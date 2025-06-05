@@ -19,7 +19,7 @@ def init_read_data(nb_images):
     # Initialize the data reading process
     print("Reading MNIST dataset...")
     # Define a transform to convert images to tensors
-    transform = transforms.Compose([transforms.Resize((20,20)),transforms.ToTensor()])
+    transform = transforms.Compose([transforms.Resize((30,30)),transforms.ToTensor()])
     # Download the MNIST test dataset
     mnist_test = datasets.MNIST(root='./data', train=True, download=False, transform=transform)
     test_loader = DataLoader(mnist_test, batch_size=nb_images, shuffle=False)
@@ -36,11 +36,11 @@ def rotate_images(images, labels, angle):
     return torch.stack(rotated_images), labels
 
 
-def rotate_images_kornia(images, angle_degrees):
+def rotate_images_kornia(images, angle):
     """    Rotate a batch of images using Kornia.
     Args:
         images (torch.Tensor): Batch of images with shape (B, C, H, W).
-        angle_degrees (float): Angle in degrees to rotate the images.
+        angle_degrees (float or list): Angle in degrees to rotate the images, or list of angles for each image.
 
         If you are using kornia in your research-related documents, it is recommended that you cite the paper.
         @inproceedings{eriba2019kornia,
@@ -53,17 +53,16 @@ def rotate_images_kornia(images, angle_degrees):
     """
     b = images.size(0) # Get the batch size
     # Resize the angle to match the batch size
-    angle = torch.tensor(angle_degrees, dtype=torch.float32, device=images.device)
-    angle = angle.repeat(b)  # Repeat the angle for each image in the batch
+    if isinstance(angle, (int, float)):
+        angle = torch.tensor([angle] * b,dtype=torch.float32)  # Repeat the angle for each image in the batch
+    elif isinstance(angle, list) and len(angle) != b:
+        raise ValueError(f"Expected angle_degrees to be a single value or a list of length {b}, got {len(angle)}")
+
     # define the rotation center
     center = torch.ones(b, 2)
     center[...,0] = images.size(2) / 2
     center[...,1] = images.size(3) / 2
     # Rotate the batch
-    scale: torch.tensor = torch.ones(b,2, device=images.device)
-    R = kornia.geometry.get_rotation_matrix2d(center, angle, scale)
-    R = R.repeat(b,1,1) # Repeat the rotation matrix for each image in the batch
-    #rotated_images = kornia.geometry.warp_affine(images, R, dsize=(images.size(2), images.size(3)))
     rotated_images = kornia.geometry.rotate(images, angle, center)
     return rotated_images
 
@@ -78,10 +77,8 @@ if __name__ == "__main__":
     print("MNIST dataset visualization completed.")
     # Rotate images using kornia
     start_time = time.time()
-    for angle in range(1,180):
-        start_loop = time.time()
+    for angle in range(1,10):
         rotated_images = rotate_images_kornia(images, angle)
-        print(f"Angle {angle} rotation completed in {time.time() - start_loop:.2f} seconds.")
     end_time = time.time() -start_time
     print(f"Total time for rotating images: {end_time:.2f} seconds")
     # Visualize the rotated images
