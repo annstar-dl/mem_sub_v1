@@ -6,7 +6,6 @@ import kornia
 import time
 from image_rotation import rotate_images_kornia, init_read_data, visualize_mnist_images
 
-
 def calculate_mse_loss(original, rotated):
     """Calculate the Mean Squared Error (MSE) loss between original and rotated images."""
     return torch.mean((original - rotated) ** 2, dim=(1, 2, 3))  # MSE across batch, height, and width
