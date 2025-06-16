@@ -38,26 +38,22 @@ def gaussian_filter_skimage(mask, sigma):
     filtered_mask = torch.tensor(filtered_mask, dtype=mask.dtype, device=mask.device)  # Convert back to tensor
     return filtered_mask
 
-def dilate_mask(mask, d):
+def dilate_mask(mask,kernel_size=(3,3), sigma=(0.5,0.5)):
     """
-    Dialate the mask using a disk-shaped structuring element.
+    Dilate the mask using a disk-shaped structuring element.
 
     Args:
         mask (torch.Tensor): Segmentation mask of shape (H,W) to apply on the image.
-        d (int): amount by which the mask is dilated.
+        kernel_size (torch.Tensor): Gaussian kernel to apply on the mask of shape (1,1)
+        sigma (torch.Tensor): Standard deviation for Gaussian kernel of shape (1,1)
 
     Returns:
         torch.Tensor: dilated mask of shape (H,W) after dilation.
     """
     dilated_mask = mask.clone()  # Clone the original mask to avoid modifying it
-    for _ in range(d):
-        # Use a disk-shaped structuring element for dilation
-        # The disk function creates a binary disk with radius d
-        # We use kornia's dilation function to apply the dilation operation
-        dilated_mask = gaussian_filter(dilated_mask, kernel_size=(3,3), sigma=(0.5, 0.5))
-        dilated_mask = dilated_mask>0.5  # Threshold the mask to create a binary mask
-        dilated_mask = dilated_mask.float()
-
+    dilated_mask = gaussian_filter(dilated_mask, kernel_size=kernel_size, sigma=sigma)
+    dilated_mask = dilated_mask>0.5  # Threshold the mask to create a binary mask
+    dilated_mask = dilated_mask.float()
     return dilated_mask
 
 def gaussian_filter(mask, kernel_size, sigma):
@@ -72,21 +68,22 @@ def gaussian_filter(mask, kernel_size, sigma):
     Returns:
         torch.Tensor: Mask after applying Gaussian filter.
     """
-    if mask.dim() == 2:
-        mask = mask.unsqueeze(0).unsqueeze(0)  # Ensure the mask is a 4D tensor (C, H, W)
-    elif mask.dim() == 3:
-        mask = mask.unsqueeze()  # Ensure the mask is a 4D tensor
-    elif mask.dim() != 4:
+    filtered_mask = mask.clone()  # Clone the original mask to avoid modifying it
+    if filtered_mask.dim() == 2:
+        filtered_mask = filtered_mask[None,None,:,:] # Ensure the mask is a 4D tensor (C, H, W)
+    elif filtered_mask.dim() == 3:
+        filtered_mask = filtered_mask.unsqueeze()  # Ensure the mask is a 4D tensor
+    elif filtered_mask.dim() != 4:
         raise ValueError(f"Expected mask to be 2D or 3D tensor, got {mask.dim()} dimensions")
     # Use kornia's Gaussian blur function to apply the filter
-    filtered_mask = kornia.filters.gaussian_blur2d(mask, kernel_size, sigma)
-    filtered_mask = filtered_mask.squeeze(0).squeeze(0)  # Remove the extra dimensions
+    filtered_mask = kornia.filters.gaussian_blur2d(filtered_mask, kernel_size, sigma)
+    filtered_mask = filtered_mask.squeeze() # Remove the extra dimensions
     return filtered_mask
 
 def select_points_within_boundary(image,r, x_indices, y_indices):
     """
     Select points within the boundary of the image based on the radius.
-
+    Then sort the indices by x and y coordinates.
     Args:
         image (tensor): Size of the image (assumed square).
         r (int): Radius to define the boundary.
@@ -126,14 +123,15 @@ def get_sampling_grid(mask, d, w):
         torch.Tensor: x coordinates Sampling grid of shape (N,), where N is the number of grid points.
         torch.Tensor: y coordinates Sampling grid of shape (N,), where N is the number of grid points.
     """
-
-    mask = dilate_mask(mask, d)  # Dialate the mask
+    mask = dilate_mask(mask, (3,3), (1.0,1.0))  # Dialate the mask
+    for _ in range(d):
+        mask = dilate_mask(mask, (3,3), (1.0,1.0))
     # Create a grid of points based on the mask
     grid = torch.zeros_like(mask, dtype=torch.float32)  # Initialize grid
     grid[::w, ::w] = 1  # Set grid points at intervals of w
     grid = grid * mask  # Apply the mask to the grid
     # Get the indices of the grid points
-    y_indices, x_indices = torch.where(grid > 0)  # Get indices of non-zero elements in the mask
+    row_indices, col_indices = torch.where(grid > 0)  # Get indices of non-zero elements in the mask
     # Select points within the boundary of the image based on the radius
     #x_indices, y_indices = select_points_within_boundary(mask.shape[0], d, x_indices, y_indices)  # Filter points within the boundary
     ### WHY DILATION IS NEEDED again?
@@ -141,4 +139,4 @@ def get_sampling_grid(mask, d, w):
     #mask = gaussian_filter_skimage(mask,2.0)# Dilated the mask again to ensure grid points are within the mask
     mask = gaussian_filter(mask, kernel_size=(3, 3), sigma=(2.0, 2.0))  # Apply Gaussian filter to smooth the mask
     mask = mask/ mask.max()  # Normalize the mask to [0, 1] range
-    return mask , x_indices, y_indices# Return the grid and coordinates as float tensors
+    return mask , row_indices, col_indices# Return the grid and coordinates as float tensors

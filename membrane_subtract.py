@@ -2,7 +2,8 @@ import torch
 from PIL import Image
 import os
 from sampling_grid import get_sampling_grid
-from basis_fn import get_bases
+from basis_fn import get_basis
+from fit_basis_to_data import fit_basis_to_data
 
 
 def extract_small_patch():
@@ -31,19 +32,26 @@ def extract_small_patch():
 def  membrane_subtract(img, mask):
     """    Subtract the membrane mask from the patch.
     Args:
-        img (torch.Tensor): The micrograph(image with membranes) image tensor of shape (C, H, W).
+        img (torch.Tensor): The micrograph(image with membranes) image tensor of shape (H, W).
         mask (torch.Tensor): The micrograph mask tensor of shape (H, W).
     Returns:
         torch.Tensor: The patch with the membrane subtracted.
     """
+    # Check if the input image is 2D or 3D
+    if img.dim() != 2:
+        raise ValueError("Input image must be a 2D tensor, got {} dimensions".format(img.dim()))
+    if mask.dim() != 2:
+        raise ValueError("Mask must be a 2D tensor, got {} dimensions".format(mask.dim()))
+
     img = img - torch.mean(img)
-    mask, x, y = get_sampling_grid(mask, 2, 4)  # Get the sampling grid from the mask
+    mask, row_idx, col_idx = get_sampling_grid(mask, 2, 4)  # Get the sampling grid from the mask
 
     r = 14 # Radius of neighboring around grid point
     dataimg = img.clone()  # Clone the original image to avoid modifying it
 
     for _ in range(3):
-        basis = get_bases(img,dataimg, mask, x, y, r)
-
+        basis = get_bases(img,dataimg, mask, row_idx, col_idx, r)
+        imgout = fit_bases_to_data(img,basis, row_idx, col_idx,r)
+        dataimg = imgout
 
     return None

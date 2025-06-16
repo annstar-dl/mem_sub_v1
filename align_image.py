@@ -3,29 +3,9 @@ import kornia
 import numpy as np
 import matplotlib.pyplot as plt
 
-def align_image_all(img, cntr, r,w,theta_b, theta_e, dtheta):
-    """
-    Align the image.
-
-    Args:
-        image (torch.Tensor): Input image tensor of shape (C, H, W).
-        cntr (int): Center of the image.
-        r (int): Radius of the neirghbourhood.
-        w (torch.Tensor): Weights for the Gaussian kernel.
-        theta_b (float): Starting angle for rotation.
-        theta_e (float): Ending angle for rotation.
-        dtheta (float): Step size for angle increment.
-    Returns:
-        torch.Tensor: angle of aligned image.
-    """
-    theta_opt = align_singe_patch(img, cntr, r, w, theta_b, theta_e, dtheta)  # Align the image patch
-    #theta_opt = align_image_multires(img, cntr, r, w, theta_b, theta_e, 1)
-    #theta_opt = align_image_multires(img, cntr, r, w, theta_opt-10, theta_opt + 10, dtheta)
-    return theta_opt
-
 def calculate_mse_loss(original, rotated):
     """Calculate the Mean Squared Error (MSE) loss between original and rotated images."""
-    return torch.mean((original - rotated) ** 2, dim=(1, 2, 3))  # MSE across batch, height, and width
+    return torch.sum((original - rotated) ** 2, dim=(1, 2, 3))  # MSE across batch, height, and width
 
 def rotate_images_kornia(images, angle):
     """    Rotate a batch of images using Kornia.
@@ -54,18 +34,91 @@ def rotate_images_kornia(images, angle):
             raise ValueError(f"Expected angle_degrees to be a single value or a list of length {b}, got {len(angle)}")
     # define the rotation center
     center = torch.ones(b, 2)
-    center[...,0] = images.size(2) / 2
-    center[...,1] = images.size(3) / 2
+    center[...,0] = images.size(2) // 2
+    center[...,1] = images.size(3) // 2
     # Rotate the batch
     rotated_images = kornia.geometry.rotate(images, angle, center)
     return rotated_images
+
+
+def align_multiple_patches(imgs_subset, cntr, r, w, theta_b, theta_e, dtheta):
+    """
+    Align an image patch to the profile that matches the membrane crossection direction.
+    :param img: torch.Tensor, Input image patch tensor of shape (C, H, W).
+    :param cntr: int, Center of the image patch.
+    :param r: int, Radius of a neighbourhood.
+    :param w: torch.Tensor, Weights for the Gaussian kernel of shape (2*r+1, 2*r+1).
+    :param theta_b: float, Starting angle for rotation in degrees.
+    :param theta_e: float, Ending angle for rotation in degrees.
+    :param dtheta: float, Step size for angle increment in degrees.
+    :return:
+    """
+    theta_opt = align_multiple_patches_multires(imgs_subset, cntr, r, w, theta_b, theta_e, 10)
+    theta_opt = align_multiple_patches_multires(imgs_subset, cntr, r, w, theta_b-10, theta_e+10, dtheta)
+    return theta_opt
+
+
+def align_multiple_patches_multires(imgs_subset,cntr, r, w, theta_b, theta_e, dtheta):
+    """
+    Align multiple image patches to the profile that matches the membrane crossection direction.
+    :param imgs: torch.Tensor, Input image patches tensor of shape (N, C, H, W).
+    :param cntrs: list of int, Centers of the image patches.
+    :param r: int, Radius of a neighbourhood.
+    :param w: torch.Tensor, Weights for the Gaussian kernel of shape (2*r+1, 2*r+1).
+    :param theta_b: float, Starting angle for rotation in degrees.
+    :param theta_e: float, Ending angle for rotation in degrees.
+    :param dtheta: float, Step size for angle increment in degrees.
+    :return:
+    """
+    if isinstance(theta_e, (int, float)) and isinstance(theta_e, (int, float)):
+        angles = torch.arange(theta_b, theta_e+dtheta, dtheta)
+        angles = angles.unsqueeze(-1).expand(-1,len(imgs_subset))  # N angles x M images
+    elif isinstance(theta_b, (list, torch.Tensor)) and isinstance(theta_e, (list,torch.Tensor)):
+        if len(theta_b) != len(theta_e):
+            raise ValueError("theta_b and theta_e must have the same length if they are lists")
+        angles = [torch.arange(b, e+dtheta, dtheta) for b, e in zip(theta_b, theta_e)]
+        angles = torch.stack(angles,axis=0).transpose(0,1) # N angles x M images
+    else:
+        raise ValueError("theta_b and theta_e must be either both scalars or both lists")
+    # check image dimensions
+    if imgs_subset.dim() != 4:
+        raise ValueError(f"Expected imgs to be a 4D tensor (N, C, H, W), got {imgs_subset.dim()} dimensions")
+    losses = torch.zeros((len(angles),len(imgs_subset)), dtype=torch.float32)  # Initialize losses tensor
+    for i in range(len(angles)):
+        tmp_img = rotate_images_kornia(imgs_subset, angles[i])  # Rotate the images by the angles
+        tmp_img = tmp_img[..., cntr - r:cntr + r + 1,cntr - r:cntr + r + 1]  # Crop the images to the neighbourhood size
+        w_exp = w.unsqueeze(0).unsqueeze(0)
+        prof = tmp_img * w_exp  # Apply the Gaussian weights to the rotated images
+        # visualize_all_rotations(prof,supertitle="Weighted Rotated Images")
+        prof = torch.sum(prof, dim=3)  # Calculate the profile for each rotated image
+        prof = prof.unsqueeze(3).expand(-1, -1, -1, 2 * r + 1)  # Expand the profile into an image for each angle
+        losses[i] = calculate_mse_loss(tmp_img, prof) # Calculate the MSE loss between the rotated images and the original images
+    loss_agr_min_idx = torch.argmin(losses, dim=0)
+    best_angles = angles[loss_agr_min_idx,torch.arange(angles.size(1))]  # Get the best angles for each image
+    return best_angles
 
 def align_single_patch(img, cntr, r, w, theta_b, theta_e, dtheta):
     """
     Align an image patch to the profile that matches the membrane crossection direction.
     :param img: torch.Tensor, Input image patch tensor of shape (C, H, W).
     :param cntr: int, Center of the image patch.
-    :param r: int, Radius of the neighbourhood.
+    :param r: int, Radius of a neighbourhood.
+    :param w: torch.Tensor, Weights for the Gaussian kernel of shape (2*r+1, 2*r+1).
+    :param theta_b: float, Starting angle for rotation in degrees.
+    :param theta_e: float, Ending angle for rotation in degrees.
+    :param dtheta: float, Step size for angle increment in degrees.
+    :return:
+    """
+    theta_opt = align_single_patch_multires(img, cntr, r, w, theta_b, theta_e, 10)
+    theta_opt = align_single_patch_multires(img, cntr, r, w, theta_opt-10, theta_opt + 10, dtheta)
+    return theta_opt
+
+def align_single_patch_multires(img, cntr, r, w, theta_b, theta_e, dtheta):
+    """
+    Align an image patch to the profile that matches the membrane crossection direction.
+    :param img: torch.Tensor, Input image patch tensor of shape (C, H, W).
+    :param cntr: int, Center of the image patch.
+    :param r: int, Radius of a neighbourhood.
     :param w: torch.Tensor, Weights for the Gaussian kernel of shape (2*r+1, 2*r+1).
     :param theta_b: float, Starting angle for rotation in degrees.
     :param theta_e: float, Ending angle for rotation in degrees.
@@ -73,13 +126,14 @@ def align_single_patch(img, cntr, r, w, theta_b, theta_e, dtheta):
     :return:
     """
 
-    angles_list = np.arange(theta_b, theta_e, dtheta).tolist()
+    angles_list = np.arange(theta_b, theta_e+dtheta, dtheta).tolist()
     # check image dimensions
     if img.dim() < 3:
         img = img.unsqueeze(0)  # Ensure img is a 4D tensor (C, H, W)
         if img.dim() < 4:
             img = img.unsqueeze(0)
     tmp_img = img.expand(len(angles_list), -1, -1, -1).contiguous()  # Efficiently repeat the image for each angle in the batch
+
     tmp_img = rotate_images_kornia(tmp_img, angles_list)  # Rotate the images by the angles
     tmp_img = tmp_img[..., cntr - r:cntr + r+1, cntr - r:cntr + r+1]  # Crop the images to the neighbourhood size
     w_exp = w.unsqueeze(0).unsqueeze(0)

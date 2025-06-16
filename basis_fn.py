@@ -1,24 +1,38 @@
 import math
-from align_image import align_image_all, align_single_patch
-from recon_patch import recon_patch
+from align_image import align_single_patch, align_multiple_patches
+from recon_patch import recon_patch, recon_mult_patches
 import torch
 
 
-def create_gaussian_disc(im_size, r):
+def create_gaussian_disc(im_size, radius):
     """
     Create a binary disc using Gaussian kernel.
     Args:
-        im_size (int): Size of the image (height and width).
-        r (int): Radius of the disc.
+        im_size (int,int): Size of the image (height and width).
+        radius (int): Radius of the disc.
     Returns:
         torch.Tensor: Binary disc of shape (im_size, im_size).
-
+        torch.Tensor: Gaussian weights for the disc of shape (im_size, im_size).
     """
-    y, x = torch.meshgrid(torch.arange(im_size), torch.arange(im_size))
-    center = im_size // 2
-    gaussWt = torch.exp(-((x - center) ** 2 + (y - center) ** 2) / (2 * r ** 2))
-    binary_disc = (gaussWt > 0.5).float()  # Convert to binary disc
-    return binary_disc, gaussWt
+    if isinstance(im_size, int):
+        raise ValueError("im_size should be a tuple of (height, width), not a single integer.")
+    rows = im_size[0]
+    cols = im_size[1]
+    y, x = torch.meshgrid(torch.arange(cols), torch.arange(rows))
+    centerX = cols // 2
+    centerY = rows // 2
+    #compute radius of each pixel from the center
+    r = torch.sqrt(((x - centerX) ** 2 + (y - centerY) ** 2))
+    # Create a Gaussian disc using the radius
+    binaryImage = (r <= radius).float()  # Create a binary disc
+    sigma = radius / 2.5  # Standard deviation for Gaussian kernel
+    # Create Gaussian weights based on the distance from the center
+    gaussWt = torch.exp(-r**2 / (2 * sigma ** 2))
+    edge_val = gaussWt[int(centerX),-1] # Get the value at the edge of the disc
+    gaussWt = torch.max(gaussWt-edge_val,torch.tensor(0.0))  # Ensure the maximum value is at the edge
+    gaussWt = gaussWt * binaryImage  # Apply the binary mask to the Gaussian weights
+    gaussWt = gaussWt / torch.sum(gaussWt)  # Normalize the Gaussian weights
+    return binaryImage, gaussWt
 
 def get_w_function(r):
     """Get the weights for the Gaussian kernel.
@@ -44,55 +58,91 @@ def get_radius_of_inner_circle(r):
     """
     return math.floor(r / math.sqrt(2.0)) - 1  # Radius of the inner circle
 
-def get_basis(img,dataimg,mask,x,y,r):
+def get_basis_sequential(img,dataimg,mask,row_idx,col_idx,r):
     """
-    Get bases from the image data using least squares method.
+    Get bases from the image data patch by patch. Basis is a membrane profile at a point.
 
     Args:
         img (torch.Tensor): Input image of shape (H,W), where N is the number of samples
                             and H, W are the height and width of the image.
         dataimg (torch.Tensor): The image from previous processing step of shape (H,W).
         mask (torch.Tensor): Segmentation mask of shape (H,W) to apply on the image.
-        x (torch.Tensor): X coordinates of grid of shape (N), number of grid points.
-        y (torch.Tensor): Y coordinates of grid of shape (N), number of grid points.
+        row_idx (torch.Tensor): X coordinates of grid of shape (N), number of grid points.
+        col_idx (torch.Tensor): Y coordinates of grid of shape (N), number of grid points.
         r (int): Radius of a neighbourhood.
 
     Returns:
         torch.Tensor: Bases(Reconstructed images of neighbourhoods around grid point)
-         of shape (D,r,r), where N is the number of bases and D is the dimension.
+         of shape (N,r,r), where N is the number of bases and r is inner radius of neighbourhood
+         around sampling grid point.
     """
-    cntr = r+1
+    # Check if the input image is 2D or 3D
+    if img.dim() != 2:
+        raise ValueError("Input image must be a 2D tensor, got {} dimensions".format(img.dim()))
+    cntr = r
     imgout = torch.zeros_like(img)
     wtimg = torch.zeros_like(img)
 
     r_in = get_radius_of_inner_circle(r)
     w = get_w_function(r_in)  # Get the weights for the Gaussian kernel
 
-    binaryImage, gaussWt = create_gaussian_disc(2*r_in+1, r_in)  # Create a binary disc and Gaussian weights
-    nGrid = x.shape[0]  # Number of grid points
+    binaryImage, gaussWt = create_gaussian_disc(2*[(2*r_in+1)], r_in)  # Create a binary disc and Gaussian weights
+    nGrid = row_idx.shape[0]  # Number of grid points
     basis = torch.zeros((nGrid, w.shape[0], w.shape[1]), dtype=torch.float32)  # Initialize bases tensor
     for i in range(nGrid):
-        xi = x[i]
-        yi = y[i]
-        img1 = dataimg[yi-r:yi+r+1, xi-r:xi+r+1]  # Extract the neighborhood around the grid point
+        img1 = dataimg[row_idx[i]-r:row_idx[i]+r+1, col_idx[i]-r:col_idx[i]+r+1]  # Extract the neighborhood around the grid point
         theta = align_single_patch(img1, cntr, r_in,w,-90.,90.0,1.0)  # Align the image using the center and radius
         patchImg = recon_patch(img1, cntr, r_in, w, gaussWt, theta)  # Reconstruct the patch using the basis functions
         basis[i] = patchImg  # Store the reconstructed patch in the bases tensor
-        imgout[yi-r_in:yi+r_in+1, xi-r_in:xi+r_in+1] += patchImg
-        wtimg[yi-r_in:yi+r_in+1, xi-r_in:xi+r_in+1] += gaussWt
+        imgout[row_idx[i]-r_in:row_idx[i]+r_in+1, col_idx[i]-r_in:col_idx[i]+r_in+1] += patchImg
+        wtimg[row_idx[i]-r_in:row_idx[i]+r_in+1, col_idx[i]-r_in:col_idx[i]+r_in+1] += gaussWt
     imgout = imgout / wtimg  # Normalize the output image by the weights
     return basis
 
-def fit_bases_to_data(data, bases, x,y,r):
+def get_basis(img,dataimg,mask,row_idx,col_idx,r):
     """
-    Fit bases to data using least squares method.
+    Get bases from the image data multiple patches at once. Basis is a membrane profile at a point.
 
     Args:
-        data (torch.Tensor): Input image of shape (N,H,W), where N is the number of samples
-                             and H, W are the height and width of the image.
-        bases (torch.Tensor): Bases of shape (M, D), where M is the number of bases.
-        weights (torch.Tensor, optional): Weights for each sample of shape (N,). If None, all samples are equally weighted.
+        img (torch.Tensor): Input image of shape (H,W), where N is the number of samples
+                            and H, W are the height and width of the image.
+        dataimg (torch.Tensor): The image from previous processing step of shape (H,W).
+        mask (torch.Tensor): Segmentation mask of shape (H,W) to apply on the image.
+        row_idx (torch.Tensor): X coordinates of grid of shape (N), number of grid points.
+        col_idx (torch.Tensor): Y coordinates of grid of shape (N), number of grid points.
+        r (int): Radius of a neighbourhood.
 
     Returns:
-        torch.Tensor: Fitted coefficients of shape (M,).
+        torch.Tensor: Bases(Reconstructed images of neighbourhoods around grid point)
+         of shape (N,r,r), where N is the number of bases and r is inner radius of neighbourhood
+         around sampling grid point.
     """
+    # Check if the input image is 2D or 3D
+    if img.dim() != 2:
+        raise ValueError("Input image must be a 2D tensor, got {} dimensions".format(img.dim()))
+    cntr = r
+    r_in = get_radius_of_inner_circle(r)
+    w = get_w_function(r_in)  # Get the weights for the Gaussian kernel
+
+    binaryImage, gaussWt = create_gaussian_disc(2*[(2*r_in+1)], r_in)  # Create a binary disc and Gaussian weights
+    imgs_subset = get_patches_from_image(dataimg, r, row_idx, col_idx)  # Get patches from the image using the specified radius
+    theta = align_multiple_patches(imgs_subset,cntr, r_in,w,-90.,90.0,1.0)  # Align the image using the center and radius
+    basis = recon_mult_patches(imgs_subset, cntr, r_in, w, gaussWt, theta)  # Reconstruct the patch using the basis functions
+    return basis
+
+def get_patches_from_image(img, r, row_idxs, col_idxs):
+    """
+    Get patches from the image using the specified radius.
+
+    Args:
+        img (torch.Tensor): Input image of shape (H,W), where H, W are the height and width of the image.
+        r (int): Radius of a neighbourhood.
+
+    Returns:
+        torch.Tensor: Patches of shape (N, 2*r+1, 2*r+1), where N is the number of patches.
+    """
+    nGrid = len(row_idxs)  # Number of grid points
+    patches = torch.zeros([nGrid,1, 2 * r + 1, 2 * r + 1], dtype=torch.float32)  # Initialize patches tensor)
+    for i in range(nGrid):
+            patches[i] = img[row_idxs[i] - r:row_idxs[i] + r + 1, col_idxs[i] - r:col_idxs[i] + r + 1].unsqueeze(0)
+    return patches

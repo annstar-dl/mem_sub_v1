@@ -27,7 +27,7 @@ def visualize_patch(patch_tensor, mask_tensor, subtitle="Patch and Mask"):
     plt.axis('off')
     plt.suptitle(subtitle)
 
-def visualize_sampling_grid(mask_tensor, x, y):
+def visualize_sampling_grid(mask_tensor, y, x):
     """
     Visualize the sampling grid on the mask.
     """
@@ -47,16 +47,16 @@ def get_sampling_grid_test(grid_size, stride):
     top = 300  # Y coordinate of the top-left corner
     patch_tensor, mask_tensor = extract_small_patch_with_mask(left, top, patch_size)
     visualize_patch(patch_tensor, mask_tensor,"Original Patch and Mask")
-    mask_tensor, x, y = get_sampling_grid(mask_tensor, grid_size, stride)
+    mask_tensor, row_idx, col_idx = get_sampling_grid(mask_tensor, grid_size, stride)
     visualize_patch(patch_tensor, mask_tensor,"Dilated Patch and Mask")
-    return mask_tensor, x, y
+    return mask_tensor, row_idx, col_idx
 
 if __name__ == "__main__":
     # Example usage
     grid_size = 2  # Size of the grid
     stride = 4  # Stride for the sampling grid
-    sampling_grid, x, y = get_sampling_grid_test(grid_size, stride)
-    visualize_sampling_grid(sampling_grid, x, y)
-    print(f"Sampling grid shape: {sampling_grid.shape}, x: {x}, y: {y}")
+    sampling_grid, row_idx, col_idx = get_sampling_grid_test(grid_size, stride)
+    visualize_sampling_grid(sampling_grid, row_idx, col_idx)
+    print(f"Sampling grid shape: {sampling_grid.shape}, row_idx: {row_idx}, col_idx: {col_idx}")
     print("Sampling grid test completed.")
     plt.show()

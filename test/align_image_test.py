@@ -1,7 +1,7 @@
 import torch
 from extract_small_patch import extract_small_patch_with_mask
 from  sampling_grid import get_sampling_grid, select_points_within_boundary
-from align_image import align_image_all, rotate_images_kornia, align_single_patch
+from align_image import rotate_images_kornia, align_single_patch
 from basis_fn import get_w_function, get_radius_of_inner_circle
 import matplotlib.pyplot as plt
 from sampling_grid_test import visualize_sampling_grid
@@ -23,7 +23,7 @@ def visualize_im(im, title="Image", add_figure=True):
     plt.axis('off')
     plt.title(title)
 
-def visalize_2_images(im1, im2, title1="Image 1", title2="Image 2"):
+def visualize_2_images(im1, im2, title1="Image 1", title2="Image 2"):
     """
     Visualize two images side by side.
     Args:
@@ -107,7 +107,7 @@ def align_image_test():
     angle = align_single_patch(cur_patch_tensor, cntr , r_in, w, -90.0, 90.0, 1.0)
     # Rotate the patch in the opposite direction
     rot_patch_tensor = rotate_images_kornia(cur_patch_tensor.unsqueeze(0), angle).squeeze(0).squeeze(0)  # Rotate the patch
-    rot_patch_tensor = rot_patch_tensor[...,cntr-r_in:cntr+r_in, cntr-r_in:cntr+r_in]  # Crop the rotated patch to the original size
+    rot_patch_tensor = rot_patch_tensor[...,cntr-r_in:cntr+r_in+1, cntr-r_in:cntr+r_in+1]  # Crop the rotated patch to the original size
     rot_patch_tensor_scale = rot_patch_tensor * w  # Scale the rotated patch by the weights
     rot_patch_profile = rot_patch_tensor_scale.sum(dim=(1))
     rot_patch_profile = rot_patch_profile.unsqueeze(1).repeat(1,2*r_in)  # Sum across height and width to get the profile
