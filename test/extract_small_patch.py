@@ -10,7 +10,7 @@ def extract_small_patch_with_mask(left=200, top=300, patch_size=(160, 160)):
     Args:
         left (int): X coordinate of the top-left corner of the patch.
         top (int): Y coordinate of the top-left corner of the patch.
-        patch_size (tuple): Size of the patch as (width, height).
+        patch_size (tuple) or None: Size of the patch as (width, height). IF None, the patch will be extracted to the right and down from the specified coordinates.
     """
     # Example implementation: Load an image and extract a small patch
     data_dir = r"/home/astar/Projects/vesicles_data"
@@ -24,10 +24,9 @@ def extract_small_patch_with_mask(left=200, top=300, patch_size=(160, 160)):
     if not os.path.exists(image_path):
         raise FileNotFoundError(f"Image file {image_path} does not exist.")
     mask = Image.open(mask_path).convert("L")  # Load the mask as grayscale
-
-
-
     # Extract the patch
+    if patch_size is None:
+        patch_size = (image.width - left, image.height - top)
     patch = image.crop((left, top, left + patch_size[0], top + patch_size[1]))
     # Extract the corresponding mask patch
     mask_patch = mask.crop((left, top, left + patch_size[0], top + patch_size[1]))

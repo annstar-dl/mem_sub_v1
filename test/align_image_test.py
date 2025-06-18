@@ -15,7 +15,7 @@ def visualize_im(im, title="Image", add_figure=True):
     """
     if add_figure:
         plt.figure()
-    if im.dim() >2:
+    if im.dim()>2:
         im = im.permute(1, 2, 0)  # Change shape to (H, W, C) for visualization
         plt.imshow(im)
     else:

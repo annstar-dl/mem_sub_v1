@@ -2,16 +2,27 @@ import matplotlib.pyplot as plt
 from extract_small_patch import extract_small_patch_with_mask
 from sampling_grid import get_sampling_grid
 from basis_fn import get_basis, get_basis_sequential
-from align_image_test import visualize_3_images
+from align_image_test import visualize_3_images, visualize_2_images
 from sampling_grid_test import visualize_sampling_grid
 from sampling_grid import select_points_within_boundary
 from basis_fn import create_gaussian_disc, get_radius_of_inner_circle
 import torch
+import time
 
-def get_basis_parallelized_test():
-    left = 150
-    top = 20
-    patch_size = (160, 160)  # Width, Height
+def get_basis_parallelized_test(patch_size, left, top):
+    """Test the get_bases function with a small patch.
+    This function extracts a small patch from the image, applies a sampling grid,
+    and reconstructs the patch using the basis functions.
+    Args:
+        patch_size (tuple): Size of the patch to extract (width, height).
+        left (int): Left coordinate of the patch.
+        top (int): Top coordinate of the patch.
+    Returns:
+        torch.Tensor: The reconstructed patch tensor.
+        torch.Tensor: The basis functions used for reconstruction.
+        torch.Tensor: The angles used for rotation.
+    """
+
     grid_size = 2  # Size of the grid for sampling
     stride = 4  # Stride for the sampling grid
     # Extract a small patch and its mask
@@ -33,7 +44,7 @@ def get_basis_parallelized_test():
     # Initialize the output image and weight image
     imgout = torch.zeros_like(patch_tensor)  # Initialize the output image
     wtimg = torch.zeros_like(patch_tensor)  # Initialize the weight image
-    basis = get_basis(patch_tensor, dataimg, mask_tensor, row_idx, col_idx, r)
+    basis, theta = get_basis(patch_tensor, dataimg, mask_tensor, row_idx, col_idx, r, True)
     for i in range(nGrid):
         imgout[row_idx[i] - r_in:row_idx[i] + r_in + 1, col_idx[i] - r_in:col_idx[i] + r_in + 1] += basis[i]
         wtimg[row_idx[i] - r_in:row_idx[i] + r_in + 1, col_idx[i] - r_in:col_idx[i] + r_in + 1] += gaussWt
@@ -42,16 +53,21 @@ def get_basis_parallelized_test():
                        title1="Original Patch",
                        title2="Reconstructed Patch",
                        title3="Weight Image")
-    return imgout, basis
-def get_basis_test():
-    """
-    Test the get_bases function with a small patch.
-    This function is a placeholder and should be implemented based on specific requirements.
-    """
+    return imgout, basis, theta
 
-    left = 150
-    top = 20
-    patch_size = (160, 160)  # Width, Height
+def get_basis_sequential_test(patch_size, left, top):
+    """Test the get_bases function with a small patch.
+    This function extracts a small patch from the image, applies a sampling grid,
+    and reconstructs the patch using the basis functions.
+    Args:
+        patch_size (tuple): Size of the patch to extract (width, height).
+        left (int): Left coordinate of the patch.
+        top (int): Top coordinate of the patch.
+    Returns:
+        torch.Tensor: The reconstructed patch tensor.
+        torch.Tensor: The basis functions used for reconstruction.
+        torch.Tensor: The angles used for rotation.
+    """
     grid_size = 2  # Size of the grid for sampling
     stride = 4  # Stride for the sampling grid
     # Extract a small patch and its mask
@@ -73,7 +89,7 @@ def get_basis_test():
     # Initialize the output image and weight image
     imgout = torch.zeros_like(patch_tensor)  # Initialize the output image
     wtimg = torch.zeros_like(patch_tensor)  # Initialize the weight image
-    basis = get_basis_sequential(patch_tensor, dataimg, mask_tensor, row_idx, col_idx, r)
+    basis, theta = get_basis_sequential(patch_tensor, dataimg, mask_tensor, row_idx, col_idx, r, True)
     for i in range(nGrid):
         imgout[row_idx[i] - r_in:row_idx[i] + r_in+1, col_idx[i] - r_in:col_idx[i] + r_in+1] += basis[i]
         wtimg[row_idx[i] - r_in:row_idx[i] + r_in+1, col_idx[i] - r_in:col_idx[i] + r_in+1] += gaussWt
@@ -82,17 +98,25 @@ def get_basis_test():
                        title1="Original Patch",
                        title2="Reconstructed Patch",
                        title3="Weight Image")
-    return imgout, basis
+    return imgout, basis, theta
 
 
 if __name__ =="__main__":
-    imgout_seq, basis_seq = get_basis_test()
-    imgout_paral,basis_paral = get_basis_parallelized_test()
+    left = 0
+    top = 0
+    patch_size = None  # Width, Height
+    start_seq = time.time()
+    imgout_seq, basis_seq, theta_seq = get_basis_sequential_test(patch_size,left, top)
+    end_seq = time.time()
+    print("Time taken for sequential reconstruction:", end_seq - start_seq)
+    start_paral = time.time()
+    imgout_paral,basis_paral, theta_paral = get_basis_parallelized_test(patch_size, left, top)
+    end_paral = time.time()
+    print("Time taken for parallelized reconstruction:", end_paral - start_paral)
     print("Difference between sequential and parallelized reconstruction:",
-          torch.mean(basis_seq - basis_paral,axis=[1,2]))
-    print("Difference between sequential and parallelized reconstruction [0]:",
-        (imgout_seq - imgout_paral)[0])
-    # Visualize the bases
+          torch.linalg.norm(basis_seq - basis_paral,dim=[1,2]))
+
+
     plt.figure(figsize=(10, 5))
     plt.imshow(imgout_seq-imgout_paral, cmap='gray')
     plt.title("Difference between Sequential and Parallelized Bases")

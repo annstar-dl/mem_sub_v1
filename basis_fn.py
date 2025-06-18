@@ -1,6 +1,7 @@
 import math
 from align_image import align_single_patch, align_multiple_patches
 from recon_patch import recon_patch, recon_mult_patches
+from utils import get_patches_from_image
 import torch
 
 
@@ -24,7 +25,7 @@ def create_gaussian_disc(im_size, radius):
     #compute radius of each pixel from the center
     r = torch.sqrt(((x - centerX) ** 2 + (y - centerY) ** 2))
     # Create a Gaussian disc using the radius
-    binaryImage = (r <= radius).float()  # Create a binary disc
+    binaryImage = torch.tensor(r <= radius, dtype=torch.float64) # Create a binary disc
     sigma = radius / 2.5  # Standard deviation for Gaussian kernel
     # Create Gaussian weights based on the distance from the center
     gaussWt = torch.exp(-r**2 / (2 * sigma ** 2))
@@ -40,7 +41,7 @@ def get_w_function(r):
     r (int): Radius of the inner circle inside the neighborhood."""
 
     # w function for high order approximation
-    u = torch.arange(-r, r+1, dtype=torch.float32) / r
+    u = torch.arange(-r, r+1, dtype=torch.float64) / r
     w = 1.40625 - 4.6875 * u ** 2 + 3.28125 * u ** 4
     w = w / torch.sum(w)  # Normalize the weights
     w = w.repeat(2 * r+1, 1)  # Repeat to create a 2D weight matrix
@@ -58,7 +59,7 @@ def get_radius_of_inner_circle(r):
     """
     return math.floor(r / math.sqrt(2.0)) - 1  # Radius of the inner circle
 
-def get_basis_sequential(img,dataimg,mask,row_idx,col_idx,r):
+def get_basis_sequential(img,dataimg,mask,row_idx,col_idx,r, return_theta=False):
     """
     Get bases from the image data patch by patch. Basis is a membrane profile at a point.
 
@@ -88,18 +89,26 @@ def get_basis_sequential(img,dataimg,mask,row_idx,col_idx,r):
 
     binaryImage, gaussWt = create_gaussian_disc(2*[(2*r_in+1)], r_in)  # Create a binary disc and Gaussian weights
     nGrid = row_idx.shape[0]  # Number of grid points
-    basis = torch.zeros((nGrid, w.shape[0], w.shape[1]), dtype=torch.float32)  # Initialize bases tensor
+    basis = torch.zeros((nGrid, w.shape[0], w.shape[1]), dtype=torch.float64)  # Initialize bases tensor
+    thetas = torch.zeros((nGrid,), dtype=torch.float64)  # Initialize theta tensor for angles
     for i in range(nGrid):
         img1 = dataimg[row_idx[i]-r:row_idx[i]+r+1, col_idx[i]-r:col_idx[i]+r+1]  # Extract the neighborhood around the grid point
+        if img1.shape[0] != 2 * r + 1 or img1.shape[1] != 2 * r + 1:
+            raise ValueError(f"Extracted patch size {img1.shape} does not match expected size {(2 * r + 1, 2 * r + 1)}"
+                             f" for grid point ({row_idx[i]}, {col_idx[i]}). ")
         theta = align_single_patch(img1, cntr, r_in,w,-90.,90.0,1.0)  # Align the image using the center and radius
         patchImg = recon_patch(img1, cntr, r_in, w, gaussWt, theta)  # Reconstruct the patch using the basis functions
         basis[i] = patchImg  # Store the reconstructed patch in the bases tensor
         imgout[row_idx[i]-r_in:row_idx[i]+r_in+1, col_idx[i]-r_in:col_idx[i]+r_in+1] += patchImg
         wtimg[row_idx[i]-r_in:row_idx[i]+r_in+1, col_idx[i]-r_in:col_idx[i]+r_in+1] += gaussWt
-    imgout = imgout / wtimg  # Normalize the output image by the weights
-    return basis
+        thetas[i] = theta  # Store the angle for the current grid point
+    if return_theta:
+        return basis, thetas
+    else:
+        return basis
 
-def get_basis(img,dataimg,mask,row_idx,col_idx,r):
+
+def get_basis(img,dataimg,mask,row_idx,col_idx,r, return_theta=False):
     """
     Get bases from the image data multiple patches at once. Basis is a membrane profile at a point.
 
@@ -128,21 +137,8 @@ def get_basis(img,dataimg,mask,row_idx,col_idx,r):
     imgs_subset = get_patches_from_image(dataimg, r, row_idx, col_idx)  # Get patches from the image using the specified radius
     theta = align_multiple_patches(imgs_subset,cntr, r_in,w,-90.,90.0,1.0)  # Align the image using the center and radius
     basis = recon_mult_patches(imgs_subset, cntr, r_in, w, gaussWt, theta)  # Reconstruct the patch using the basis functions
-    return basis
+    if return_theta:
+        return basis, theta
+    else:
+        return basis
 
-def get_patches_from_image(img, r, row_idxs, col_idxs):
-    """
-    Get patches from the image using the specified radius.
-
-    Args:
-        img (torch.Tensor): Input image of shape (H,W), where H, W are the height and width of the image.
-        r (int): Radius of a neighbourhood.
-
-    Returns:
-        torch.Tensor: Patches of shape (N, 2*r+1, 2*r+1), where N is the number of patches.
-    """
-    nGrid = len(row_idxs)  # Number of grid points
-    patches = torch.zeros([nGrid,1, 2 * r + 1, 2 * r + 1], dtype=torch.float32)  # Initialize patches tensor)
-    for i in range(nGrid):
-            patches[i] = img[row_idxs[i] - r:row_idxs[i] + r + 1, col_idxs[i] - r:col_idxs[i] + r + 1].unsqueeze(0)
-    return patches

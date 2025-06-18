@@ -24,6 +24,7 @@ def rotate_images_kornia(images, angle):
     """
     if images.dim() != 4:
         raise ValueError(f"Expected images to be a 4D tensor (B, C, H, W), got {images.dim()} dimensions")
+    images = images.to(torch.float32)
     b = images.size(0) # Get the batch size
     # Resize the angle to match the batch size
     if isinstance(angle, (int, float)):
@@ -37,7 +38,8 @@ def rotate_images_kornia(images, angle):
     center[...,0] = images.size(2) // 2
     center[...,1] = images.size(3) // 2
     # Rotate the batch
-    rotated_images = kornia.geometry.rotate(images, angle, center)
+    rotated_images = kornia.geometry.rotate(images, angle, center,mode="bilinear")
+    rotated_images = rotated_images.to(torch.float64)
     return rotated_images
 
 
@@ -54,7 +56,7 @@ def align_multiple_patches(imgs_subset, cntr, r, w, theta_b, theta_e, dtheta):
     :return:
     """
     theta_opt = align_multiple_patches_multires(imgs_subset, cntr, r, w, theta_b, theta_e, 10)
-    theta_opt = align_multiple_patches_multires(imgs_subset, cntr, r, w, theta_b-10, theta_e+10, dtheta)
+    theta_opt = align_multiple_patches_multires(imgs_subset, cntr, r, w, theta_opt-10, theta_opt+10, dtheta)
     return theta_opt
 
 
@@ -112,6 +114,7 @@ def align_single_patch(img, cntr, r, w, theta_b, theta_e, dtheta):
     theta_opt = align_single_patch_multires(img, cntr, r, w, theta_b, theta_e, 10)
     theta_opt = align_single_patch_multires(img, cntr, r, w, theta_opt-10, theta_opt + 10, dtheta)
     return theta_opt
+
 
 def align_single_patch_multires(img, cntr, r, w, theta_b, theta_e, dtheta):
     """
