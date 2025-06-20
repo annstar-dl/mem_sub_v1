@@ -59,7 +59,7 @@ def get_radius_of_inner_circle(r):
     """
     return math.floor(r / math.sqrt(2.0)) - 1  # Radius of the inner circle
 
-def get_basis_sequential(img,dataimg,mask,row_idx,col_idx,r, return_theta=False):
+def get_basis_sequential(dataimg,mask,row_idx,col_idx,r, return_theta=False):
     """
     Get bases from the image data patch by patch. Basis is a membrane profile at a point.
 
@@ -78,11 +78,11 @@ def get_basis_sequential(img,dataimg,mask,row_idx,col_idx,r, return_theta=False)
          around sampling grid point.
     """
     # Check if the input image is 2D or 3D
-    if img.dim() != 2:
-        raise ValueError("Input image must be a 2D tensor, got {} dimensions".format(img.dim()))
+    if dataimg.dim() != 2:
+        raise ValueError("Input image must be a 2D tensor, got {} dimensions".format(dataimg.dim()))
     cntr = r
-    imgout = torch.zeros_like(img)
-    wtimg = torch.zeros_like(img)
+    imgout = torch.zeros_like(dataimg)
+    wtimg = torch.zeros_like(dataimg)
 
     r_in = get_radius_of_inner_circle(r)
     w = get_w_function(r_in)  # Get the weights for the Gaussian kernel
@@ -108,7 +108,7 @@ def get_basis_sequential(img,dataimg,mask,row_idx,col_idx,r, return_theta=False)
         return basis
 
 
-def get_basis(img,dataimg,mask,row_idx,col_idx,r, return_theta=False):
+def get_basis(dataimg,mask,row_idx,col_idx,r, return_theta=False):
     """
     Get bases from the image data multiple patches at once. Basis is a membrane profile at a point.
 
@@ -127,8 +127,8 @@ def get_basis(img,dataimg,mask,row_idx,col_idx,r, return_theta=False):
          around sampling grid point.
     """
     # Check if the input image is 2D or 3D
-    if img.dim() != 2:
-        raise ValueError("Input image must be a 2D tensor, got {} dimensions".format(img.dim()))
+    if dataimg.dim() != 2:
+        raise ValueError("Input image must be a 2D tensor, got {} dimensions".format(dataimg.dim()))
     cntr = r
     r_in = get_radius_of_inner_circle(r)
     w = get_w_function(r_in)  # Get the weights for the Gaussian kernel

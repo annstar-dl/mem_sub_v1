@@ -13,19 +13,17 @@ import torch
 from fit_basis_to_data import fit_basis_to_data
 
 
-def load_image_from_mat(file_path, variable_name='image'):
-    """
-    Load an image from a .mat file.
 
-    Args:
-        file_path (str): Path to the .mat file.
-    Returns:
-        np.ndarray: The loaded image as a NumPy array.
-    """
-    mat_data = scipy.io.loadmat(file_path)
-    if variable_name not in mat_data:
-        raise KeyError(f"Variable '{variable_name}' not found in the .mat file.")
-    return mat_data[variable_name]
+
+def compare_angles(angles, angles_matlab):
+    angles_matlab = torch.tensor(angles_matlab).squeeze()
+    if angles.shape!=angles_matlab.shape:
+        raise Exception(f"Shape tensors array from matlab and pytorch are not equal, "
+                      f"and are matlab {angles_matlab.shape},"
+                      f"and torch {angles.shape}")
+    if not torch.allclose(angles, angles_matlab, atol=1e-6):
+        raise Exception(f"Matlab angles are different from pytorch, example pytorch [:3] {angles[:3]} matlab {angles_matlab[:3]} ")
+
 
 def compare_basis(basis, basis_matlab):
     """
@@ -130,7 +128,7 @@ if __name__ == "__main__":
     # Initialize the output image and weight image
     imgout = torch.zeros_like(patch_tensor)  # Initialize the output image
     for iter in range(1):
-        basis, thetas = get_basis(patch_tensor, dataimg, mask_tensor, row_idx, col_idx, r, True)
+        basis, thetas = get_basis(dataimg, mask_tensor, row_idx, col_idx, r, True)
         #compare_basis(basis,basis_matlab)
         #print("Thetas Pytorch - thetas Matlab", thetas - torch.tensor(thetas_matlab).squeeze())
         # Fit basis to data

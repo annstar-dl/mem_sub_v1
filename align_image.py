@@ -38,7 +38,7 @@ def rotate_images_kornia(images, angle):
     center[...,0] = images.size(2) // 2
     center[...,1] = images.size(3) // 2
     # Rotate the batch
-    rotated_images = kornia.geometry.rotate(images, angle, center,mode="bilinear")
+    rotated_images = kornia.geometry.rotate(images, angle,center,mode="bilinear")
     rotated_images = rotated_images.to(torch.float64)
     return rotated_images
 

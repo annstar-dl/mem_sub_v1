@@ -53,7 +53,7 @@ def  membrane_subtract(img, mask,r, nb_iter):
     dataimg = img.clone()  # Clone the original image to avoid modifying it
 
     for _ in range(nb_iter):
-        basis = get_basis(img,dataimg, mask, row_idx, col_idx, r)
+        basis = get_basis(dataimg, mask, row_idx, col_idx, r)
         imgout = fit_basis_to_data(img,basis, row_idx, col_idx,r)
         dataimg = imgout
 
