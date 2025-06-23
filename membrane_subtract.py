@@ -46,11 +46,11 @@ def  membrane_subtract(img, mask,r, nb_iter):
         raise ValueError("Mask must be a 2D tensor, got {} dimensions".format(mask.dim()))
     img = img.to(torch.float64)
     img = img - torch.mean(img)
-    mask, row_idx, col_idx = get_sampling_grid(mask, 2, 4)  # Get the sampling grid from the mask
+    mask, row_idx, col_idx = get_sampling_grid(mask, 4, 4)  # Get the sampling grid from the mask
     row_idx, col_idx = select_points_within_boundary(img, r, row_idx,
                                                      col_idx)
-    r = 14 # Radius of neighboring around grid point
-    dataimg = img.clone()  # Clone the original image to avoid modifying it
+    r = 20 # Radius of neighboring around grid point
+    dataimg = img.detach().clone()  # Clone the original image to avoid modifying it
 
     for _ in range(nb_iter):
         basis = get_basis(dataimg, mask, row_idx, col_idx, r)

@@ -2,7 +2,7 @@ import torch
 from skimage.morphology import disk, dilation
 from skimage.filters import gaussian
 import kornia
-
+import torch.nn.functional as F
 
 def dilate_mask_skimage(mask, d):
     """
@@ -39,7 +39,40 @@ def gaussian_filter_skimage(mask, sigma):
     filtered_mask = torch.tensor(filtered_mask, dtype=mask.dtype, device=mask.device)  # Convert back to tensor
     return filtered_mask
 
-def dilate_mask(mask,kernel_size=(3,3), sigma=(0.5,0.5)):
+def create_disk_kernel(radius: int) -> torch.Tensor:
+    """Create a disk-shaped binary kernel as a tensor."""
+    diameter = 2 * radius + 1
+    y, x = torch.meshgrid(torch.arange(diameter), torch.arange(diameter), indexing='ij')
+    center = radius
+    dist = ((x - center)**2 + (y - center)**2).float().sqrt()
+    disk = (dist <= radius).float()
+    return disk.view(1, 1, diameter, diameter)
+
+
+
+def dilate_mask(mask: torch.Tensor,radius=3 ) -> torch.Tensor:
+    """
+    Simulates imdilate(mask, se) using 2D convolution.
+
+    Args:
+        mask: (B, 1, H, W) binary image tensor (0s and 1s)
+        se_kernel: (1, 1, kH, kW) binary structuring element (disk or square)
+
+    Returns:
+        dilated: (B, 1, H, W) binary dilated mask
+    """
+    se_kernel = create_disk_kernel(radius=radius)  # Create a disk-shaped kernel with radius 1
+    # Pad so output size matches input size
+    padding = se_kernel.shape[-1] // 2
+
+    # Perform binary dilation: convolve and threshold
+    if mask.dim() == 2:
+        mask = mask.unsqueeze(0).unsqueeze(0)  # Ensure mask is a 4D tensor (B, C, H, W)
+    out = F.conv2d(mask.to(torch.float32), se_kernel, padding=padding)
+    dilated = (out > 0).float()  # if any neighbor is 1, output is 1
+    return dilated.squeeze()
+
+def dilate_mask_kornia(mask,kernel_size=(3,3), sigma=(0.5,0.5)):
     """
     Dilate the mask using a disk-shaped structuring element.
 
@@ -54,7 +87,8 @@ def dilate_mask(mask,kernel_size=(3,3), sigma=(0.5,0.5)):
     dilated_mask = mask.clone()  # Clone the original mask to avoid modifying it
     dilated_mask = gaussian_filter(dilated_mask, kernel_size=kernel_size, sigma=sigma)
     dilated_mask = dilated_mask>0.5  # Threshold the mask to create a binary mask
-    dilated_mask = dilated_mask.float()*255.  # Convert to float and scale to [0, 255]
+    # Perform binary dilation: convolve and threshold
+    dilated_mask = dilated_mask.to(torch.float64)  # Ensure the mask is in float32 format
     return dilated_mask
 
 def gaussian_filter(mask, kernel_size, sigma):
@@ -117,10 +151,10 @@ def get_sampling_grid(mask, d, w):
         torch.Tensor: x coordinates Sampling grid of shape (N,), where N is the number of grid points.
         torch.Tensor: y coordinates Sampling grid of shape (N,), where N is the number of grid points.
     """
-    mask = dilate_mask(mask, (3,3), (0.3,0.3))  # Dialate the mask
+    mask = dilate_mask(mask, 1)  # Dialate the mask
 
     for _ in range(d):
-        mask = dilate_mask(mask, (3,3), (0.3,0.3))
+        mask = dilate_mask(mask, 1)
     # Create a grid of points based on the mask
     grid = torch.zeros_like(mask, dtype=torch.uint8)  # Initialize grid
     grid[::w, ::w] = 1  # Set grid points at intervals of w
@@ -131,8 +165,8 @@ def get_sampling_grid(mask, d, w):
     #x_indices, y_indices = select_points_within_boundary(mask.shape[0], d, x_indices, y_indices)  # Filter points within the boundary
     ### WHY DILATION IS NEEDED again?
     for _ in range(3):
-        mask = dilate_mask(mask, (3, 3), (0.3, 0.3))
+        mask = dilate_mask(mask, 1)
     #mask = gaussian_filter_skimage(mask,2.0)# Dilated the mask again to ensure grid points are within the mask
-    mask = gaussian_filter(mask, kernel_size=(9, 9), sigma=(2, 2))  # Apply Gaussian filter to smooth the mask
+    mask = gaussian_filter(mask, kernel_size=(11, 11), sigma=(3.5, 3.5))  # Apply Gaussian filter to smooth the mask
     mask = mask/ mask.max()  # Normalize the mask to [0, 1] range
     return mask , row_indices, col_indices# Return the grid and coordinates as float tensors

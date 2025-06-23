@@ -15,14 +15,19 @@ from fit_basis_to_data import fit_basis_to_data
 
 
 
-def compare_angles(angles, angles_matlab):
-    angles_matlab = torch.tensor(angles_matlab).squeeze()
+def compare_angles(angles, angles_matlab,  row_idx, col_idx, basis):
+    angles_matlab = torch.tensor(angles_matlab).squeeze().to(torch.float32)
     if angles.shape!=angles_matlab.shape:
         raise Exception(f"Shape tensors array from matlab and pytorch are not equal, "
                       f"and are matlab {angles_matlab.shape},"
                       f"and torch {angles.shape}")
     if not torch.allclose(angles, angles_matlab, atol=1e-6):
-        raise Exception(f"Matlab angles are different from pytorch, example pytorch [:3] {angles[:3]} matlab {angles_matlab[:3]} ")
+        angles_diff = torch.abs(angles - angles_matlab)
+        angles_diff_binary = angles_diff > 1e-6
+        nb_diff_angles = torch.sum(angles_diff_binary)
+        print("Amount of angles that are different: ", nb_diff_angles)
+        idx_max_diff = torch.argmax(angles_diff)
+        raise Exception(f"Matlab angles are different from pytorch, example pytorch {angles[idx_max_diff]} matlab {angles_matlab[idx_max_diff]} ")
 
 
 def compare_basis(basis, basis_matlab):
@@ -61,7 +66,7 @@ def compare_masks(mask, mask_matlab):
     # Convert mask from PyTorch tensor to NumPy array
     mask_matlab = torch.tensor(mask_matlab)
     diff_mask = mask_matlab - mask
-    visualize_3_images(mask, mask_matlab,diff_mask,"Mask from PyTorch", "Mask from MATLAB","Difference Mask")
+    visualize_3_images(mask, mask_matlab,diff_mask,"Mask from PyTorch", "Mask from MATLAB","Matlab - PyTorch")
 
 def compare_reconstr_image(imgout, imgout_matlab):
     """Compare """

@@ -7,7 +7,7 @@ def calculate_mse_loss(original, rotated):
     """Calculate the Mean Squared Error (MSE) loss between original and rotated images."""
     return torch.sum((original - rotated) ** 2, dim=(1, 2, 3))  # MSE across batch, height, and width
 
-def rotate_images_kornia(images, angle):
+def rotate_images_kornia(images, angles):
     """    Rotate a batch of images using Kornia.
     Args:
         images (torch.Tensor): Batch of images with shape (B, C, H, W).
@@ -24,22 +24,22 @@ def rotate_images_kornia(images, angle):
     """
     if images.dim() != 4:
         raise ValueError(f"Expected images to be a 4D tensor (B, C, H, W), got {images.dim()} dimensions")
-    images = images.to(torch.float32)
     b = images.size(0) # Get the batch size
     # Resize the angle to match the batch size
-    if isinstance(angle, (int, float)):
-        angle = torch.tensor([angle] * b,dtype=torch.float32)  # Repeat the angle for each image in the batch
-    elif isinstance(angle, list):
-        angle = torch.tensor(angle, dtype=torch.float32)  # Convert list to tensor
-        if len(angle) != b:
-            raise ValueError(f"Expected angle_degrees to be a single value or a list of length {b}, got {len(angle)}")
-    # define the rotation center
-    center = torch.ones(b, 2)
-    center[...,0] = images.size(2) // 2
-    center[...,1] = images.size(3) // 2
-    # Rotate the batch
-    rotated_images = kornia.geometry.rotate(images, angle,center,mode="bilinear")
-    rotated_images = rotated_images.to(torch.float64)
+    if isinstance(angles, (int, float)):
+        angles = torch.tensor([angles] * b, dtype=torch.double)  # Repeat the angle for each image in the batch
+    elif isinstance(angles, list):
+        angles = torch.tensor(angles, dtype=torch.double)  # Convert list to tensor
+        if len(angles) != b:
+            raise ValueError(f"Expected angle_degrees to be a single value or a list of length {b}, got {len(angles)}")
+    # conver angles to double precision
+    angles = angles.to(torch.double)  # Ensure angles are in double precision
+    # move angles to the same device as imgs_subset
+    if images.device != angles.device:
+        angles = angles.to(images.device)
+
+    center = torch.tensor([[images.shape[-2] // 2, images.shape[-1] // 2]], dtype=torch.double, device=images.device)
+    rotated_images = kornia.geometry.rotate(images, angles,center,mode="bilinear")
     return rotated_images
 
 
@@ -82,6 +82,7 @@ def align_multiple_patches_multires(imgs_subset,cntr, r, w, theta_b, theta_e, dt
         angles = torch.stack(angles,axis=0).transpose(0,1) # N angles x M images
     else:
         raise ValueError("theta_b and theta_e must be either both scalars or both lists")
+
     # check image dimensions
     if imgs_subset.dim() != 4:
         raise ValueError(f"Expected imgs to be a 4D tensor (N, C, H, W), got {imgs_subset.dim()} dimensions")

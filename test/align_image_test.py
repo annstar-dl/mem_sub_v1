@@ -2,24 +2,12 @@ import torch
 from  sampling_grid import get_sampling_grid, select_points_within_boundary
 from align_image import rotate_images_kornia, align_single_patch_multires
 import math
-import scipy
+from read_matlab import load_image_from_mat
 from basis_fn import get_radius_of_inner_circle, get_w_function, create_gaussian_disc
 from matplotlib import pyplot as plt
 from recon_patch import recon_patch, recon_mult_patches
 
-def load_image_from_mat(file_path, variable_name='image'):
-    """
-    Load an image from a .mat file.
 
-    Args:
-        file_path (str): Path to the .mat file.
-    Returns:
-        np.ndarray: The loaded image as a NumPy array.
-    """
-    mat_data = scipy.io.loadmat(file_path)
-    if variable_name not in mat_data:
-        raise KeyError(f"Variable '{variable_name}' not found in the .mat file.")
-    return mat_data[variable_name]
 
 def visualize_im(im, title="Image", add_figure=True):
     """
