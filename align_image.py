@@ -39,7 +39,7 @@ def rotate_images_kornia(images, angles):
         angles = angles.to(images.device)
 
     center = torch.tensor([[images.shape[-2] // 2, images.shape[-1] // 2]], dtype=torch.double, device=images.device)
-    rotated_images = kornia.geometry.rotate(images, angles,center,mode="bilinear")
+    rotated_images = kornia.geometry.rotate(images,angles,center,mode="bilinear")
     return rotated_images
 
 
@@ -73,12 +73,12 @@ def align_multiple_patches_multires(imgs_subset,cntr, r, w, theta_b, theta_e, dt
     :return:
     """
     if isinstance(theta_e, (int, float)) and isinstance(theta_e, (int, float)):
-        angles = torch.arange(theta_b, theta_e+dtheta, dtheta)
+        angles = torch.arange(theta_b, theta_e, dtheta)
         angles = angles.unsqueeze(-1).expand(-1,len(imgs_subset))  # N angles x M images
     elif isinstance(theta_b, (list, torch.Tensor)) and isinstance(theta_e, (list,torch.Tensor)):
         if len(theta_b) != len(theta_e):
             raise ValueError("theta_b and theta_e must have the same length if they are lists")
-        angles = [torch.arange(b, e+dtheta, dtheta) for b, e in zip(theta_b, theta_e)]
+        angles = [torch.arange(b, e, dtheta) for b, e in zip(theta_b, theta_e)]
         angles = torch.stack(angles,axis=0).transpose(0,1) # N angles x M images
     else:
         raise ValueError("theta_b and theta_e must be either both scalars or both lists")
@@ -130,7 +130,7 @@ def align_single_patch_multires(img, cntr, r, w, theta_b, theta_e, dtheta):
     :return:
     """
 
-    angles_list = np.arange(theta_b, theta_e+dtheta, dtheta).tolist()
+    angles_list = np.arange(theta_b, theta_e, dtheta).tolist()
     # check image dimensions
     if img.dim() < 3:
         img = img.unsqueeze(0)  # Ensure img is a 4D tensor (C, H, W)

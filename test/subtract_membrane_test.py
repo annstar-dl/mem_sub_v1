@@ -59,7 +59,6 @@ def compare_basis(img,basis, basis_matlab,row_idx, col_idx,r,angles, angles_matl
 def subtrack_membrane_test():
     # Extract a small patch and its mask
     r = 20
-    nb_iter = 1
     maindir = r"/home/astar/Projects/data_from_matlab_code"
     file_path = os.path.join(maindir,r'mk_1.mat')
     img, mask = load_image_from_mat(file_path, ["img","mask"])
@@ -84,13 +83,16 @@ def subtrack_membrane_test():
         #compare_basis(img,basis, basis_matlab,row_idx,col_idx,r,angles, angles_matlab)
         imgout_separate = fit_basis_to_data(img, basis, row_idx, col_idx, r)
         dataimg = imgout_separate
+    fname = os.path.join(maindir, "mk1_basis_iter3.mat")
+    imgout_matlab = load_image_from_mat(fname, "imgout")
     compare_reconstr_image(imgout_separate, imgout_matlab)
     #compare_angles(angles,angles_matlab,row_idx,col_idx,basis)
 
-    imgout_together, mask = membrane_subtract(img,mask_org,r, 1)
+    imgout_together, mask = membrane_subtract(img,mask_org,r, 3)
     visualize_3_images(imgout_separate,imgout_together,set_mask_boundary_to_zero(imgout_separate,40)-
                        set_mask_boundary_to_zero(imgout_together,40), "Imgout separate", "Imgout together", "Separate - Together")
     visualize_3_images(img,imgout_together,img - imgout_together*mask, "Org","Membrane", "Subtr")
+    plt.imsave("membranes_subtracted.png", img - imgout_together*mask, cmap='gray')
     #file_path = r"/home/astar/Projects/data_from_matlab_code/mk_1_2.mat"
     #imgout_matlab = load_image_from_mat(file_path,"mem")
     #imgout_matlab = imgout_matlab[top:top+rows,left:left+cols]

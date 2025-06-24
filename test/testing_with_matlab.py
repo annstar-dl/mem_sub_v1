@@ -15,7 +15,7 @@ from fit_basis_to_data import fit_basis_to_data
 
 
 
-def compare_angles(angles, angles_matlab,  row_idx, col_idx, basis):
+def compare_angles(angles, angles_matlab):
     angles_matlab = torch.tensor(angles_matlab).squeeze().to(torch.float32)
     if angles.shape!=angles_matlab.shape:
         raise Exception(f"Shape tensors array from matlab and pytorch are not equal, "
@@ -27,7 +27,7 @@ def compare_angles(angles, angles_matlab,  row_idx, col_idx, basis):
         nb_diff_angles = torch.sum(angles_diff_binary)
         print("Amount of angles that are different: ", nb_diff_angles)
         idx_max_diff = torch.argmax(angles_diff)
-        raise Exception(f"Matlab angles are different from pytorch, example pytorch {angles[idx_max_diff]} matlab {angles_matlab[idx_max_diff]} ")
+        raise Exception(f"Matlab angles are different from pytorch, example idx {idx_max_diff} pytorch {angles[idx_max_diff]} matlab {angles_matlab[idx_max_diff]} ")
 
 
 def compare_basis(basis, basis_matlab):
