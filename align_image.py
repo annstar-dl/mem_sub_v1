@@ -86,7 +86,7 @@ def align_multiple_patches_multires(imgs_subset,cntr, r, w, theta_b, theta_e, dt
     # check image dimensions
     if imgs_subset.dim() != 4:
         raise ValueError(f"Expected imgs to be a 4D tensor (N, C, H, W), got {imgs_subset.dim()} dimensions")
-    losses = torch.zeros((len(angles),len(imgs_subset)), dtype=torch.float32, device=imgs_subset.device)  # Initialize losses tensor
+    losses = torch.zeros((len(angles),len(imgs_subset)), dtype=torch.float64, device=imgs_subset.device)  # Initialize losses tensor
     for i in range(len(angles)):
         tmp_img = rotate_images_kornia(imgs_subset, angles[i])  # Rotate the images by the angles
         tmp_img = tmp_img[..., cntr - r:cntr + r + 1,cntr - r:cntr + r + 1]  # Crop the images to the neighbourhood size

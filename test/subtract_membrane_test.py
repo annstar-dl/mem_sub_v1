@@ -1,3 +1,5 @@
+import os
+os.environ["CUDA_VISIBLE_DEVICES"] = ""
 from get_basis_test import visualize_3_images
 import torch
 from matplotlib import pyplot as plt

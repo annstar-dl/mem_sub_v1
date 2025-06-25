@@ -22,11 +22,9 @@ def measure_time(run_gd=False):
     dataimg = img.detach().clone()
     basis = get_basis(dataimg, mask, row_idx, col_idx, r)
     if run_gd:
-        imgout = fit_basis_to_data(img, basis, row_idx, col_idx, r, 0.025, 1)
+        imgout = fit_basis_to_data(img, basis, row_idx, col_idx, r, 0.025, 30)
 
-if __name__ == "__main__":
-    print("Is cuda available:", torch.cuda.is_available())
-    start_time = time.time()
+def run_with_profiler():
     activities = [ProfilerActivity.CPU]
     sort_by_keyword = "cpu" + "_time_total"
     if torch.cuda.is_available():
@@ -34,9 +32,13 @@ if __name__ == "__main__":
         sort_by_keyword = "cuda" + "_time_total"
     with profile(activities=activities, record_shapes=False) as prof:
         with record_function("bases rotations"):
-            measure_time()
+            measure_time(True)
+    print(prof.key_averages(group_by_input_shape=True).table(sort_by=sort_by_keyword, row_limit=10))
+    prof.export_chrome_trace("trace.json")
+if __name__ == "__main__":
+    print("Is cuda available:", torch.cuda.is_available())
+    start_time = time.time()
+    measure_time(True)
     end_time = time.time()
     elapsed_time = end_time - start_time
     print(f"Elapsed time: {elapsed_time:.2f} seconds")
-    print(prof.key_averages(group_by_input_shape=True).table(sort_by=sort_by_keyword, row_limit=10))
-    prof.export_chrome_trace("trace.json")

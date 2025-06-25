@@ -1,9 +1,9 @@
 import time
 import torch
 from basis_fn import create_gaussian_disc, get_radius_of_inner_circle, get_w_function
-from utils import get_patches_from_image, add_patches_to_image
+from utils import get_patches_from_image, add_patches_to_image, get_patches_from_image_unfold, add_patches_to_image_fold
 
-def fit_basis_to_data(img, basis, row_idx, col_idx, r, rho, max_iter):
+def fit_basis_to_data(img, basis, row_idx, col_idx, r, rho, max_iter,use_unfold=True):
     """
     Fit bases to data using gradient descent method. Here we optimize alpha values
     for each basis function. Then we reconstruct the image using the optimized alpha
@@ -21,8 +21,9 @@ def fit_basis_to_data(img, basis, row_idx, col_idx, r, rho, max_iter):
     #Check if the input image is 2D
     if img.dim() != 2:
         raise ValueError("Input image must be a 2D tensor, got {} dimensions".format(img.dim()))
+    img = img.to(basis.device)  # Move the image to the same device as the basis
     nGrid = row_idx.shape[0]  # Number of grid points
-    gradient = torch.zeros((nGrid,))
+    gradient = torch.zeros((nGrid,),device =basis.device)  # Initialize the gradient tensor
     dataimg = img.detach().clone()  # Clone the original image to avoid modifying it
     imgout = torch.zeros_like(img)  # Initialize the output image
     r_in = get_radius_of_inner_circle(r)  # Radius of the inner circle
@@ -36,10 +37,19 @@ def fit_basis_to_data(img, basis, row_idx, col_idx, r, rho, max_iter):
 
     while stop_flag == 0 and iter < max_iter:
         iter = iter + 1
-        tmp_dataimg = get_patches_from_image(dataimg, r_in, row_idx, col_idx).squeeze()
+        #tmp_dataimg = get_patches_from_image(dataimg, r_in, row_idx, col_idx).squeeze().to(basis.device)
+        if use_unfold:
+            tmp_dataimg = get_patches_from_image_unfold(dataimg, r_in, 4, row_idx, col_idx).squeeze().to(basis.device)
+        else:
+            tmp_dataimg = get_patches_from_image(dataimg, r_in, row_idx, col_idx).squeeze().to(basis.device)
+
         prod = tmp_dataimg * basis
         gradient = torch.sum(prod, [1,2])[...,None,None]
-        imgout = add_patches_to_image(rho*gradient*basis, imgout, r_in, row_idx, col_idx)
+        if use_unfold:
+            imgout = add_patches_to_image_fold(rho * gradient * basis, imgout, r_in, 4, row_idx, col_idx)
+        else:
+            imgout = add_patches_to_image(rho*gradient*basis, imgout, r_in, row_idx, col_idx)
+
 
         diff_norm.append(
             torch.linalg.norm(img - imgout)) # Compute the difference norm

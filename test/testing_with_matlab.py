@@ -1,4 +1,6 @@
 import scipy.io
+import os
+os.environ["CUDA_VISIBLE_DEVICES"] = ""
 import numpy as np
 import torch
 import matplotlib.pyplot as plt
@@ -16,7 +18,7 @@ from fit_basis_to_data import fit_basis_to_data
 
 
 def compare_angles(angles, angles_matlab):
-    angles_matlab = torch.tensor(angles_matlab).squeeze().to(torch.float32)
+    angles_matlab = torch.tensor(angles_matlab, device=angles.device, dtype=angles.dtype).squeeze()
     if angles.shape!=angles_matlab.shape:
         raise Exception(f"Shape tensors array from matlab and pytorch are not equal, "
                       f"and are matlab {angles_matlab.shape},"
@@ -42,7 +44,7 @@ def compare_basis(basis, basis_matlab):
         bool: True if the bases are similar, False otherwise.
     """
     # Convert basis from PyTorch tensor to NumPy array
-    basis_matlab = torch.tensor(basis_matlab)
+    basis_matlab = torch.tensor(basis_matlab, device=basis.device, dtype=basis.dtype)
     # Check if the values are similar
     diff_norm = torch.linalg.norm(basis - basis_matlab, dim=(1, 2))
     idx_max = torch.argmax(diff_norm)
@@ -64,13 +66,13 @@ def compare_masks(mask, mask_matlab):
         bool: True if the masks are similar, False otherwise.
     """
     # Convert mask from PyTorch tensor to NumPy array
-    mask_matlab = torch.tensor(mask_matlab)
+    mask_matlab = torch.tensor(mask_matlab, device=mask.device, dtype=mask.dtype)
     diff_mask = mask_matlab - mask
     visualize_3_images(mask, mask_matlab,diff_mask,"Mask from PyTorch", "Mask from MATLAB","Matlab - PyTorch")
 
 def compare_reconstr_image(imgout, imgout_matlab):
     """Compare """
-    imgout_matlab = torch.tensor(imgout_matlab)
+    imgout_matlab = torch.tensor(imgout_matlab, device=imgout.device, dtype=imgout.dtype)
     print("Norm of difference of reconstructed images: ", torch.linalg.norm(imgout - imgout_matlab))
     visualize_3_images(imgout, imgout_matlab, imgout - imgout_matlab, "Imgout Pytorch", "Imgout Matlab", "Pytorch - Matlab")
 
@@ -85,7 +87,7 @@ def compare_dilation(dilate_mask, dilate_mask_matlab):
         bool: True if the dilated masks are similar, False otherwise.
     """
     # Convert dilated mask from PyTorch tensor to NumPy array
-    dilate_mask_matlab = torch.tensor(dilate_mask_matlab)
+    dilate_mask_matlab = torch.tensor(dilate_mask_matlab, device=dilate_mask.device, dtype=dilate_mask.dtype)
     diff_dilate_mask = dilate_mask_matlab - dilate_mask
     visualize_3_images(dilate_mask, dilate_mask_matlab, diff_dilate_mask,
                        title1="Dilated Mask from PyTorch",
