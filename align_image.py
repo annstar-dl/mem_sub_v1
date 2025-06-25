@@ -3,6 +3,7 @@ import kornia
 import numpy as np
 import matplotlib.pyplot as plt
 
+
 def calculate_mse_loss(original, rotated):
     """Calculate the Mean Squared Error (MSE) loss between original and rotated images."""
     return torch.sum((original - rotated) ** 2, dim=(1, 2, 3))  # MSE across batch, height, and width
@@ -73,20 +74,19 @@ def align_multiple_patches_multires(imgs_subset,cntr, r, w, theta_b, theta_e, dt
     :return:
     """
     if isinstance(theta_e, (int, float)) and isinstance(theta_e, (int, float)):
-        angles = torch.arange(theta_b, theta_e, dtheta)
+        angles = torch.arange(theta_b, theta_e+dtheta, dtheta)
         angles = angles.unsqueeze(-1).expand(-1,len(imgs_subset))  # N angles x M images
     elif isinstance(theta_b, (list, torch.Tensor)) and isinstance(theta_e, (list,torch.Tensor)):
         if len(theta_b) != len(theta_e):
             raise ValueError("theta_b and theta_e must have the same length if they are lists")
-        angles = [torch.arange(b, e, dtheta) for b, e in zip(theta_b, theta_e)]
+        angles = [torch.arange(b, e+dtheta, dtheta) for b, e in zip(theta_b, theta_e)]
         angles = torch.stack(angles,axis=0).transpose(0,1) # N angles x M images
     else:
         raise ValueError("theta_b and theta_e must be either both scalars or both lists")
-
     # check image dimensions
     if imgs_subset.dim() != 4:
         raise ValueError(f"Expected imgs to be a 4D tensor (N, C, H, W), got {imgs_subset.dim()} dimensions")
-    losses = torch.zeros((len(angles),len(imgs_subset)), dtype=torch.float32)  # Initialize losses tensor
+    losses = torch.zeros((len(angles),len(imgs_subset)), dtype=torch.float32, device=imgs_subset.device)  # Initialize losses tensor
     for i in range(len(angles)):
         tmp_img = rotate_images_kornia(imgs_subset, angles[i])  # Rotate the images by the angles
         tmp_img = tmp_img[..., cntr - r:cntr + r + 1,cntr - r:cntr + r + 1]  # Crop the images to the neighbourhood size
@@ -96,7 +96,7 @@ def align_multiple_patches_multires(imgs_subset,cntr, r, w, theta_b, theta_e, dt
         prof = torch.sum(prof, dim=3)  # Calculate the profile for each rotated image
         prof = prof.unsqueeze(3).expand(-1, -1, -1, 2 * r + 1)  # Expand the profile into an image for each angle
         losses[i] = calculate_mse_loss(tmp_img, prof) # Calculate the MSE loss between the rotated images and the original images
-    loss_agr_min_idx = torch.argmin(losses, dim=0)
+    loss_agr_min_idx = torch.argmin(losses, dim=0).to("cpu")  # Get the index of the minimum loss for each image
     best_angles = angles[loss_agr_min_idx,torch.arange(angles.size(1))]  # Get the best angles for each image
     return best_angles
 
@@ -130,7 +130,7 @@ def align_single_patch_multires(img, cntr, r, w, theta_b, theta_e, dtheta):
     :return:
     """
 
-    angles_list = np.arange(theta_b, theta_e, dtheta).tolist()
+    angles_list = np.arange(theta_b, theta_e+dtheta, dtheta).tolist()
     # check image dimensions
     if img.dim() < 3:
         img = img.unsqueeze(0)  # Ensure img is a 4D tensor (C, H, W)

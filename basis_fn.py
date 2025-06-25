@@ -29,7 +29,7 @@ def create_gaussian_disc(im_size, radius):
     #compute radius of each pixel from the center
     r = torch.sqrt(((x - centerX) ** 2 + (y - centerY) ** 2))
     # Create a Gaussian disc using the radius
-    binaryImage = r <= radius# Create a binary disc
+    binaryImage = r <= radius # Create a binary disc
     sigma = radius / 2.5  # Standard deviation for Gaussian kernel
     # Create Gaussian weights based on the distance from the center
     gaussWt = torch.exp(-r**2 / (2 * sigma ** 2))
@@ -140,9 +140,10 @@ def get_basis(dataimg,mask,row_idx,col_idx,r, return_theta=False):
     binaryImage, gaussWt = create_gaussian_disc(2*[(2*r_in+1)], r_in)  # Create a binary disc and Gaussian weights
     imgs_subset = get_patches_from_image(dataimg, r, row_idx, col_idx)  # Get patches from the image using the specified radius
     # Move imgs_subset to GPU if available
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    if device == "cuda":
-        imgs_subset = imgs_subset.to(device)
+    if torch.cuda.is_available():
+        imgs_subset = imgs_subset.to("cuda")
+        w = w.to("cuda")  # Move weights to GPU
+        gaussWt = gaussWt.to("cuda")
     theta = align_multiple_patches(imgs_subset,cntr, r_in,w,-90.,90.0,1.0)  # Align the image using the center and radius
     basis = recon_mult_patches(imgs_subset, cntr, r_in, w, gaussWt, theta)  # Reconstruct the patch using the basis functions
     if return_theta:
