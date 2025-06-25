@@ -1,4 +1,6 @@
 import torch
+import yaml
+import os
 
 
 def get_patches_from_image(img, r, row_idxs, col_idxs):
@@ -71,3 +73,38 @@ def get_patches_from_image_unfold(img, r, row_idxs, col_idxs):
     selected_patches = patches_all[patch_idxs]  # (N, k*k)
     patches = selected_patches.view(-1, 1, k, k)  # (N,1,k,k)
     return patches
+
+def read_parameter_from_yaml_file(parameter):
+    """
+    Read a YAML configuration file and return its contents.
+
+    Args:
+        :param parameter:
+
+    Returns:
+        value: Contents of the YAML file parameter 
+    """
+    filename = 'parameters.yml'  # Replace with your YAML file path
+    maindir = os.path.dirname(os.path.abspath(__file__))  # Get the directory of the current file
+    filepath = os.path.join(maindir, filename)  # Construct the full path to the YAML file
+    with open(filepath, 'r') as file:
+        config = yaml.safe_load(file)
+    return config[parameter]
+
+def read_dict_from_yaml_file():
+    """
+    Read a YAML configuration file and return its contents as a dictionary.
+
+    Returns:
+        dict: Contents of the YAML file.
+    """
+    filename = 'parameters.yml'  # Replace with your YAML file path
+    maindir = os.path.dirname(os.path.abspath(__file__))  # Get the directory of the current file
+    filepath = os.path.join(maindir, filename)  # Construct the full path to the YAML file
+    with open(filepath, 'r') as file:
+        config = yaml.safe_load(file)
+    return config
+
+
+if __name__ == "__main__":
+    pass

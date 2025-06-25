@@ -81,7 +81,7 @@ def subtrack_membrane_test():
     for _ in range(3):
         basis,angles = get_basis(dataimg, mask, row_idx, col_idx, r,return_theta=True)
         #compare_basis(img,basis, basis_matlab,row_idx,col_idx,r,angles, angles_matlab)
-        imgout_separate = fit_basis_to_data(img, basis, row_idx, col_idx, r)
+        imgout_separate = fit_basis_to_data(img, basis, row_idx, col_idx, r, 0.025, 30)
         dataimg = imgout_separate
     fname = os.path.join(maindir, "mk1_basis_iter3.mat")
     imgout_matlab = load_image_from_mat(fname, "imgout")
