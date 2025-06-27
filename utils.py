@@ -20,6 +20,45 @@ def get_patches_from_image(img, r, row_idxs, col_idxs):
         patches[i] = img[row_idxs[i] - r:row_idxs[i] + r + 1, col_idxs[i] - r:col_idxs[i] + r + 1].unsqueeze(0)
     return patches
 
+def get_patches_from_image_adv_indexing(img, r, row_idxs, col_idxs):
+    """
+    Get patches from the image using the specified radius.
+
+    Args:
+        img (torch.Tensor): Input image of shape (H,W), where H, W are the height and width of the image.
+        r (int): Radius of a neighbourhood.
+
+    Returns:
+        torch.Tensor: Patches of shape (N, 2*r+1, 2*r+1), where N is the number of patches.
+    """
+    row_grid, col_grid = torch.meshgrid([torch.arange(-r, r + 1), torch.arange(-r, r + 1)])
+    row_grid = row_grid.unsqueeze(0).expand(len(row_idxs), -1, -1)
+    col_grid = col_grid.unsqueeze(0).expand(len(row_idxs), -1, -1)
+    row_grid = row_grid + row_idxs.unsqueeze(1).unsqueeze(2)
+    col_grid = col_grid + col_idxs.unsqueeze(1).unsqueeze(2)
+    patches = img[row_grid, col_grid]  # Extract pixels from the image
+    return patches
+
+def add_patches_to_image_adv_indexing(patches, img, r, row_idxs, col_idxs):
+    """    Add patches to the image using advanced indexing.
+    Args:
+        patches (torch.Tensor): Patches of shape (N, 2*r+1, 2*r+1) that need to be pasted into image.
+        img (torch.Tensor): Input image of shape (H,W), where H, W are the height and width of the image.
+        r (int): Radius of a neighbourhood.
+        row_idxs (torch.Tensor): Row indices where patches will be added.
+        col_idxs (torch.Tensor): Column indices where patches will be added.
+    Returns:
+        torch.Tensor: Image with patches added, of shape (H,W).
+    """
+     # Create a copy of the image to avoid modifying the original
+    row_grid, col_grid = torch.meshgrid([torch.arange(-r, r + 1), torch.arange(-r, r + 1)])
+    row_grid = row_grid.unsqueeze(0).expand(len(row_idxs), -1, -1)
+    col_grid = col_grid.unsqueeze(0).expand(len(row_idxs), -1, -1)
+    row_grid = row_grid + row_idxs.unsqueeze(1).unsqueeze(2)
+    col_grid = col_grid + col_idxs.unsqueeze(1).unsqueeze(2)
+    img[row_grid,col_grid] += patches
+    return img
+
 def add_patches_to_image(patches, img, r, row_idxs, col_idxs):
     """
     Get patches from the image using the specified radius.
@@ -37,6 +76,25 @@ def add_patches_to_image(patches, img, r, row_idxs, col_idxs):
     for i in range(nGrid):
         img[row_idxs[i] - r:row_idxs[i] + r + 1, col_idxs[i] - r:col_idxs[i] + r + 1] += patches[i]
     return img
+
+def add_patches_to_image(patches, img, r, row_idxs, col_idxs):
+    """
+    Get patches from the image using the specified radius.
+
+    Args:
+        patches (torch.Tensor): patches of shape (N, 2*r+1, 2*r+1) that need to be pasted into image
+        img (torch.Tensor): Input image of shape (H,W), where H, W are the height and width of the image.
+        r (int): Radius of a neighbourhood.
+
+    Returns:
+        torch.Tensor: Patches of shape (H,W), where N is the number of patches.
+    """
+    nGrid = len(row_idxs)  # Number of grid points
+
+    for i in range(nGrid):
+        img[row_idxs[i] - r:row_idxs[i] + r + 1, col_idxs[i] - r:col_idxs[i] + r + 1] += patches[i]
+    return img
+
 
 def add_patches_to_image_fold(patches, img, r, s, row_idxs, col_idxs):
     """

@@ -3,7 +3,7 @@ from PIL import Image
 import os
 from sampling_grid import get_sampling_grid, select_points_within_boundary
 from basis_fn import get_basis
-from fit_basis_to_data import fit_basis_to_data
+from fit_basis_to_data import fit_basis_to_data, fit_basis_to_data_matrix
 from utils import read_dict_from_yaml_file
 
 
