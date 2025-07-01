@@ -4,6 +4,57 @@ from skimage.filters import gaussian
 import kornia
 import torch.nn.functional as F
 
+def creat_idx_batches_for_parl_sum(row_idx, col_idx, r, step):
+
+    init_rows = []
+    init_cols = []
+    nb_batches_1d = (2*r+1)//step+(1 if (2*r+1)%step!=0 else 0) # Number of batches in one dimension
+    for i in range(nb_batches_1d):
+        for j in range(nb_batches_1d):
+            init_rows.append(min(row_idx)+ i * step)
+            init_cols.append(min(col_idx) + j * step)
+
+    batched_row_idxs = []
+    batched_col_idxs = []
+    bases_idxs = []
+    for init_row,init_col in zip(init_rows, init_cols):
+        batch_row_idxs = []
+        batch_col_idxs = []
+        basis_idxs = []
+        for i in range(len(row_idx)):
+            rr = row_idx[i]
+            c = col_idx[i]
+            dev = step*((2*r+1)//step + (1 if (2*r+1)%step!=0 else 0))  # Calculate the deviation for the grid
+            if (rr -init_row) % dev== 0 and (c-init_col) % dev== 0:
+                batch_row_idxs.append(rr)
+                batch_col_idxs.append(c)
+                basis_idxs.append(i)
+            elif rr== init_row and c == init_col:  # If the point is exactly at the initial point
+                batch_row_idxs.append(rr)
+                batch_col_idxs.append(c)
+                basis_idxs.append(i)
+        batched_row_idxs.append(torch.tensor(batch_row_idxs, dtype=torch.int64))
+        batched_col_idxs.append(torch.tensor(batch_col_idxs, dtype=torch.int64))
+        bases_idxs.append(torch.tensor(basis_idxs, dtype=torch.int64))
+    return batched_row_idxs, batched_col_idxs, bases_idxs
+
+def sum_patches_back_batched(img, patches, row_idxs, col_idxs,bases_idxs, r):
+
+    img_new = torch.zeros_like(img)  # Create a copy of the image to avoid modifying the original
+    normalizer = torch.zeros_like(img)  # Create a normalizer to avoid double counting
+    row_grid, col_grid = torch.meshgrid([torch.arange(-r, r + 1), torch.arange(-r, r + 1)])
+
+    for b_idx in range(len(row_idxs)):
+        row_grid_expand = row_grid.unsqueeze(0).expand(len(row_idxs[b_idx]), -1, -1)
+        col_grid_expand = col_grid.unsqueeze(0).expand(len(row_idxs[b_idx]), -1, -1)
+        row_grid_batched = row_grid_expand + row_idxs[b_idx].unsqueeze(1).unsqueeze(2)
+        col_grid_batched = col_grid_expand + col_idxs[b_idx].unsqueeze(1).unsqueeze(2)
+
+        img_new[row_grid_batched, col_grid_batched] += patches[bases_idxs[b_idx]]
+        normalizer[row_grid_batched, col_grid_batched] += 1  # Increment the normalizer at the patch location
+    img_new[normalizer != 0]  /= normalizer[normalizer != 0] # Normalize the summed image to avoid double counting
+    return img_new, normalizer
+
 def dilate_mask_skimage(mask, d):
     """
     Dilate the mask using a disk-shaped structuring element.

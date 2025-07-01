@@ -1,17 +1,48 @@
 from align_image import rotate_images_kornia
-from get_basis_test import visualize_3_images
 import torch
 from matplotlib import pyplot as plt
-import time
-from sampling_grid import get_sampling_grid
-from membrane_subtract import membrane_subtract
-from basis_fn import get_basis, get_basis_sequential, get_w_function, get_radius_of_inner_circle
-from testing_with_matlab import compare_reconstr_image, compare_masks
-from testing_with_matlab import compare_angles
+from basis_fn import get_basis, get_w_function, get_radius_of_inner_circle
 from fit_basis_to_data import fit_basis_to_data
 from read_matlab import load_image_from_mat
+from visualizations import visualize_3_images
+from testing_with_matlab_final import convert_coords_from_matlab_to_torch
 import os
-from subtract_membrane_test import set_mask_boundary_to_zero, convert_coords_from_matlab_to_torch, compare_basis, compare_angles
+
+def set_mask_boundary_to_zero(mask,border=35):
+    mask[:border]=0
+    mask[-border:]=0
+    mask[:,:border]=0
+    mask[:,-border:]=0
+    return mask
+
+def compare_masks(mask, mask_matlab):
+    """
+    Compare the mask extracted from the patch with the mask from MATLAB.
+    Args:
+        mask (torch.Tensor): Mask extracted from the patch.
+        mask_matlab (np.ndarray): Mask from MATLAB.
+
+    Returns:
+        bool: True if the masks are similar, False otherwise.
+    """
+    # Convert mask from PyTorch tensor to NumPy array
+    mask_matlab = torch.tensor(mask_matlab, device=mask.device, dtype=mask.dtype)
+    diff_mask = mask_matlab - mask
+    visualize_3_images(mask, mask_matlab,diff_mask,"Mask from PyTorch", "Mask from MATLAB","Matlab - PyTorch")
+
+def compare_angles(angles, angles_matlab):
+    angles_matlab = torch.tensor(angles_matlab, device=angles.device, dtype=angles.dtype).squeeze()
+    if angles.shape!=angles_matlab.shape:
+        raise Exception(f"Shape tensors array from matlab and pytorch are not equal, "
+                      f"and are matlab {angles_matlab.shape},"
+                      f"and torch {angles.shape}")
+    if not torch.allclose(angles, angles_matlab, atol=1e-6):
+        angles_diff = torch.abs(angles - angles_matlab)
+        angles_diff_binary = angles_diff > 1e-6
+        nb_diff_angles = torch.sum(angles_diff_binary)
+        print("Amount of angles that are different: ", nb_diff_angles)
+        idx_max_diff = torch.argmax(angles_diff)
+        raise Exception(f"Matlab angles are different from pytorch, example idx {idx_max_diff} pytorch {angles[idx_max_diff]} matlab {angles_matlab[idx_max_diff]} ")
 
 def investigate_wrong_angle():
     r = 20

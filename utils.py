@@ -39,24 +39,83 @@ def get_patches_from_image_adv_indexing(img, r, row_idxs, col_idxs):
     patches = img[row_grid, col_grid]  # Extract pixels from the image
     return patches
 
-def add_patches_to_image_adv_indexing(patches, img, r, row_idxs, col_idxs):
-    """    Add patches to the image using advanced indexing.
-    Args:
-        patches (torch.Tensor): Patches of shape (N, 2*r+1, 2*r+1) that need to be pasted into image.
-        img (torch.Tensor): Input image of shape (H,W), where H, W are the height and width of the image.
-        r (int): Radius of a neighbourhood.
-        row_idxs (torch.Tensor): Row indices where patches will be added.
-        col_idxs (torch.Tensor): Column indices where patches will be added.
-    Returns:
-        torch.Tensor: Image with patches added, of shape (H,W).
+def creat_idx_batches_for_parl_sum(row_idx, col_idx, r, step):
     """
-     # Create a copy of the image to avoid modifying the original
+    Stack the indices of the nonoverlapping patches into batches for parallel summation.
+    Args:
+        row_idx
+        (torch.Tensor): Row indices of the patches.
+        col_idx (torch.Tensor): Column indices of the patches.
+        r (int): Radius of a neighbourhood.
+        step (int): Step size for batching.
+    Returns:
+        tuple: A tuple containing three lists:
+            - batched_row_idxs: List of tensors with row indices for each batch.
+            - batched_col_idxs: List of tensors with column indices for each batch.
+            - bases_idxs: List of tensors with indices of patches corresponding to each batch.
+        """
+
+    init_rows = []
+    init_cols = []
+    nb_batches_1d = (2*r+1)//step+(1 if (2*r+1)%step!=0 else 0) # Number of batches in one dimension
+    nb_batches_1d = (2 * r + 1) // step + (1 if (2 * r + 1) % step != 0 else 0)  # Number of batches in one dimension
+    batch_id_init_row_idx = torch.arange(nb_batches_1d) * step + min(row_idx)  # Initial indices for the batches
+    batch_id_init_col_idx = torch.arange(nb_batches_1d) * step + min(col_idx)  # Initial indices for the batches
+    init_rows, init_cols = torch.meshgrid([batch_id_init_row_idx, batch_id_init_col_idx],
+                                          indexing='ij')  # Create a grid of initial points
+    init_rows = init_rows.flatten()  # Flatten the grid to get initial row indices
+    init_cols = init_cols.flatten()  # Flatten the grid to get initial column indices
+
+    batched_row_idxs = []
+    batched_col_idxs = []
+    bases_idxs = []
+    for init_row, init_col in zip(init_rows, init_cols):
+        # Vectorized computation for batch assignment
+        rr = row_idx
+        cc = col_idx
+        dev = step * ((2 * r + 1) // step + (1 if (2 * r + 1) % step != 0 else 0))
+        mask = ((rr - init_row) % dev == 0) & ((cc - init_col) % dev == 0)
+        mask |= (rr == init_row) & (cc == init_col)
+        batch_row_idxs = rr[mask]
+        batch_col_idxs = cc[mask]
+        basis_idxs = torch.arange(len(row_idx), dtype=torch.int64)[mask]
+        batched_row_idxs.append(batch_row_idxs)
+        batched_col_idxs.append(batch_col_idxs)
+        bases_idxs.append(basis_idxs)
+
+    nb_of_elements_in_batches = [len(batched_row_idxs[i]) for i in
+                                 range(len(batched_row_idxs))]  # Number of elements in each batch
+    nb_of_elements_in_batches = torch.sum(
+        torch.tensor(nb_of_elements_in_batches))  # Total number of elements in all batches
+    if nb_of_elements_in_batches != len(row_idx):
+        raise ValueError(
+            f"Number of elements in batches {nb_of_elements_in_batches} is not equal to number of grid points {len(row_idx)}")
+
+    return batched_row_idxs, batched_col_idxs, bases_idxs
+
+def add_patches_to_image_batched(patches, img, r, row_idxs, col_idxs, bases_idxs):
+    """Sum the patches back to the image at specified row and column indices using batched indexing.
+    Patches are summed at the specified row and column indices in the image, with one batch containing only non-overlapping patches.
+    Args:
+        img (torch.Tensor): Input image of shape (H,W), where H, W are the height and width of the image.
+        patches (torch.Tensor): Patches tensor of shape (N,2*r+1, 2*r+1).
+        row_idxs (list of torch.Tensor): List of row indices for each batch.
+        col_idxs (list of torch.Tensor): List of column indices for each batch.
+        bases_idxs (list of torch.Tensor): List of indices of patches corresponding to each batch.
+        r (int): Radius of a neighbourhood.
+    Returns:
+        torch.Tensor: Image with patches summed back, of shape (H,W).
+        """
+
     row_grid, col_grid = torch.meshgrid([torch.arange(-r, r + 1), torch.arange(-r, r + 1)])
-    row_grid = row_grid.unsqueeze(0).expand(len(row_idxs), -1, -1)
-    col_grid = col_grid.unsqueeze(0).expand(len(row_idxs), -1, -1)
-    row_grid = row_grid + row_idxs.unsqueeze(1).unsqueeze(2)
-    col_grid = col_grid + col_idxs.unsqueeze(1).unsqueeze(2)
-    img[row_grid,col_grid] += patches
+
+    for b_idx in range(len(row_idxs)):
+        row_grid_expand = row_grid.unsqueeze(0).expand(len(row_idxs[b_idx]), -1, -1)
+        col_grid_expand = col_grid.unsqueeze(0).expand(len(row_idxs[b_idx]), -1, -1)
+        row_grid_batched = row_grid_expand + row_idxs[b_idx].unsqueeze(1).unsqueeze(2)
+        col_grid_batched = col_grid_expand + col_idxs[b_idx].unsqueeze(1).unsqueeze(2)
+        img[row_grid_batched, col_grid_batched] += patches[bases_idxs[b_idx]]
+
     return img
 
 def add_patches_to_image(patches, img, r, row_idxs, col_idxs):
@@ -77,103 +136,6 @@ def add_patches_to_image(patches, img, r, row_idxs, col_idxs):
         img[row_idxs[i] - r:row_idxs[i] + r + 1, col_idxs[i] - r:col_idxs[i] + r + 1] += patches[i]
     return img
 
-def add_patches_to_image(patches, img, r, row_idxs, col_idxs):
-    """
-    Get patches from the image using the specified radius.
-
-    Args:
-        patches (torch.Tensor): patches of shape (N, 2*r+1, 2*r+1) that need to be pasted into image
-        img (torch.Tensor): Input image of shape (H,W), where H, W are the height and width of the image.
-        r (int): Radius of a neighbourhood.
-
-    Returns:
-        torch.Tensor: Patches of shape (H,W), where N is the number of patches.
-    """
-    nGrid = len(row_idxs)  # Number of grid points
-
-    for i in range(nGrid):
-        img[row_idxs[i] - r:row_idxs[i] + r + 1, col_idxs[i] - r:col_idxs[i] + r + 1] += patches[i]
-    return img
-
-
-def add_patches_to_image_fold(patches, img, r, s, row_idxs, col_idxs):
-    """
-    Add patches to the image using the specified radius and stride.
-    :param patches:
-    :param img:
-    :param r:
-    :param s:
-    :param row_idxs:
-    :param col_idxs:
-    :return:
-    """
-    if img.dim() == 2:
-        img = img.unsqueeze(0).unsqueeze(0)  # shape: (1,1,H,W)
-    elif img.dim() == 3:
-        img = img.unsqueeze(0)  # shape: (1,C,H,W)
-    else:
-        raise ValueError("Input image must be 2D or 3D tensor.")
-    k = 2 * r + 1
-    unfold = torch.nn.Unfold(kernel_size=k, stride=s, padding=r)  # Create an unfold layer
-    patches_all = unfold(img).squeeze(0).T  # (num_patches, k*k)
-    H, W = img.shape[-2:]
-    # Compute linear indices for the requested patch centers
-    idxs = row_idxs * W + col_idxs
-    # Get all possible patch centers
-    valid_row = torch.arange(0, H,s)
-    valid_col = torch.arange(0, W,s)
-    grid_row, grid_col = torch.meshgrid(valid_row, valid_col, indexing='ij')
-    all_centers = (grid_row.flatten() * W + grid_col.flatten())
-    # Map requested indices to their position in the unfolded output
-    idx_map = {c.item(): i for i, c in enumerate(all_centers)}
-    patch_idxs = [idx_map[idx.item()] for idx in idxs]
-    patches_all[:,:] = 0
-    patches_all[patch_idxs]=patches.view(-1, k*k)  # (N, k*k)
-    # Create a Fold instance with the same parameters and output_size
-    fold = torch.nn.Fold(output_size=img.shape[-2:], kernel_size=k, stride=s, padding=r)
-    img = fold(patches_all.T.unsqueeze(0))  # (1, C, H, W)
-    return img.squeeze()  # Remove the batch dimension, resulting in (H, W)
-
-def get_patches_from_image_unfold(img, r, s, row_idxs, col_idxs):
-    """
-    Get patches from the image using the specified radius.
-
-    Args:
-        img (torch.Tensor): Input image of shape (H,W), where H, W are the height and width of the image.
-        r (int): Radius of a neighbourhood.
-        s (int): Stride for the patch extraction.
-        row_idxs (torch.Tensor): X coordinates of grid points.
-        col_idxs (torch.Tensor): Y coordinates of grid points.
-
-
-    Returns:
-        torch.Tensor: Patches of shape (N, 2*r+1, 2*r+1), where N is the number of patches.
-    """
-    # Add batch and channel dimensions if missing
-    if img.dim() == 2:
-        img = img.unsqueeze(0).unsqueeze(0)  # shape: (1,1,H,W)
-    elif img.dim() == 3:
-        img = img.unsqueeze(0)  # shape: (1,C,H,W)
-    else:
-        raise ValueError("Input image must be 2D or 3D tensor.")
-
-    k = 2 * r + 1
-    unfold = torch.nn.Unfold(kernel_size=k, stride=s, padding=r)  # Create an unfold layer
-    patches_all = unfold(img).squeeze(0).T  # (num_patches, k*k)
-    H, W = img.shape[-2:]
-    # Compute linear indices for the requested patch centers
-    idxs = row_idxs * W + col_idxs
-    # Get all possible patch centers
-    valid_row = torch.arange(0, H,s)
-    valid_col = torch.arange(0, W,s)
-    grid_row, grid_col = torch.meshgrid(valid_row, valid_col, indexing='ij')
-    all_centers = (grid_row.flatten() * W + grid_col.flatten())
-    # Map requested indices to their position in the unfolded output
-    idx_map = {c.item(): i for i, c in enumerate(all_centers)}
-    patch_idxs = [idx_map[idx.item()] for idx in idxs]
-    selected_patches = patches_all[patch_idxs]  # (N, k*k)
-    patches = selected_patches.view(-1, 1, k, k)  # (N,1,k,k)
-    return patches
 
 def read_parameter_from_yaml_file(parameter):
     """

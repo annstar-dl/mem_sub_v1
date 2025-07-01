@@ -3,7 +3,7 @@ from PIL import Image
 import os
 from sampling_grid import get_sampling_grid, select_points_within_boundary
 from basis_fn import get_basis
-from fit_basis_to_data import fit_basis_to_data, fit_basis_to_data_matrix
+from fit_basis_to_data import fit_basis_to_data, fit_basis_to_data_batched
 from utils import read_dict_from_yaml_file
 
 
@@ -30,13 +30,11 @@ def extract_small_patch():
     patch_tensor = torch.tensor(patch, dtype=torch.float64).permute(2, 0, 1)
     return patch_tensor
 
-def  membrane_subtract(img, mask,r, nb_iter):
+def  membrane_subtract(img, mask):
     """    Subtract the membrane mask from the patch.
     Args:
         img (torch.Tensor): The micrograph(image with membranes) image tensor of shape (H, W).
         mask (torch.Tensor): The micrograph mask tensor of shape (H, W).
-        r (torch.Tensor): The radius of neighbourhood
-        nb_iter int: number of fittings
     Returns:
         torch.Tensor: The patch with the membrane subtracted.
     """
@@ -64,7 +62,7 @@ def  membrane_subtract(img, mask,r, nb_iter):
 
     for _ in range(nb_iter):
         basis = get_basis(dataimg, mask, row_idx, col_idx, r)
-        imgout = fit_basis_to_data(img,basis, row_idx, col_idx,r, rho, max_iter_gd)
+        imgout = fit_basis_to_data_batched(img,basis, row_idx, col_idx,r, rho, max_iter_gd,w)
         dataimg = imgout
 
-    return imgout,mask
+    return imgout

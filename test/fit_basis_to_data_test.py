@@ -9,7 +9,7 @@ from basis_fn import create_gaussian_disc, get_radius_of_inner_circle
 import torch
 from fit_basis_to_data import fit_basis_to_data
 import time
-from testing_with_matlab import load_image_from_mat
+from read_matlab import load_image_from_mat
 
 
 def fit_basis_to_data_test(patch_size, left, top):

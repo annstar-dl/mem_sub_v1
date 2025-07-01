@@ -1,7 +1,7 @@
 import math
 from align_image import align_single_patch, align_multiple_patches
 from recon_patch import recon_patch, recon_mult_patches
-from utils import get_patches_from_image
+from utils import get_patches_from_image_adv_indexing
 import torch
 
 
@@ -138,7 +138,8 @@ def get_basis(dataimg,mask,row_idx,col_idx,r, return_theta=False):
     w = get_w_function(r_in)  # Get the weights for the Gaussian kernel
 
     binaryImage, gaussWt = create_gaussian_disc(2*[(2*r_in+1)], r_in)  # Create a binary disc and Gaussian weights
-    imgs_subset = get_patches_from_image(dataimg, r, row_idx, col_idx)  # Get patches from the image using the specified radius
+    imgs_subset = get_patches_from_image_adv_indexing(dataimg, r, row_idx, col_idx)  # Get patches from the image using the specified radius
+    imgs_subset = imgs_subset.unsqueeze(1)  # Remove the channel dimension if it exists
     # Move imgs_subset to GPU if available
     if torch.cuda.is_available():
         imgs_subset = imgs_subset.to("cuda")
