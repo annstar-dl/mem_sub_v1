@@ -7,29 +7,6 @@ from fit_basis_to_data import fit_basis_to_data, fit_basis_to_data_batched
 from utils import read_dict_from_yaml_file
 
 
-def extract_small_patch():
-    """
-    Extract a small patch from a larger image.
-    This function is a placeholder and should be implemented based on specific requirements.
-    """
-    # Example implementation: Load an image and extract a small patch
-    data_dir = r"/home/astar/Projects/vesicles_data"
-    image_name = r"slot6_100_0002ms"
-    image_path = os.path.join(data_dir, "test", image_name + ".jpg")
-    image = Image.open(image_path).convert("RGB")
-
-    # Define the patch size and position
-    patch_size = (160, 160)  # Width, Height
-    left = 1000  # X coordinate of the top-left corner
-    top = 1000  # Y coordinate of the top-left corner
-
-    # Extract the patch
-    patch = image.crop((left, top, left + patch_size[0], top + patch_size[1]))
-    patch.show("Original Patch")
-    # Convert the patch to a tensor
-    patch_tensor = torch.tensor(patch, dtype=torch.float64).permute(2, 0, 1)
-    return patch_tensor
-
 def  membrane_subtract(img, mask):
     """    Subtract the membrane mask from the patch.
     Args:
@@ -65,4 +42,7 @@ def  membrane_subtract(img, mask):
         imgout = fit_basis_to_data_batched(img,basis, row_idx, col_idx,r, rho, max_iter_gd,w)
         dataimg = imgout
 
-    return imgout
+    # Subtract the membrane from the original image
+    imgout = imgout.to(mask.device)
+    subtracted_img = img - imgout * mask
+    return imgout, subtracted_img

@@ -17,7 +17,7 @@ def init_read_data(nb_images):
     # Define a transform to convert images to tensors
     transform = transforms.Compose([transforms.Resize((30,30)),transforms.ToTensor()])
     # Download the MNIST test dataset
-    mnist_test = datasets.MNIST(root='/home/astar/Projects/VesicleSegment/data', train=True, download=True, transform=transform)
+    mnist_test = datasets.MNIST(root='/home/astar/Projects/VesicleProjection/data', train=True, download=True, transform=transform)
     test_loader = DataLoader(mnist_test, batch_size=nb_images, shuffle=False)
     # Get one batch of 20 images and labels
     images, labels = next(iter(test_loader))

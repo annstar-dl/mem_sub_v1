@@ -3,7 +3,9 @@ from PIL import Image
 import numpy as np
 from matplotlib import pyplot as plt
 from skimage.restoration import denoise_bilateral
-from skimage import data, img_as_float
+from skimage import img_as_float
+from scipy.ndimage import gaussian_filter
+from scipy.ndimage import median_filter
 
 def read_image(image_path):
     """
@@ -18,7 +20,7 @@ def read_image(image_path):
     image = Image.open(image_path).convert("L")  # Convert to grayscale
     return np.array(image, dtype=np.float32)
 
-def calc_histogram(data, bins=256):
+def calc_histogram(data, bins=255):
     """
     Calculate the histogram of an image.
 
@@ -29,10 +31,10 @@ def calc_histogram(data, bins=256):
     Returns:
         np.ndarray: Histogram of the image.
     """
-    hist, _ = np.histogram(data, bins=bins, range=(0, 256))
-    return hist
+    hist, bins_edges = np.histogram(data, bins=bins)
+    return hist, bins_edges
 
-def visualize_histogram(hist, bins=256, title="Histogram"):
+def visualize_histogram(hist, bins, title="Histogram"):
     """
     Visualize the histogram using matplotlib.
 
@@ -42,12 +44,12 @@ def visualize_histogram(hist, bins=256, title="Histogram"):
     """
     hist = hist / hist.sum()  # Normalize the histogram
     plt.figure(figsize=(10, 5))
-    plt.bar(range(bins), hist, width=1, color='blue', alpha=0.7)
+    plt.bar(bins[:-1], hist, width=1, color='blue', alpha=0.7)
     plt.title(title)
     plt.xlabel('Pixel Intensity')
     plt.ylabel('Frequency')
 
-def visualize_overlap_histograms(hist1, hist2, bins=256, title1="Histogram 1", title2="Histogram 2"):
+def visualize_overlap_histograms(hist1, hist2, bins, title1="Histogram 1", title2="Histogram 2"):
     """
     Visualize two histograms on the same plot.
 
@@ -61,8 +63,9 @@ def visualize_overlap_histograms(hist1, hist2, bins=256, title1="Histogram 1", t
     hist1 = hist1 / hist1.sum()  # Normalize the first histogram
     hist2 = hist2 / hist2.sum()  # Normalize the second histogram
     plt.figure(figsize=(10, 5))
-    plt.bar(range(bins), hist1, width=1, color='blue', alpha=1.0, label=title1)
-    plt.bar(range(bins), hist2, width=1, color='red', alpha=0.5, label=title2)
+    bins1 = bins[:-1]+0.5
+    plt.bar(bins1, hist1, width=1, color='blue', alpha=1.0, label=title1)
+    plt.bar(bins1, hist2, width=1, color='red', alpha=0.5, label=title2)
     plt.title("Overlap of " + title1 + " and " + title2)
     plt.xlabel('Pixel Intensity')
     plt.ylabel('Frequency')
@@ -94,7 +97,7 @@ def smooth_image(image, sigma=1.0):
     Returns:
         np.ndarray: Smoothed image.
     """
-    from scipy.ndimage import gaussian_filter
+
     return gaussian_filter(image, sigma=sigma)
 
 def smooth_image_bilateral(image, sigma_color=1.0, sigma_spatial=5):
@@ -124,10 +127,9 @@ def smooth_image_median(image, size=3):
     Returns:
         np.ndarray: Smoothed image.
     """
-    from scipy.ndimage import median_filter
     return median_filter(image, size=size)
 
-def image_histogram(image_path,mask_path,output_path, bins=256):
+def image_histogram(image_path,mask_path,output_path):
     """
     Calculate the histogram of an image and visualize it.
 
@@ -138,14 +140,20 @@ def image_histogram(image_path,mask_path,output_path, bins=256):
     """
     # Read the image
     image_org = read_image(image_path)
-    image_org = image_org[160:-160, 160:-160] # Remove the border
+    edge = 50
+    image_org = image_org[edge:-edge, edge:-edge] # Remove the border
+    visualize_im(image_org, title="Original Image")
+    image_smoothed = smooth_image(image_org, sigma=20.0)  # Optional smoothing
+    visualize_im(image_smoothed, title="Original Image smoothed")
+    image_org = image_org - image_smoothed
+    visualize_im(image_org, title="Original Image after subtraction")
     #image = smooth_image(image, sigma=2.0)  # Optional smoothing
     #image_org = smooth_image_bilateral(image_org, sigma_color=0.2,sigma_spatial=5)  # Optional smoothing with bilateral filter
-    image_org = smooth_image_median(image_org, size=5)  # Optional smoothing with median filter
-    visualize_im(image_org, title="Original Image")
+    image_org = smooth_image_median(image_org, size=3)  # Optional smoothing with median filter
+    visualize_im(image_org, title="Original Image smoothed median filter")
     # Read membrane mask
     mask = read_image(mask_path)
-    mask = mask[160:-160, 160:-160]  # Remove the border
+    mask = mask[edge:-edge, edge:-edge]  # Remove the border
     mask = mask > 0  # Convert mask to binary (0 or 1)
     nb_ones = np.sum(mask)
     # Visualize membrane histogram
@@ -154,9 +162,9 @@ def image_histogram(image_path,mask_path,output_path, bins=256):
     masked_data = masked_data[mask>0] # Flatten the masked data
     print(f"Masked data contains {len(masked_data)} non-zero pixels., and {nb_ones} pixels in the mask")
     output_file = os.path.join(output_path, "membrane_"+image_name + ".png")
-    hist_membrane = calc_histogram(masked_data, bins=bins)
-    visualize_histogram(hist_membrane, bins=bins, title = "Membrane Histogram")
-    plt.savefig(output_file)
+    hist_membrane, bins_edges_membrane = calc_histogram(masked_data)
+    visualize_histogram(hist_membrane, bins=bins_edges_membrane, title = "Membrane Histogram")
+    #plt.savefig(output_file)
     print(f"Histogram saved to {output_path}")
 
     # Read the non-membrane histogram
@@ -164,19 +172,19 @@ def image_histogram(image_path,mask_path,output_path, bins=256):
     visualize_im(image, title="Image without membrane")
     image = image[(1-mask)>0]  # Flatten the non-membrane data
     # Calculate histogram
-    hist_nonmembrane = calc_histogram(image, bins=bins)
+    hist_nonmembrane, _  = calc_histogram(image, bins=bins_edges_membrane)
     # Visualize the histogram
-    visualize_histogram(hist_nonmembrane, bins=bins, title="Image without membrane")
-    output_file = os.path.join(output_path, "nomembrane_" + image_name + ".png")
-    plt.savefig(output_file)
+    visualize_histogram(hist_nonmembrane, bins=bins_edges_membrane, title="Image without membrane")
+    output_file = os.path.join(output_path, "nonmembrane_" + image_name + ".png")
+    #plt.savefig(output_file)
 
     # Visualize the overlap of histograms
-    visualize_overlap_histograms(hist_nonmembrane, hist_membrane, bins=bins, title1="Nonmembrane Histogram", title2="Membrane Histogram")
+    visualize_overlap_histograms(hist_nonmembrane, hist_membrane, bins_edges_membrane, title1="Nonmembrane Histogram", title2="Membrane Histogram")
 
-    class_im = classify_pixel_based_on_histogram(image_org, hist_membrane, hist_nonmembrane)
+    class_im = classify_pixel_based_on_histogram(image_org, bins_edges_membrane, hist_membrane, hist_nonmembrane)
     visualize_im(class_im, title="Classified Image")
     plt.show()
-def classify_pixel_based_on_histogram(image, hist1, hist2):
+def classify_pixel_based_on_histogram(image,bins, hist1, hist2):
     """
     Classify pixels based on histogram values.
 
@@ -192,7 +200,11 @@ def classify_pixel_based_on_histogram(image, hist1, hist2):
     hist2 = hist2 / hist2.sum()
     # Calculate the difference between histograms
     im_flat = image.flatten()
-    im_flat = im_flat.astype(np.uint8)  # Ensure pixel values are in the range [0, 255]
+    im_flat = np.digitize(im_flat,bins,False)-1
+    im_flat = im_flat -1
+    im_flat = np.clip(im_flat,a_min=None,a_max=hist1.shape[0])
+    print("max(im_flat0)", max(im_flat))
+    print("hist1 shape", hist1.shape)
     im_out = np.zeros_like(im_flat, dtype=np.uint8)
     hist1_val = hist1[im_flat]  # Get the histogram value for the pixel intensity
     hist2_val = hist2[im_flat]  # Get the histogram value for the pixel intensity
@@ -202,13 +214,13 @@ def classify_pixel_based_on_histogram(image, hist1, hist2):
     return im_out
 if __name__ == "__main__":
     # Example usage
-    data_dir = r"/home/astar/Projects/vesicles_data"
+    data_dir = r"/home/astar/Projects/vesicles_data/data_analyses"
     image_name = r"slot6_100_0002ms"
     image_path = os.path.join(data_dir,"test",image_name+".jpg")
     mask_path = os.path.join(data_dir,"labels",image_name+".png")
     output_path = os.path.join(data_dir,"histograms")
     if not os.path.exists(output_path):
         os.makedirs(output_path)
-    image_histogram(image_path, mask_path, output_path, bins=256)
+    image_histogram(image_path, mask_path, output_path)
 
 

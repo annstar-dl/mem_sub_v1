@@ -85,15 +85,13 @@ def get_basis_sequential(dataimg,mask,row_idx,col_idx,r, return_theta=False):
     if dataimg.dim() != 2:
         raise ValueError("Input image must be a 2D tensor, got {} dimensions".format(dataimg.dim()))
     cntr = r
-    imgout = torch.zeros_like(dataimg)
-    wtimg = torch.zeros_like(dataimg)
 
     r_in = get_radius_of_inner_circle(r)
     w = get_w_function(r_in)  # Get the weights for the Gaussian kernel
 
     binaryImage, gaussWt = create_gaussian_disc(2*[(2*r_in+1)], r_in)  # Create a binary disc and Gaussian weights
     nGrid = row_idx.shape[0]  # Number of grid points
-    basis = torch.zeros((nGrid, w.shape[0], w.shape[1]), dtype=torch.float64)  # Initialize bases tensor
+    basis = torch.zeros((nGrid, w.shape[0], w.shape[1]), dtype=torch.float64)  # Initialize basis tensor
     thetas = torch.zeros((nGrid,), dtype=torch.float64)  # Initialize theta tensor for angles
     for i in range(nGrid):
         img1 = dataimg[row_idx[i]-r:row_idx[i]+r+1, col_idx[i]-r:col_idx[i]+r+1]  # Extract the neighborhood around the grid point
@@ -102,9 +100,7 @@ def get_basis_sequential(dataimg,mask,row_idx,col_idx,r, return_theta=False):
                              f" for grid point ({row_idx[i]}, {col_idx[i]}). ")
         theta = align_single_patch(img1, cntr, r_in,w,-90.,90.0,1.0)  # Align the image using the center and radius
         patchImg = recon_patch(img1, cntr, r_in, w, gaussWt, theta)  # Reconstruct the patch using the basis functions
-        basis[i] = patchImg  # Store the reconstructed patch in the bases tensor
-        imgout[row_idx[i]-r_in:row_idx[i]+r_in+1, col_idx[i]-r_in:col_idx[i]+r_in+1] += patchImg
-        wtimg[row_idx[i]-r_in:row_idx[i]+r_in+1, col_idx[i]-r_in:col_idx[i]+r_in+1] += gaussWt
+        basis[i] = patchImg  # Store the reconstructed patch in the basis tensor
         thetas[i] = theta  # Store the angle for the current grid point
     if return_theta:
         return basis, thetas
@@ -139,7 +135,7 @@ def get_basis(dataimg,mask,row_idx,col_idx,r, return_theta=False):
 
     binaryImage, gaussWt = create_gaussian_disc(2*[(2*r_in+1)], r_in)  # Create a binary disc and Gaussian weights
     imgs_subset = get_patches_from_image_adv_indexing(dataimg, r, row_idx, col_idx)  # Get patches from the image using the specified radius
-    imgs_subset = imgs_subset.unsqueeze(1)  # Remove the channel dimension if it exists
+    imgs_subset = imgs_subset.unsqueeze(1)  # Add channel dimension
     # Move imgs_subset to GPU if available
     if torch.cuda.is_available():
         imgs_subset = imgs_subset.to("cuda")

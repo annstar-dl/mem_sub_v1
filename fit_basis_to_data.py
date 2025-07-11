@@ -98,8 +98,6 @@ def fit_basis_to_data(img, basis, row_idx, col_idx, r, rho, max_iter,step):
         gradient = torch.sum(prod, [1,2])[...,None,None]
 
         imgout = add_patches_to_image(rho*gradient*basis, imgout, r_in, row_idx, col_idx)
-
-
         diff_norm.append(
             torch.linalg.norm(img - imgout)) # Compute the difference norm
 

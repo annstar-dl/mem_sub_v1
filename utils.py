@@ -32,8 +32,10 @@ def get_patches_from_image_adv_indexing(img, r, row_idxs, col_idxs):
         torch.Tensor: Patches of shape (N, 2*r+1, 2*r+1), where N is the number of patches.
     """
     row_grid, col_grid = torch.meshgrid([torch.arange(-r, r + 1), torch.arange(-r, r + 1)])
+    # Reshape the row and column grids to match the number of grid points
     row_grid = row_grid.unsqueeze(0).expand(len(row_idxs), -1, -1)
     col_grid = col_grid.unsqueeze(0).expand(len(row_idxs), -1, -1)
+    # Add row and column indices to the grid
     row_grid = row_grid + row_idxs.unsqueeze(1).unsqueeze(2)
     col_grid = col_grid + col_idxs.unsqueeze(1).unsqueeze(2)
     patches = img[row_grid, col_grid]  # Extract pixels from the image

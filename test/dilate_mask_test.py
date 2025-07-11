@@ -1,7 +1,6 @@
 import torch
-import pytest
 from sampling_grid import dilate_mask, gaussian_filter, get_sampling_grid
-from get_basis_test import visualize_3_images
+from visualizations import visualize_3_images
 import os
 from read_matlab import load_image_from_mat
 from matplotlib import pyplot as plt
@@ -16,7 +15,7 @@ def compare_dilated_masks():
     Returns:
         bool: True if the masks are similar, False otherwise.
     """
-    maindir = r"/home/astar/Projects/data_from_matlab_code"
+    maindir = r"/home/astar/Projects/matlab_code/data_from_matlab_code"
     file_path = os.path.join(maindir, r'mk_1.mat')
     mask = load_image_from_mat(file_path, ["mask"])
     mask = torch.tensor(mask, dtype=torch.float32)  # Convert mask to tensor
@@ -38,7 +37,7 @@ def compare_d_times_dilated_masks():
     Returns:
         bool: True if the masks are similar, False otherwise.
     """
-    maindir = r"/home/astar/Projects/data_from_matlab_code"
+    maindir = r"/home/astar/Projects/matlab_code/data_from_matlab_code"
     file_path = os.path.join(maindir, r'mk_1.mat')
     mask = load_image_from_mat(file_path, ["mask"])
     mask = torch.tensor(mask, dtype=torch.float32)  # Convert mask to tensor
@@ -50,7 +49,7 @@ def compare_d_times_dilated_masks():
     mask_dilate_matlab = load_image_from_mat(fname, "mask1")
     mask_dilate_matlab = torch.tensor(mask_dilate_matlab)
     # Check if the values are similar
-    visualize_3_images(mask_dilate, mask_matlab, mask_dilate - mask_dilate_matlab,
+    visualize_3_images(mask_dilate, mask_dilate_matlab , mask_dilate - mask_dilate_matlab,
                        title1="Mask dilated from PyTorch", title2="Mask Matlab", title3="Mask dilate PyTorch - MATLAB")
 if __name__ == "__main__":
 

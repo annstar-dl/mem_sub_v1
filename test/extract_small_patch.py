@@ -13,7 +13,7 @@ def extract_small_patch_with_mask(left=200, top=300, patch_size=(160, 160)):
         patch_size (tuple) or None: Size of the patch as (width, height). IF None, the patch will be extracted to the right and down from the specified coordinates.
     """
     # Example implementation: Load an image and extract a small patch
-    data_dir = r"/home/astar/Projects/vesicles_data"
+    data_dir = r"/home/astar/Projects/vesicles_data/data_analyses"
     image_name = r"slot6_100_0002ms"
     image_path = os.path.join(data_dir, "test", image_name + ".jpg")
     if not os.path.exists(image_path):
@@ -31,6 +31,6 @@ def extract_small_patch_with_mask(left=200, top=300, patch_size=(160, 160)):
     # Extract the corresponding mask patch
     mask_patch = mask.crop((left, top, left + patch_size[0], top + patch_size[1]))
     # Convert the patch to a tensor
-    patch_tensor = torch.tensor(np.array(patch), dtype=torch.float32).unsqueeze(0)
-    mask_tensor = torch.tensor(np.array(mask_patch), dtype=torch.float32)
+    patch_tensor = torch.tensor(np.array(patch), dtype=torch.float64).unsqueeze(0)
+    mask_tensor = torch.tensor(np.array(mask_patch), dtype=torch.float64)
     return patch_tensor, mask_tensor

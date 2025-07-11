@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 from extract_small_patch import extract_small_patch_with_mask
 from sampling_grid import get_sampling_grid, gaussian_filter, dilate_mask
 from basis_fn import get_basis
-from align_image_test import visualize_3_images, visualize_2_images,visualize_im
+from visualizations import visualize_3_images, visualize_2_images,visualize_im
 from sampling_grid_test import visualize_sampling_grid
 from sampling_grid import select_points_within_boundary
 from basis_fn import create_gaussian_disc, get_radius_of_inner_circle

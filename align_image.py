@@ -12,7 +12,7 @@ def rotate_images_kornia(images, angles):
     """    Rotate a batch of images using Kornia.
     Args:
         images (torch.Tensor): Batch of images with shape (B, C, H, W).
-        angle_degrees (float or list): Angle in degrees to rotate the images, or list of angles for each image.
+        angles (int, float or list): Angle in degrees to rotate the images, or list of angles for each image.
 
         If you are using kornia in your research-related documents, it is recommended that you cite the paper.
         @inproceedings{eriba2019kornia,
@@ -57,15 +57,16 @@ def align_multiple_patches(imgs_subset, cntr, r, w, theta_b, theta_e, dtheta):
     :return:
     """
     theta_opt = align_multiple_patches_multires(imgs_subset, cntr, r, w, theta_b, theta_e, 10)
+    # refine the angle by searching in a smaller range
     theta_opt = align_multiple_patches_multires(imgs_subset, cntr, r, w, theta_opt-10, theta_opt+10, dtheta)
     return theta_opt
 
 
 def align_multiple_patches_multires(imgs_subset,cntr, r, w, theta_b, theta_e, dtheta):
     """
-    Align multiple image patches to the profile that matches the membrane crossection direction.
-    :param imgs: torch.Tensor, Input image patches tensor of shape (N, C, H, W).
-    :param cntrs: list of int, Centers of the image patches.
+    Align multiple image patches to the profile of membranes. Every image patch has different angle rotation range.
+    :param imgs_subset: torch.Tensor, Input image patches tensor of shape (N, C, H, W).
+    :param cntr: int, center of the image patch.
     :param r: int, Radius of a neighbourhood.
     :param w: torch.Tensor, Weights for the Gaussian kernel of shape (2*r+1, 2*r+1).
     :param theta_b: float, Starting angle for rotation in degrees.
@@ -73,9 +74,12 @@ def align_multiple_patches_multires(imgs_subset,cntr, r, w, theta_b, theta_e, dt
     :param dtheta: float, Step size for angle increment in degrees.
     :return:
     """
+    # Resize the angle to match the batch size
+    # if range of angles is the same for all images then theta_b and theta_e are scalars
     if isinstance(theta_e, (int, float)) and isinstance(theta_e, (int, float)):
         angles = torch.arange(theta_b, theta_e+dtheta, dtheta)
         angles = angles.unsqueeze(-1).expand(-1,len(imgs_subset))  # N angles x M images
+    # if range of angles is different for each image then theta_b and theta_e are lists
     elif isinstance(theta_b, (list, torch.Tensor)) and isinstance(theta_e, (list,torch.Tensor)):
         if len(theta_b) != len(theta_e):
             raise ValueError("theta_b and theta_e must have the same length if they are lists")
@@ -86,16 +90,16 @@ def align_multiple_patches_multires(imgs_subset,cntr, r, w, theta_b, theta_e, dt
     # check image dimensions
     if imgs_subset.dim() != 4:
         raise ValueError(f"Expected imgs to be a 4D tensor (N, C, H, W), got {imgs_subset.dim()} dimensions")
-    losses = torch.zeros((len(angles),len(imgs_subset)), dtype=torch.float64, device=imgs_subset.device)  # Initialize losses tensor
+    # Initialize losses tensor
+    losses = torch.zeros((len(angles),len(imgs_subset)), dtype=torch.float64, device=imgs_subset.device)
     for i in range(len(angles)):
         tmp_img = rotate_images_kornia(imgs_subset, angles[i])  # Rotate the images by the angles
         tmp_img = tmp_img[..., cntr - r:cntr + r + 1,cntr - r:cntr + r + 1]  # Crop the images to the neighbourhood size
         w_exp = w.unsqueeze(0).unsqueeze(0)
         prof = tmp_img * w_exp  # Apply the Gaussian weights to the rotated images
-        # visualize_all_rotations(prof,supertitle="Weighted Rotated Images")
         prof = torch.sum(prof, dim=3)  # Calculate the profile for each rotated image
         prof = prof.unsqueeze(3).expand(-1, -1, -1, 2 * r + 1)  # Expand the profile into an image for each angle
-        losses[i] = calculate_mse_loss(tmp_img, prof) # Calculate the MSE loss between the rotated images and the original images
+        losses[i] = calculate_mse_loss(tmp_img, prof) # Calculate the MSE loss between the rotated images and the profile images
     loss_agr_min_idx = torch.argmin(losses, dim=0).to("cpu")  # Get the index of the minimum loss for each image
     best_angles = angles[loss_agr_min_idx,torch.arange(angles.size(1))]  # Get the best angles for each image
     return best_angles
@@ -113,6 +117,7 @@ def align_single_patch(img, cntr, r, w, theta_b, theta_e, dtheta):
     :return:
     """
     theta_opt = align_single_patch_multires(img, cntr, r, w, theta_b, theta_e, 10)
+    # refine the angle by searching in a smaller range
     theta_opt = align_single_patch_multires(img, cntr, r, w, theta_opt-10, theta_opt + 10, dtheta)
     return theta_opt
 
@@ -152,26 +157,5 @@ def align_single_patch_multires(img, cntr, r, w, theta_b, theta_e, dtheta):
     loss_agr_min_idx = torch.argmin(loss,dim=0)
     return angles_list[loss_agr_min_idx]  # Get the best angle
 
-def visualize_all_rotations(imgs, loss=None,supertitle=None):
-    """
-    Visualize all rotations of the image patch.
-    :param img: torch.Tensor, Input image patch tensor of shape (C, H, W).
-    :param cntr: int, Center of the image patch.
-    :param r: int, Radius of the neighbourhood.
-    :param w: torch.Tensor, Weights for the Gaussian kernel of shape (2*r+1, 2*r+1).
-    :param theta_b: float, Starting angle for rotation in degrees.
-    :param theta_e: float, Ending angle for rotation in degrees.
-    :param dtheta: float, Step size for angle increment in degrees.
-    """
-    plt.figure()
-    fig, axes = plt.subplots(1, len(imgs), figsize=(15, 5))
-    for i, img in enumerate(imgs):
-        axes[i].imshow(img[0].cpu().numpy(),cmap="gray")  # Convert tensor to numpy array for visualization
-        axes[i].axis('off')
-        if loss is not None:
-            axes[i].set_title(f'Loss: {loss[i]:.2f}, Rot {i+1}')
-        else:
-            axes[i].set_title(f'Rotation {i+1}')
-    if not supertitle is None:
-        plt.suptitle(supertitle, fontsize=16)
+
 
