@@ -13,7 +13,8 @@ def  membrane_subtract(img, mask):
         img (torch.Tensor): The micrograph(image with membranes) image tensor of shape (H, W).
         mask (torch.Tensor): The micrograph mask tensor of shape (H, W).
     Returns:
-        torch.Tensor: The patch with the membrane subtracted.
+        torch.Tensor: The reconstructed membrane image, tensor of shape (H, W).
+        torch.Tensor: The image with subtracted membranes, tensor of shape (H, W).
     """
     # Check if the input image is 2D or 3D
     if img.dim() != 2:

@@ -6,6 +6,7 @@ from scipy.ndimage import gaussian_filter
 from membrane_subtract import membrane_subtract
 from tqdm import tqdm
 import argparse
+from scipy.io import savemat
 
 def read_membrane_img(fpath, flatten_bg=True, sigma=20.0):
     """Read membrane image from file and optionally flatten the background.
@@ -54,30 +55,38 @@ def save_im(img, fpath):
 
 if __name__=="__main__":
     parser = argparse.ArgumentParser(description="Process membrane images and subtract membranes.")
-    parser.add_argument("--main_path", type=str, default="/home/astar/Projects/vesicles_data",
-                        help="Main directory containing images and labels.")
-    parser.add_argument("--imgsout_dir", type=str, default="imgout_fred_mck",help="Output directory for processed images.")
-    parser.add_argument("--imgsout_subracted_dir", type=str, default="imgout_subracted_fred_mck",
-                        help="Output directory for processed images.")
-    parser.add_argument("--imgs_dir", type=str, default="images_fred_mck", help="Directory containing input images.")
+    parser.add_argument("--imgs_path", type=str, default="images_fred_mck", help="Directory containing input images.")
     parser.add_argument("--masks_dir", type=str, default="labels_fred_mck", help="Directory containing labels for images.")
-    parser.add_argument("--sigma", type=float, default=20.0, help="Sigma for Gaussian filter to flatten background.")
+    parser.add_argument("--sigma", type=float, default=24.0, help="Sigma for Gaussian filter to flatten background.")
     parser.add_argument("--flatten_bg", action='store_true', help="Whether to flatten(even) the background of images.")
+    parser.add_argument("--save_as_mat", action='store_true',help="Whether to save images as .mat files instead of .png.")
     args = parser.parse_args()
 
-    imgsout_subracted_path = os.path.join(args.main_path,args.imgsout_subracted_dir)
+    main_path = os.path.dirname(args.imgs_path)
+    dataset_name = os.path.basename(args.imgs_path)
+    imgsout_subracted_dir = dataset_name + "_subtracted"
+    imgsout_dir = dataset_name + "_reconstructed_membranes"
+    imgsout_subracted_path = os.path.join(main_path,imgsout_subracted_dir)
     if not os.path.exists(imgsout_subracted_path):
         os.makedirs(imgsout_subracted_path)
-    imgsout_path = os.path.join(args.main_path, args.imgsout_dir)
+    imgsout_path = os.path.join(main_path, imgsout_dir)
     if not os.path.exists(imgsout_path):
         os.makedirs(imgsout_path)
-    imgs_path = os.path.join(args.main_path,args.imgs_dir)
-    masks_path = os.path.join(args.main_path,args.masks_dir)
+    if args.save_as_mat:
+        imgsout_path_mat = imgsout_subracted_path+ "_mat"
+        if not os.path.exists(imgsout_path_mat):
+            os.makedirs(imgsout_path_mat)
+
+    imgs_path = args.imgs_path
+    masks_path = os.path.join(main_path,args.masks_dir)
     for fpath in tqdm(os.listdir(imgs_path), desc="Processing images"):
         fname = os.path.splitext(fpath)[0]
-        img = read_membrane_img(os.path.join(imgs_path,fname+".jpg"))
+        img = read_membrane_img(os.path.join(imgs_path,fname+".jpg"), flatten_bg=args.flatten_bg, sigma=args.sigma)
         mask = read_img(os.path.join(masks_path,fname+".png"))
         imgout, sub_img = membrane_subtract(torch.tensor(img),torch.tensor(mask))
+        if args.save_as_mat:
+            # Save as .mat file if specified
+            savemat(os.path.join(imgsout_path_mat, fname + ".mat"), {'img': img, 'sub': sub_img.numpy()})
         save_im(sub_img, os.path.join(imgsout_subracted_path,fname+".png"))
         save_im(imgout, os.path.join(imgsout_path,fname+".png"))
 

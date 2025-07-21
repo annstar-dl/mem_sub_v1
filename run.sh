@@ -1,5 +1,5 @@
 #!/bin/bash
 # This script runs the Python script with the specified arguments.
-python run.py --main_path "/home/astar/Projects/vesicles_data" \
- --imgsout_dir "imgout_subtract_fred_mck" --imgs_dir "images_fred_mck" \
---masks_dir "labels_fred_mck" --flatten_bg
+IMGSPATH="/home/astar/Projects/vesicles_data/images_fred_mck"
+python run.py --imgs_path $IMGSPATH \
+--masks_dir "labels_fred_mck" --flatten_bg --save_as_mat
