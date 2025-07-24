@@ -1,0 +1,28 @@
+import numpy as np
+from scipy.ndimage import gaussian_filter
+
+
+def get_background(img: np.ndarray, mask: np.ndarray, sigma:
+                   float = 30.0) -> (np.ndarray,np.ndarray):
+    """
+    Get the background of an image by applying Gaussian smoothing and masking.
+
+    Args:
+        img (np.ndarray): Input image array, type float64.
+        mask (np.ndarray): Mask array of membrane
+        sigma (float): Standard deviation for Gaussian kernel.
+
+    Returns:
+        np.ndarray: Background image with the same shape as the input image.
+    """
+    # Ensure mask is in float64 format for compatibility with Gaussian filter
+    # Invert the mask to create a background mask
+    bg_mask = 1 - mask.astype(np.float64)
+    #Smooth image and mask
+    img_smoothed = gaussian_filter(img*bg_mask, sigma=sigma)  # Apply Gaussian smoothing
+    bg_mask_smoothed = gaussian_filter(bg_mask, sigma=sigma)  # Smooth the inverted mask
+
+    # estimate background by dividing smoothed image by smoothed mask
+    img_background = img_smoothed / (bg_mask_smoothed + 1e-6)  # Avoid division by zero
+    diff = img - img_background  # Calculate the difference between original image and background
+    return img_background, diff
