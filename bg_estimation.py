@@ -17,7 +17,11 @@ def get_background(img: np.ndarray, mask: np.ndarray, sigma:
     """
     # Ensure mask is in float64 format for compatibility with Gaussian filter
     # Invert the mask to create a background mask
-    bg_mask = 1 - mask.astype(np.float64)
+    if not mask.dtype == np.float64:
+        mask = mask.astype(np.float64)
+    if not img.dtype == np.float64:
+        img = img.astype(np.float64)
+    bg_mask = 1 - mask
     #Smooth image and mask
     img_smoothed = gaussian_filter(img*bg_mask, sigma=sigma)  # Apply Gaussian smoothing
     bg_mask_smoothed = gaussian_filter(bg_mask, sigma=sigma)  # Smooth the inverted mask

@@ -8,37 +8,13 @@ from tqdm import tqdm
 import argparse
 from scipy.io import savemat
 
-def read_membrane_img(fpath, flatten_bg=True, sigma=20.0):
-    """Read membrane image from file and optionally flatten the background.
-    Args:
-        fpath (str): Path to the image file.
-        flatten_bg (bool): Whether to flatten the background of the image.
-        sigma (float): Standard deviation for Gaussian kernel if flattening is applied.
-    Returns:
-        numpy.ndarray: Image array, either with flattened background or original.
-    """
-    img = Image.open(fpath)
-    img = np.array(img, dtype = np.float64)
-    if flatten_bg:
-        img = flatten_background(img, sigma)
-    return img
+
 
 def read_img(fpath):
     img = Image.open(fpath)
-    img = np.array(img)
+    img = np.array(img,dtype = np.float64)
     return img
 
-def flatten_background(img,sigma=20.0):
-    """Flatten(even out) the background of the image using Gaussian smoothing.
-    Args:
-        img (numpy.ndarray): Input image array.
-        sigma (float): Standard deviation for Gaussian kernel.
-    Returns:
-        numpy.ndarray: Image with flattened background.
-        """
-    img_smoothed = gaussian_filter(img, sigma)
-    img = img - img_smoothed
-    return img
 
 def save_im(img, fpath):
     """Save the image to a file after normalizing it to the range [0, 255].
@@ -58,14 +34,12 @@ if __name__=="__main__":
     parser.add_argument("--imgs_path", type=str, default="images_fred_mck", help="Directory containing input images.")
     parser.add_argument("--masks_dir", type=str, default="labels_fred_mck", help="Directory containing labels for images.")
     parser.add_argument("--sigma", type=float, default=24.0, help="Sigma for Gaussian filter to flatten background.")
-    parser.add_argument("--flatten_bg", action='store_true', help="Whether to flatten(even) the background of images.")
     parser.add_argument("--save_as_mat", action='store_true',help="Whether to save images as .mat files instead of .png.")
     args = parser.parse_args()
 
     main_path = os.path.dirname(args.imgs_path)
     dataset_name = os.path.basename(args.imgs_path)
     imgout_mainpath = os.path.join(main_path, dataset_name + "_reconstructions")
-    imgout_mainpath += "" if not args.flatten_bg else "_flatten_bg"
     imgsout_subracted_path = os.path.join(imgout_mainpath,"subtracted")
     imgsout_reconstructed_path = os.path.join(imgout_mainpath,"reconstructed_membranes")
 
@@ -83,9 +57,10 @@ if __name__=="__main__":
     masks_path = os.path.join(main_path,args.masks_dir)
     for fpath in tqdm(os.listdir(imgs_path), desc="Processing images"):
         fname = os.path.splitext(fpath)[0]
-        img = read_membrane_img(os.path.join(imgs_path,fname+".jpg"), flatten_bg=args.flatten_bg, sigma=args.sigma)
-        mask = read_img(os.path.join(masks_path,fname+".png"))
-        imgout, sub_img = membrane_subtract(torch.tensor(img),torch.tensor(mask))
+        img = read_img(os.path.join(imgs_path,fname+".jpg"))
+        mask = read_img(os.path.join(masks_path, fname + ".png"))
+        imgout, sub_img = membrane_subtract(img,mask)
+        #add background back to the subtracted image
         if args.save_as_mat:
             # Save as .mat file if specified
             savemat(os.path.join(imgsout_path_mat, fname + ".mat"), {'img': img, 'sub': sub_img.numpy()})
