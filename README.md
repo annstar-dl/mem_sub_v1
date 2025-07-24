@@ -1,2 +1,2 @@
-# VesicleSegment
-Vesicle segmentation project code
+# Membrane Subtraction
+Vesicle reconstruction code
