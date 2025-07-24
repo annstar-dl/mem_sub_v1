@@ -17,14 +17,14 @@ def read_membrane_img(fpath, flatten_bg=True, sigma=20.0):
     Returns:
         numpy.ndarray: Image array, either with flattened background or original.
     """
-    img = Image.open(fpath).convert("L")
-    img = np.array(img)
+    img = Image.open(fpath)
+    img = np.array(img, dtype = np.float64)
     if flatten_bg:
         img = flatten_background(img, sigma)
     return img
 
 def read_img(fpath):
-    img = Image.open(fpath).convert("L")
+    img = Image.open(fpath)
     img = np.array(img)
     return img
 
@@ -64,14 +64,16 @@ if __name__=="__main__":
 
     main_path = os.path.dirname(args.imgs_path)
     dataset_name = os.path.basename(args.imgs_path)
-    imgsout_subracted_dir = dataset_name + "_subtracted"
-    imgsout_dir = dataset_name + "_reconstructed_membranes"
-    imgsout_subracted_path = os.path.join(main_path,imgsout_subracted_dir)
+    imgout_mainpath = os.path.join(main_path, dataset_name + "_reconstructions")
+    imgout_mainpath += "" if not args.flatten_bg else "_flatten_bg"
+    imgsout_subracted_path = os.path.join(imgout_mainpath,"subtracted")
+    imgsout_reconstructed_path = os.path.join(imgout_mainpath,"reconstructed_membranes")
+
     if not os.path.exists(imgsout_subracted_path):
         os.makedirs(imgsout_subracted_path)
-    imgsout_path = os.path.join(main_path, imgsout_dir)
-    if not os.path.exists(imgsout_path):
-        os.makedirs(imgsout_path)
+
+    if not os.path.exists(imgsout_reconstructed_path):
+        os.makedirs(imgsout_reconstructed_path)
     if args.save_as_mat:
         imgsout_path_mat = imgsout_subracted_path+ "_mat"
         if not os.path.exists(imgsout_path_mat):
@@ -88,6 +90,6 @@ if __name__=="__main__":
             # Save as .mat file if specified
             savemat(os.path.join(imgsout_path_mat, fname + ".mat"), {'img': img, 'sub': sub_img.numpy()})
         save_im(sub_img, os.path.join(imgsout_subracted_path,fname+".png"))
-        save_im(imgout, os.path.join(imgsout_path,fname+".png"))
+        save_im(imgout, os.path.join(imgsout_reconstructed_path,fname+".png"))
 
 

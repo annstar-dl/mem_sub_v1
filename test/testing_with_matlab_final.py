@@ -116,7 +116,7 @@ def matlab_testing():
     r = 20
     step = 4
     nb_iter = 30
-    maindir = r"/home/astar/Projects/data_from_matlab_code"
+    maindir = r"/home/astar/Projects/matlab_code/data_from_matlab_code"
     file_path = os.path.join(maindir,r'mk_1.mat')
     img, mask = load_image_from_mat(file_path, ["img","mask"])
     img = torch.tensor(img, dtype=torch.float64)
@@ -147,7 +147,7 @@ def matlab_testing():
     compare_reconstr_image(img, imgout, imgout_matlab,subtitle1="Pytorch",subtitle2="Matlab", title="Reconstructed Image from PyTorch vs MATLAB")
 
     #compare imgout on pytorch with mask from pytorch to substract_membrane function output
-    imgout_together = membrane_subtract(img, mask_org)
+    imgout_together,_ = membrane_subtract(img, mask_org)
     mask,row_idx, col_idx = mask_py, row_idx_py, col_idx_py
     row_idx, col_idx = select_points_within_boundary(img,r, row_idx, col_idx)
     dataimg = img.detach().clone()
