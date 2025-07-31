@@ -11,6 +11,9 @@ from scipy.io import savemat
 
 
 def read_img(fpath):
+    #check if the file exists
+    if not os.path.exists(fpath):
+        raise FileNotFoundError(f"File {fpath} does not exist.")
     img = Image.open(fpath)
     img = np.array(img,dtype = np.float64)
     return img
@@ -31,15 +34,15 @@ def save_im(img, fpath):
 
 if __name__=="__main__":
     parser = argparse.ArgumentParser(description="Process membrane images and subtract membranes.")
-    parser.add_argument("--imgs_path", type=str, default="images_fred_mck", help="Directory containing input images.")
-    parser.add_argument("--masks_dir", type=str, default="labels_fred_mck", help="Directory containing labels for images.")
+    parser.add_argument("--dataset_path", type=str,help="Directory containing folders with images and labels")
+    parser.add_argument("--imgs_dir", type=str, default="images", help="Directory containing images.")
+    parser.add_argument("--masks_dir", type=str, default="labels", help="Directory containing labels for images.")
     parser.add_argument("--sigma", type=float, default=24.0, help="Sigma for Gaussian filter to flatten background.")
     parser.add_argument("--save_as_mat", action='store_true',help="Whether to save images as .mat files instead of .png.")
     args = parser.parse_args()
 
-    main_path = os.path.dirname(args.imgs_path)
-    dataset_name = os.path.basename(args.imgs_path)
-    imgout_mainpath = os.path.join(main_path, dataset_name + "_reconstructions")
+    main_path = args.dataset_path
+    imgout_mainpath = os.path.join(main_path, "reconstructions")
     imgsout_subracted_path = os.path.join(imgout_mainpath,"subtracted")
     imgsout_reconstructed_path = os.path.join(imgout_mainpath,"reconstructed_membranes")
 
@@ -53,7 +56,7 @@ if __name__=="__main__":
         if not os.path.exists(imgsout_path_mat):
             os.makedirs(imgsout_path_mat)
 
-    imgs_path = args.imgs_path
+    imgs_path = os.path.join(main_path,args.imgs_dir)
     masks_path = os.path.join(main_path,args.masks_dir)
     for fpath in tqdm(os.listdir(imgs_path), desc="Processing images"):
         fname = os.path.splitext(fpath)[0]
@@ -63,7 +66,7 @@ if __name__=="__main__":
         #add background back to the subtracted image
         if args.save_as_mat:
             # Save as .mat file if specified
-            savemat(os.path.join(imgsout_path_mat, fname + ".mat"), {'img': img, 'sub': sub_img.numpy()})
+            savemat(os.path.join(imgsout_path_mat, fname + ".mat"), {'img': img, 'label': mask,'mem': imgout.numpy(),'sub': sub_img.numpy()})
         save_im(sub_img, os.path.join(imgsout_subracted_path,fname+".png"))
         save_im(imgout, os.path.join(imgsout_reconstructed_path,fname+".png"))
 
