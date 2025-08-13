@@ -7,15 +7,19 @@ from membrane_subtract import membrane_subtract
 from tqdm import tqdm
 import argparse
 from scipy.io import savemat
+from readmrc import load_mrc
 
 
 
-def read_img(fpath):
+def read_img(fpath,downsampling_factor=1,is_mrc=False):
     #check if the file exists
     if not os.path.exists(fpath):
         raise FileNotFoundError(f"File {fpath} does not exist.")
-    img = Image.open(fpath)
-    img = np.array(img,dtype = np.float64)
+    if is_mrc:
+        img = load_mrc(fpath,downsample_factor=downsampling_factor).astype(np.float64)
+    else:
+        img = Image.open(fpath)
+        img = np.array(img,dtype = np.float64)
     return img
 
 
@@ -34,11 +38,13 @@ def save_im(img, fpath):
 
 if __name__=="__main__":
     parser = argparse.ArgumentParser(description="Process membrane images and subtract membranes.")
-    parser.add_argument("--dataset_path", type=str,help="Directory containing folders with images and labels")
-    parser.add_argument("--imgs_dir", type=str, default="images", help="Directory containing images.")
-    parser.add_argument("--masks_dir", type=str, default="labels", help="Directory containing labels for images.")
-    parser.add_argument("--sigma", type=float, default=24.0, help="Sigma for Gaussian filter to flatten background.")
+    parser.add_argument("-dp","--dataset_path", type=str,help="Directory containing folders with images and labels")
+    parser.add_argument("-id","--imgs_dir", type=str, default="images", help="Directory containing images.")
+    parser.add_argument("-md","--masks_dir", type=str, default="labels", help="Directory containing labels for images.")
+    parser.add_argument("-s","--sigma", type=float, default=24.0, help="Sigma for Gaussian filter to flatten background.")
+    parser.add_argument("--mrc", action='store_true',help="Whether the input images are in .mrc format.")
     parser.add_argument("--save_as_mat", action='store_true',help="Whether to save images as .mat files instead of .png.")
+    parser.add_argument("-ds","--downsample_factor", type=int, default=4, help="Factor by which to downsample the images (default: 4).")
     args = parser.parse_args()
 
     main_path = args.dataset_path
@@ -59,15 +65,19 @@ if __name__=="__main__":
     imgs_path = os.path.join(main_path,args.imgs_dir)
     masks_path = os.path.join(main_path,args.masks_dir)
     for fpath in tqdm(os.listdir(imgs_path), desc="Processing images"):
-        fname = os.path.splitext(fpath)[0]
-        img = read_img(os.path.join(imgs_path,fname+".jpg"))
-        mask = read_img(os.path.join(masks_path, fname + ".png"))
+        basename = os.path.splitext(fpath)[0]
+        img_fname = basename + ".mrc" if args.mrc else basename + ".jpg"
+        img = read_img(os.path.join(imgs_path,img_fname),args.downsample_factor,args.mrc)
+        mask = read_img(os.path.join(masks_path, basename + ".png"))
+        #check if the image is the same size as the mask
+        if img.shape[:2] != mask.shape[:2]:
+            raise ValueError(f"Image {img_fname} and mask {basename}.png must have the same dimensions. Image shape: {img.shape}, Mask shape: {mask.shape}")
         imgout, sub_img = membrane_subtract(img,mask)
         #add background back to the subtracted image
         if args.save_as_mat:
             # Save as .mat file if specified
-            savemat(os.path.join(imgsout_path_mat, fname + ".mat"), {'img': img, 'label': mask,'mem': imgout.numpy(),'sub': sub_img.numpy()})
-        save_im(sub_img, os.path.join(imgsout_subracted_path,fname+".png"))
-        save_im(imgout, os.path.join(imgsout_reconstructed_path,fname+".png"))
+            savemat(os.path.join(imgsout_path_mat, basename + ".mat"), {'img': img, 'label': mask,'mem': imgout.numpy(),'sub': sub_img.numpy()})
+        save_im(sub_img, os.path.join(imgsout_subracted_path,basename+".png"))
+        save_im(imgout, os.path.join(imgsout_reconstructed_path,basename+".png"))
 
 

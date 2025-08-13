@@ -1,0 +1,120 @@
+#!/usr/bin/env python3
+#
+#   mrc2tif.py - Convert MRC-like files to TIFF or JPEG file formats
+#   author: Christopher JF Cameron
+
+
+import argparse
+import mrcfile as mrc  # type: ignore
+import numpy as np  # type: ignore
+import os
+import sys
+import tifffile as tiff  # type: ignore
+from readmrc import load_mrc  # type: ignore
+from glob import glob
+from tqdm import tqdm  # type: ignore
+from skimage import io
+
+MRC_MODE_DICT = {
+    0: np.int8,
+    1: np.int16,
+    2: np.float32,
+    3: np.complex64,
+    4: np.complex128,
+    6: np.uint16,
+    12: np.float16,
+    101: None,
+}
+FILE_TYPES = ["mrc", "st"]
+
+
+
+def main(args: argparse.Namespace) -> None:
+    """
+    Convert MRC files to TIFF and JPEG file formats.
+
+    Args:
+        args (argparse.Namespace): command-line arguments
+
+    Returns:
+        None
+    """
+    #   get list of MRC-like files
+    files = []
+    for ext in FILE_TYPES:
+        files.extend(glob(os.path.join(args.in_dir, f"*.{ext}")))
+
+    #   convert MRC-like files to TIFF and JPEG file formats
+    for file in tqdm(files):
+
+        #   read in the MRC-like file data
+        data = load_mrc(file, downsample_factor=args.downsample_factor)
+
+        #   save as TIFF image
+        basename, _ = os.path.splitext(os.path.basename(file))
+        if args.format == "tif":
+            data_tif = (data - np.min(data)) / (np.max(data) - np.min(data))
+            tiff.imwrite(
+                os.path.join(args.out_dir, f"{basename}.tif"),
+                data_tif,
+                photometric="minisblack",
+            )
+        elif args.format == "jpeg":
+            #   save as JPEG image
+            # Normalize the data to the range [0, 255] for JPEG saving
+            # tiff.imwrite(
+            #     os.path.join(args.out_dir, f"{basename}.tif"),
+            #     cv2.normalize(data, None, 0, 1, cv2.NORM_MINMAX),
+            #     photometric="minisblack",
+            # )
+
+            data_jpg = (255*(data - np.min(data))/(np.max(data)-np.min(data))).astype(np.uint8)
+            io.imsave(os.path.join(args.out_dir, f"{basename}.jpeg"), data_jpg)
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description="Convert MRC-like files to TIFF and JPEG file formats")
+    parser.add_argument(
+        "in_dir",
+        type=str,
+        help="Directory path to input directory containing MRC-like files",
+    )
+    parser.add_argument(
+        "-o",
+        "--out_dir",
+        type=str,
+        default=None,
+        help="Directory path to output directory (default: input directory)",
+    )
+    parser.add_argument(
+        "--format",
+        type=str,
+        choices=["tif", "jpeg"],
+        default="jpeg",
+        help="Output file format (default: jpeg)",
+    )
+    parser.add_argument(
+        "-ds",
+        "--downsample_factor",
+        type=int,
+        default=4,
+        help="Factor by which to downsample the images (default: 4)",
+    )
+    args = parser.parse_args()
+
+    assert os.path.isdir(args.in_dir), f"Input directory does not exist: {args.in_dir}"
+    if args.out_dir is None:
+        # set output directory to input directory if not specified
+        args.out_dir = args.in_dir
+    else:
+        # create output directory if it does not exist
+        os.makedirs(args.out_dir, exist_ok=True)
+
+    if args.format not in ["tif", "jpeg"]:
+        print(f"Unsupported format: {args.format}. Supported formats are 'tif' and 'jpeg'.")
+        sys.exit(1)
+    if args.downsample_factor > 1:
+        print(f"Downsample images by {args.downsample_factor}.")
+        sys.exit(1)
+    main(args)
