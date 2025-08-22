@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 export CUDA_VISIBLE_DEVICES=2
 
-PADDLESEG_DIR="/home/astar/Projects/PaddleSeg"
-SEGMENTATION_DIR="/home/astar/Projects/membrane_detection/out/unet_membrane_256x256_noise_20_notonlybg_1000000"
+MEMBRANE_DETECTION_DIR="/home/astar/Projects/membrane_detection"
+SEGMENTATION_DIR="${MEMBRANE_DETECTION_DIR}/out/unet_membrane_256x256_noise_20_notonlybg_1000000"
 MEMBRANE_SUBTRACTION_DIR="/home/astar/Projects/VesicleProjection"
 # Check if the directory argument is provided
 if [ $# -lt 4 ]; then
@@ -32,16 +32,14 @@ echo "Converted MRC files to JPG in $PWD/images_jpg"
 
 # Run the segmentation model
 # infer
-conda run -n paddleseg python "${PADDLESEG_DIR}/deploy/python/infer.py" \
---config "${SEGMENTATION_DIR}/result/deploy.yaml" \
---image_path "$PWD/images_jpg" \
---save_dir "$PWD/labels_pseudcolor" \
+conda run -n paddleseg_onnx python "$MEMBRANE_DETECTION_DIR/export_onnx/run_onnx.py" \
+--model_dir "${SEGMENTATION_DIR}/result" \
+--onnx_fname model.onnx \
+--data_path "${PWD}/images_jpg" \
+--save_dir "${PWD}"
 echo "Segmented images saved to $PWD/labels_pseudcolor"
 # Subtract the predicted masks from the original micrographs
 
-# convert the pseudo-color masks to binary masks
-conda run -n ves_seg python "${MEMBRANE_SUBTRACTION_DIR}/color2binary.py" "$PWD/labels_pseudcolor"
-echo "Converted pseudo-color masks to binary masks in $PWD/labels"
 # run the membrane subtraction script
 conda run -n ves_seg python "${MEMBRANE_SUBTRACTION_DIR}/run.py"  -dp ${PWD} -id ${MRC_DIR} -md "labels" --in_format $4 --out_format "mrc" -ds $3
 echo "Subtracted masks from original micrographs and saved results in $PWD/reconstructions"

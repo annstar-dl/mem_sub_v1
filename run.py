@@ -9,21 +9,27 @@ import argparse
 from scipy.io import savemat
 from mrc2jpg import load_mrc
 import mrcfile
+from skimage import transform
 
 
 
-def read_img(fpath,in_format,downsampling_factor=1):
+def read_img(fpath,in_format,downsample_factor=1, normalize=False):
     #check if the file exists
     print(f"Processing image: {fpath}")
     if not os.path.exists(fpath):
         raise FileNotFoundError(f"File {fpath} does not exist.")
     if "mrc" in in_format:
-        img, header = load_mrc(fpath,downsample_factor=downsampling_factor)
+        img, header = load_mrc(fpath,downsample_factor=downsample_factor)
         img = img.astype(np.float64)
         return img, header
     else:
         img = Image.open(fpath)
         img = np.array(img,dtype = np.float64)
+        if normalize:
+            img = img - np.min(img)
+            img = img / np.max(img)
+        if downsample_factor > 1:
+            img = transform.rescale(img, 1/downsample_factor, anti_aliasing=True, preserve_range=True)
         return img, None
 
 
@@ -60,7 +66,7 @@ def main(args):
         basename = os.path.splitext(fpath)[0]
         img_fname = basename+"."+args.in_format
         img, header = read_img(os.path.join(imgs_path, img_fname),args.in_format, args.downsample_factor)
-        mask = read_img(os.path.join(masks_path, basename + ".png"),"png")[0]
+        mask = read_img(os.path.join(masks_path, basename + ".png"),"png",args.downsample_factor,True)[0]
         # check if the image is the same size as the mask
         if img.shape[:2] != mask.shape[:2]:
             raise ValueError(
