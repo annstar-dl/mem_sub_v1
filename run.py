@@ -13,7 +13,7 @@ from skimage import transform
 
 
 
-def read_img(fpath,in_format,downsample_factor=1, normalize=False):
+def read_img(fpath,in_format,downsample_factor=1, mask=False):
     #check if the file exists
     print(f"Processing image: {fpath}")
     if not os.path.exists(fpath):
@@ -25,9 +25,10 @@ def read_img(fpath,in_format,downsample_factor=1, normalize=False):
     else:
         img = Image.open(fpath)
         img = np.array(img,dtype = np.float64)
-        if normalize:
+        if mask:
             img = img - np.min(img)
             img = img / np.max(img)
+            img = (img >0.5).astype(np.float64)
         if downsample_factor > 1:
             img = transform.rescale(img, 1/downsample_factor, anti_aliasing=True, preserve_range=True)
         return img, None
