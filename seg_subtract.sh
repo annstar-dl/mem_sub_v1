@@ -1,12 +1,17 @@
 #!/usr/bin/env bash
-export CUDA_VISIBLE_DEVICES=2
+export CUDA_VISIBLE_DEVICES=0
 
-PADDLESEG_DIR="/home/astar/Projects/PaddleSeg"
-SEGMENTATION_DIR="/home/astar/Projects/membrane_detection/out/unet_membrane_256x256_noise_20_notonlybg_1000000"
-MEMBRANE_SUBTRACTION_DIR="/home/astar/Projects/VesicleProjection"
+# Path to the membrane detection project directory
+MEMBRANE_DETECTION_DIR="/home/astar/Projects/membrane_detection"
+# Path to the pretrained segmentation model directory
+SEGMENTATION_DIR="/home/astar/Projects/membrane_detection/out/unet_membrane_256x256_500000"
+MEMBRANE_SUBTRACTION_DIR="/home/astar/Projects/VesicleProjection" # Path to the VesicleProjection project directory
+INPUT_FILE_FORMAT="mrc"  # Change to "tif" if input files are in TIFF format
+SEGMENTATION_MODEL_FORMAT="paddleseg" # "onnx" or "paddleseg"
+
 # Check if the directory argument is provided
-if [ $# -lt 4 ]; then
-    echo "Usage: $0 <output_directory_path> <input_files_directory> <downsample_factor> <input_file_format>"
+if [ $# -lt 3 ]; then
+    echo "Usage: $0 <output_directory_path> <input_files_directory> <downsample_factor_segmentation>"
     exit 1
 fi
 
@@ -24,25 +29,40 @@ mkdir -p "images_jpg"
 mkdir -p "labels"
 
 # Convert mrc files to jpg for segmentation
-
 echo "Converting MRC files to JPG..."
 echo "Using Membrane Subtraction directory: $PWD/${MRC_DIR}"
 conda run -n ves_seg python "${MEMBRANE_SUBTRACTION_DIR}/mrc2jpg.py" "$PWD/${MRC_DIR}" -o "$PWD/images_jpg" --format "jpeg" -ds $3
 echo "Converted MRC files to JPG in $PWD/images_jpg"
 
-# Run the segmentation model
-# infer
-conda run -n paddleseg python "${PADDLESEG_DIR}/deploy/python/infer.py" \
---config "${SEGMENTATION_DIR}/result/deploy.yaml" \
---image_path "$PWD/images_jpg" \
---save_dir "$PWD/labels_pseudcolor" \
-echo "Segmented images saved to $PWD/labels_pseudcolor"
-# Subtract the predicted masks from the original micrographs
+if [ ${SEGMENTATION_MODEL_FORMAT} == "onnx" ]; then
+    echo "Using ONNX segmentation model format."
+    conda run -n paddleseg_onnx python "$MEMBRANE_DETECTION_DIR/export_onnx/run_onnx.py" \
+    --model_dir "${SEGMENTATION_DIR}/result" \
+    --onnx_fname model.onnx \
+    --data_path "${PWD}/images_jpg" \
+    --save_dir "${PWD}"
+elif [ ${SEGMENTATION_MODEL_FORMAT} == "paddleseg" ]; then
+    echo "Using PaddleSeg segmentation model format."
+    PADDLESEG_DIR ="/home/astar/Projects/PaddleSeg" # Path to the PaddleSeg project directory
+    # Perform segmentation using PaddleSeg
+    conda run -n paddleseg python "${PADDLESEG_DIR}/deploy/python/infer.py" \
+    --config "${SEGMENTATION_DIR}/result/deploy.yaml" \
+    --image_path "$PWD/images_jpg" \
+    --save_dir "$PWD/labels_pseudcolor" \
+    # convert the pseudo-color masks to binary masks
+    conda run -n ves_seg python "${MEMBRANE_SUBTRACTION_DIR}/color2binary.py" "$PWD/labels_pseudcolor"
 
-# convert the pseudo-color masks to binary masks
-conda run -n ves_seg python "${MEMBRANE_SUBTRACTION_DIR}/color2binary.py" "$PWD/labels_pseudcolor"
+else
+    echo "Invalid segmentation model format specified. Use 'onnx' or 'paddleseg'."
+    exit 1
+fi
 echo "Converted pseudo-color masks to binary masks in $PWD/labels"
-# run the membrane subtraction script
-conda run -n ves_seg python "${MEMBRANE_SUBTRACTION_DIR}/run.py"  -dp ${PWD} -id ${MRC_DIR} -md "labels" --in_format $4 --out_format "mrc" -ds $3
+
+# Subtract the predicted masks from the original micrographs
+conda run -n ves_seg python "${MEMBRANE_SUBTRACTION_DIR}/run.py" \
+ -dp ${PWD} -id ${MRC_DIR} -md "labels" \
+ --in_format ${INPUT_FILE_FORMAT} \
+ --out_format "mrc" -ds $3
 echo "Subtracted masks from original micrographs and saved results in $PWD/reconstructions"
+
 

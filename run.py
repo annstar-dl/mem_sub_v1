@@ -94,7 +94,7 @@ if __name__=="__main__":
     parser.add_argument("-s","--sigma", type=float, default=24.0, help="Sigma for Gaussian filter to flatten background.")
     parser.add_argument("--in_format", type=str,choices=["mrc","jpeg","tiff"],help="Format of input images. Default is mrc", default="mrc")
     parser.add_argument("--out_format", nargs="+", choices=["mrc", "png","mat"], default="png", help="List of file format to save subracted images. Choices are .mat,.png.,mrc formats")
-    parser.add_argument("-ds","--downsample_factor", type=int, default=4, help="Factor by which to downsample the images (default: 4).")
+    parser.add_argument("-ds","--downsample_factor", type=int, default=1, help="Factor by which to downsample the images (default: 1).")
     parser.add_argument("--save_reconstruction", action="store_true", default=False, help="Save the reconstructed membranes.")
     args = parser.parse_args()
 

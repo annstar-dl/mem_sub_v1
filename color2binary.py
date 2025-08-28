@@ -29,7 +29,10 @@ def main(args):
         args (argparse.Namespace): command-line arguments
     """
     input_dir = args.input_dir
-    output_dir = os.path.join(os.path.dirname(input_dir),"labels")
+    if args.output_dir is None:
+        output_dir = os.path.join(os.path.dirname(input_dir),"labels")
+    else:
+        output_dir = args.output_dir
 
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
@@ -49,7 +52,7 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Convert color images to binary format.")
     parser.add_argument("input_dir", type=str, help="Directory containing input images.")
-
+    parser.add_argument("--output_dir", type=str,default=None, help="Directory containing input images.")
     args = parser.parse_args()
 
     main(args)

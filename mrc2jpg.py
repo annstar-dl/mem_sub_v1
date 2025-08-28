@@ -8,8 +8,7 @@ import argparse
 import mrcfile as mrc
 import numpy as np
 import os
-import sys
-import tifffile as tiff
+from PIL import Image
 from glob import glob
 from tqdm import tqdm
 from skimage import io, transform
@@ -96,12 +95,8 @@ def main(args: argparse.Namespace) -> None:
         #   save as TIFF image
         basename, _ = os.path.splitext(os.path.basename(file))
         if args.format == "tif":
-            data_tif = (data - np.min(data)) / (np.max(data) - np.min(data))
-            tiff.imwrite(
-                os.path.join(args.out_dir, f"{basename}.tif"),
-                data_tif,
-                photometric="minisblack",
-            )
+            data_tif = data
+            Image.fromarray(data_tif).save(os.path.join(args.out_dir, f"{basename}.tif"))
         elif args.format == "jpeg":
             #   save as JPEG image
             # Normalize the data to the range [0, 255] for JPEG saving
@@ -128,7 +123,7 @@ if __name__ == "__main__":
         "--out_dir",
         type=str,
         default=None,
-        help="Directory path to output directory (default: input directory)",
+        help="Directory path to output directory ",
     )
     parser.add_argument(
         "--format",
@@ -147,6 +142,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     assert os.path.isdir(args.in_dir), f"Input directory does not exist: {args.in_dir}"
+    data_dir_name = os.path.basename(os.path.normpath(args.in_dir))
+    args.out_dir = os.path.join(args.out_dir, data_dir_name +"_"+args.format+"_"+f"ds{args.downsample_factor}")
     if args.out_dir is None:
         # set output directory to input directory if not specified
         args.out_dir = args.in_dir
@@ -155,9 +152,7 @@ if __name__ == "__main__":
         os.makedirs(args.out_dir, exist_ok=True)
 
     if args.format not in ["tif", "jpeg"]:
-        print(f"Unsupported format: {args.format}. Supported formats are 'tif' and 'jpeg'.")
-        sys.exit(1)
+        parser.error(f"Unsupported format: {args.format}. Supported formats are 'tif' and 'jpeg'.")
     if args.downsample_factor > 1:
         print(f"Downsample images by {args.downsample_factor}.")
-        sys.exit(1)
     main(args)
