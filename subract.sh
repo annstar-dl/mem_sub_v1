@@ -21,7 +21,7 @@ cd $1
 conda run -n ves_seg python "${MEMBRANE_SUBTRACTION_DIR}/run.py" \
  -dp ${PWD} -id ${MRC_DIR} -md "labels" \
  --in_format ${INPUT_FILE_FORMAT} \
- --out_format "mat" -ds $3
+ --out_format "mat" "mrc" "jpeg" -ds $3
 echo "Subtracted masks from original micrographs and saved results in $PWD/reconstructions"
 
 

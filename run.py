@@ -64,7 +64,14 @@ def main(args):
     for fpath in tqdm(os.listdir(imgs_path), desc="Processing images"):
         if not fpath.endswith(args.in_format):
             continue
+
         basename = os.path.splitext(fpath)[0]
+        if os.path.exists(os.path.join(args.imgsout_path + "_jpeg", basename + ".jpeg")) and \
+              os.path.exists(os.path.join(args.imgsout_path + "_mat", basename + ".mat")) and \
+                os.path.exists(os.path.join(args.imgsout_path + "_mrc", basename + ".mrc")):
+            print(f"Output for {basename} already exists. Skipping...")
+            continue
+
         img_fname = basename+"."+args.in_format
         img, header = read_img(os.path.join(imgs_path, img_fname),args.in_format, args.downsample_factor)
         mask = read_img(os.path.join(masks_path, basename + ".png"),"png",args.downsample_factor,True)[0]
@@ -76,14 +83,14 @@ def main(args):
         # add background back to the subtracted image
         if "mat" in args.out_format:
             # Save as .mat file if specified
-            savemat(os.path.join(args.imgsout_path, basename + ".mat"),
+            savemat(os.path.join(args.imgsout_path+"_mat", basename + ".mat"),
                     {'img': img, 'label': mask, 'mem': imgout.numpy(), 'sub': sub_img.numpy()})
-        if "png" in args.out_format:
+        if "jpeg" in args.out_format:
             # Save as .png file if specified
-            save_im(sub_img, os.path.join(args.imgsout_path, basename + ".png"))
+            save_im(sub_img, os.path.join(args.imgsout_path+"_jpeg", basename + ".jpeg"))
         if "mrc" in args.out_format:
             # Save as .png file if specified
-            save_im_mrc(sub_img, os.path.join(args.imgsout_path, basename + ".mrc"), header)
+            save_im_mrc(sub_img, os.path.join(args.imgsout_path+"_mrc", basename + ".mrc"), header)
         if args.save_reconstruction:
             save_im(imgout, os.path.join(args.imgsout_reconstructed_path, basename + ".png"))
 
@@ -109,10 +116,9 @@ if __name__=="__main__":
         if not os.path.exists(imgsout_reconstructed_path):
             os.makedirs(imgsout_reconstructed_path)
         args.imgsout_reconstructed_path = imgsout_reconstructed_path
-
+    args.imgsout_path = imgsout_subracted_path
     for fmt in args.out_format:
-        imgsout_path = imgsout_subracted_path+ f"_{fmt}"
-        args.imgsout_path = imgsout_path
+        imgsout_path = imgsout_subracted_path + f"_{fmt}"
         if not os.path.exists(imgsout_path):
             os.makedirs(imgsout_path)
     main(args)
