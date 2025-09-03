@@ -52,7 +52,7 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Convert color images to binary format.")
     parser.add_argument("input_dir", type=str, help="Directory containing input images.")
-    parser.add_argument("--output_dir", type=str,default=None, help="Directory containing input images.")
+    parser.add_argument("-o","--output_dir", type=str,default=None, help="Directory containing output images.")
     args = parser.parse_args()
 
     main(args)
