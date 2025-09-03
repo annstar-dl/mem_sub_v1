@@ -97,7 +97,7 @@ def main(args: argparse.Namespace) -> None:
         if args.format == "tif":
             data_tif = data
             Image.fromarray(data_tif).save(os.path.join(args.out_dir, f"{basename}.tif"))
-        elif args.format == "jpeg":
+        elif args.format == "jpeg" or args.format == "jpg":
             #   save as JPEG image
             # Normalize the data to the range [0, 255] for JPEG saving
             # tiff.imwrite(
@@ -107,7 +107,11 @@ def main(args: argparse.Namespace) -> None:
             # )
 
             data_jpg = (255*(data - np.min(data))/(np.max(data)-np.min(data))).astype(np.uint8)
-            io.imsave(os.path.join(args.out_dir, f"{basename}.jpeg"), data_jpg)
+            io.imsave(os.path.join(args.out_dir, f"{basename}.{args.format}"), data_jpg)
+        elif args.format == "png":
+            data_png = data.astype(np.uint8)
+            print("Data range", np.min(data_png), np.max(data_png))
+            io.imsave(os.path.join(args.out_dir, f"{basename}.{args.format}"), data_png)
 
 
 if __name__ == "__main__":
@@ -128,7 +132,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--format",
         type=str,
-        choices=["tif", "jpeg"],
+        choices=["tif", "jpeg", "jpg", "png"],
         default="jpeg",
         help="Output file format (default: jpeg)",
     )
@@ -151,7 +155,7 @@ if __name__ == "__main__":
         # create output directory if it does not exist
         os.makedirs(args.out_dir, exist_ok=True)
 
-    if args.format not in ["tif", "jpeg"]:
+    if args.format not in ["tif", "jpeg", "jpg", "png"]:
         parser.error(f"Unsupported format: {args.format}. Supported formats are 'tif' and 'jpeg'.")
     if args.downsample_factor > 1:
         print(f"Downsample images by {args.downsample_factor}.")

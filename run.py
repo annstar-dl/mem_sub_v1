@@ -41,9 +41,7 @@ def save_im(img, fpath):
         fpath (str): Path to save the image file.
     """
     img = img.detach().cpu().numpy()
-    img = img - np.min(img)
-    img = img/np.max(img)
-    img = (img*255).astype(np.uint8)
+    img = img.astype(np.uint8)
     img = Image.fromarray(img,"L")
     img.save(fpath)
 
