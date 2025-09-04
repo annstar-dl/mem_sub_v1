@@ -106,7 +106,7 @@ def main(args: argparse.Namespace) -> None:
             #     photometric="minisblack",
             # )
 
-            data_jpg = (255*(data - np.min(data))/(np.max(data)-np.min(data))).astype(np.uint8)
+            data_jpg = data.astype(np.uint8)
             io.imsave(os.path.join(args.out_dir, f"{basename}.{args.format}"), data_jpg)
         elif args.format == "png":
             data_png = data.astype(np.uint8)
