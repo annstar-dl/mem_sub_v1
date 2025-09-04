@@ -90,7 +90,8 @@ def main(args):
             # Save as .png file if specified
             save_im_mrc(sub_img, os.path.join(args.imgsout_path+"_mrc", basename + ".mrc"), header)
         if args.save_reconstruction:
-            save_im(imgout, os.path.join(args.imgsout_reconstructed_path, basename + ".png"))
+            save_im(imgout, os.path.join(args.imgsout_reconstructed_path, basename + ".tif"))
+            np.save(os.path.join(args.imgsout_reconstructed_path, basename + ".npy"), imgout)
 
 if __name__=="__main__":
     parser = argparse.ArgumentParser(description="Process membrane images and subtract membranes.")
