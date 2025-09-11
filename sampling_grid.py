@@ -213,11 +213,8 @@ def get_sampling_grid(mask, d, w):
     # Get the indices of the grid points
     row_indices, col_indices = torch.where(grid > 0)  # Get indices of non-zero elements in the mask
     # Select points within the boundary of the image based on the radius
-    #x_indices, y_indices = select_points_within_boundary(mask.shape[0], d, x_indices, y_indices)  # Filter points within the boundary
-    ### WHY DILATION IS NEEDED again?
     for _ in range(3):
         mask = dilate_mask(mask, 1)
-    #mask = gaussian_filter_skimage(mask,2.0)# Dilated the mask again to ensure grid points are within the mask
     mask = gaussian_filter(mask, kernel_size=(11, 11), sigma=(3.5, 3.5))  # Apply Gaussian filter to smooth the mask
     mask = mask/ mask.max()  # Normalize the mask to [0, 1] range
     return mask , row_indices, col_indices# Return the grid and coordinates as float tensors

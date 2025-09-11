@@ -34,6 +34,7 @@ def  membrane_subtract(img, mask):
     img, mask = torch.tensor(img,dtype=torch.float64), torch.tensor(mask, dtype=torch.float64),
     img_background =  torch.tensor(img_background,dtype=torch.float64)
     # Ensure the image is centered around zero
+    ###!!!TODO: GET RID OF THIS MEAN SUBTRACTION IN THE FUTURE OR ADD IT BACK AFTER SUBTRACTION
     img = img - torch.mean(img)
     #read parameters from the YAML file
     parameters = read_dict_from_yaml_file()

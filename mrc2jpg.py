@@ -25,7 +25,7 @@ MRC_MODE_DICT = {
 }
 FILE_TYPES = ["mrc", "st"]
 
-def load_mrc(in_file: str = None, transpose: tuple = None, downsample_factor: int = 4):
+def load_mrc(in_file: str = None, transpose: tuple = None, downsample_factor: int = 1):
     """
     Load an MRC-like file (.mrc or .st) and return the data as a numpy array.
 
