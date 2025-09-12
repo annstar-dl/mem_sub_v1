@@ -86,6 +86,9 @@ def main(args):
         if "jpeg" in args.out_format:
             # Save as .png file if specified
             save_im(sub_img, os.path.join(args.imgsout_path+"_jpeg", basename + ".jpeg"))
+        if "png" in args.out_format:
+            # Save as .png file if specified
+            save_im(sub_img, os.path.join(args.imgsout_path+"_png", basename + ".png"))
         if "mrc" in args.out_format:
             # Save as .png file if specified
             save_im_mrc(sub_img, os.path.join(args.imgsout_path+"_mrc", basename + ".mrc"), header)
