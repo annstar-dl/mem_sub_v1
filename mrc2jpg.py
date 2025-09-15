@@ -88,7 +88,6 @@ def main(args: argparse.Namespace) -> None:
 
     #   convert MRC-like files to TIFF and JPEG file formats
     for file in tqdm(files):
-
         #   read in the MRC-like file data
         data,_ = load_mrc(file, downsample_factor=args.downsample_factor)
 
@@ -98,6 +97,8 @@ def main(args: argparse.Namespace) -> None:
             data_tif = data
             Image.fromarray(data_tif).save(os.path.join(args.out_dir, f"{basename}.tif"))
         elif args.format == "jpeg" or args.format == "jpg":
+            if args.scale:
+                data = (data - np.min(data)) / (np.max(data) - np.min(data)) * 255
             #   save as JPEG image
             # Normalize the data to the range [0, 255] for JPEG saving
             # tiff.imwrite(
@@ -142,6 +143,11 @@ if __name__ == "__main__":
         type=int,
         default=4,
         help="Factor by which to downsample the images (default: 4)",
+    )
+    parser.add_argument(
+        "--scale",
+        action="store_true",
+        help="Scale images to 0-255 for JPEG output (default: False)",
     )
     args = parser.parse_args()
 
