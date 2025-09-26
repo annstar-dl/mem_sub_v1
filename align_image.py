@@ -1,7 +1,6 @@
 import torch
 import kornia
 import numpy as np
-import matplotlib.pyplot as plt
 
 
 def calculate_mse_loss(original, rotated):

@@ -11,7 +11,8 @@ import os
 from PIL import Image
 from glob import glob
 from tqdm import tqdm
-from skimage import io, transform
+from skimage import io
+from downsample import dowsample
 
 MRC_MODE_DICT = {
     0: np.int8,
@@ -32,6 +33,7 @@ def load_mrc(in_file: str = None, transpose: tuple = None, downsample_factor: in
     Args:
         in_file (str): path to the MRC-like file (.mrc or .st - default: self.mrc_file)
         transpose (tuple): transpose the data array (default: no transpose)
+        dawnsample_factor (int): factor by which to downsample the data (default: 1 - no downsampling)
 
     Returns:
         np.ndarray: data array of the MRC-like file
@@ -54,22 +56,6 @@ def load_mrc(in_file: str = None, transpose: tuple = None, downsample_factor: in
 
     return data, header
 
-def dowsample(data: np.ndarray, factor: 4) -> np.ndarray:
-    """
-    Downsample the data by a given factor.
-
-    Args:
-        data (np.ndarray): Input data array.
-        factor (int): Downsampling factor.
-
-    Returns:
-        np.ndarray: Downsampled data array.
-    """
-    height, width = data.shape[:2]
-    new_width = int(width / factor)
-    new_height = int(height / factor)
-    downsampled_img = transform.resize(image=data, output_shape=(new_height, new_width), order=1, mode='reflect', anti_aliasing=True)
-    return downsampled_img
 
 def main(args: argparse.Namespace) -> None:
     """
@@ -106,7 +92,6 @@ def main(args: argparse.Namespace) -> None:
             #     cv2.normalize(data, None, 0, 1, cv2.NORM_MINMAX),
             #     photometric="minisblack",
             # )
-
             data_jpg = data.astype(np.uint8)
             io.imsave(os.path.join(args.out_dir, f"{basename}.{args.format}"), data_jpg)
         elif args.format == "png":
