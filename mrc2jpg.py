@@ -26,7 +26,43 @@ MRC_MODE_DICT = {
 }
 FILE_TYPES = ["mrc", "st"]
 
-def load_mrc(in_file: str = None, transpose: tuple = None, downsample_factor: int = 1):
+def calc_downsampling_factor_based_on_voxel_size(voxel_size):
+    """
+    Calculate the downsampling factor based on the voxel size.
+
+    Args:
+        voxel_size (float): Original voxel size.
+    Returns:
+        int: Downsampling factor.
+    """
+    target_voxel_size = 4.2 # in Angstroms.
+    # This is a voxel size that is approximately correspond to voxel size of membrane detection training data
+    if voxel_size <= 0 or target_voxel_size <= 0:
+        raise ValueError("Voxel sizes must be positive values.")
+    downsample_factor = target_voxel_size / voxel_size
+    if downsample_factor < 1:
+        downsample_factor = 1
+    return downsample_factor
+
+def downsample_mrc(data: np.ndarray, voxel_size: tuple) -> np.ndarray:
+    """
+    Downsample the MRC data based on the voxel size.
+
+    Args:
+        data (np.ndarray): Input image data.
+        voxel_size (tuple): Voxel size in each dimension.
+
+    Returns:
+        np.ndarray: Downsampled image data.
+    """
+    if len(set(np.array(voxel_size[:2]).round(2))) != 1:
+        raise ValueError("Voxel size must be isotropic for downsampling.")
+    downsample_factor = calc_downsampling_factor_based_on_voxel_size(voxel_size[0])
+    if downsample_factor > 1:
+        data = dowsample(data, factor=downsample_factor)
+    return data
+
+def load_mrc(in_file: str = None, transpose: tuple = None):
     """
     Load an MRC-like file (.mrc or .st) and return the data as a numpy array.
 
@@ -43,7 +79,7 @@ def load_mrc(in_file: str = None, transpose: tuple = None, downsample_factor: in
         data = f.data.astype(MRC_MODE_DICT[f.header["mode"].item()])
         voxel_size = f.voxel_size.item()
     #assert len(set(np.array(voxel_size).round(4))) == 1, "Voxel size must be isotropic"
-    del in_file, f, voxel_size
+    del in_file, f
     if data.ndim > 2:
         if data.shape[0] == 1:
             data = data[0]
@@ -51,10 +87,7 @@ def load_mrc(in_file: str = None, transpose: tuple = None, downsample_factor: in
             raise ValueError("Data has more than 2 dimensions, which is not supported.")
     if transpose is not None:
         data = data.transpose(transpose)
-    if downsample_factor > 1:
-        data = dowsample(data, downsample_factor)  # Downsample the data by a factor of 4
-
-    return data, header
+    return data, header, voxel_size
 
 
 def main(args: argparse.Namespace) -> None:
@@ -75,7 +108,7 @@ def main(args: argparse.Namespace) -> None:
     #   convert MRC-like files to TIFF and JPEG file formats
     for file in tqdm(files):
         #   read in the MRC-like file data
-        data,_ = load_mrc(file, downsample_factor=args.downsample_factor)
+        data,_,_ = load_mrc(file, downsample_factor=args.downsample_factor)
 
         #   save as TIFF image
         basename, _ = os.path.splitext(os.path.basename(file))

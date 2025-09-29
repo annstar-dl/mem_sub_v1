@@ -5,6 +5,7 @@ from PIL import Image
 from skimage import transform
 
 
+
 def dowsample(img: np.ndarray, factor: int = 1) -> np.ndarray:
     """
     Downsample the data by a given factor.
@@ -21,7 +22,6 @@ def dowsample(img: np.ndarray, factor: int = 1) -> np.ndarray:
     new_height = int(height / factor)
     if new_width < 1 or new_height < 1:
         raise ValueError("Downsampling factor is too large for the given data dimensions.")
-    ###TODO: check if width and hights are even
 
     downsampled_data = fft_for_im(img, downsample=factor)
     return downsampled_data
@@ -78,7 +78,7 @@ def fft_for_im(img: np.ndarray, downsample) -> np.ndarray:
     nb_rows, nb_cols = img.shape
     f = np.fft.fft2(img)
     fshift = np.fft.fftshift(f)
-    nb_ds_rows, nb_ds_cols = nb_rows//downsample, nb_cols//downsample
+    nb_ds_rows, nb_ds_cols = int(nb_rows/downsample), int(nb_cols/downsample)
     center_row, center_col = get_fft_center_coord(img)
     fshift = crop_im(fshift, (center_row, center_col), (nb_ds_rows, nb_ds_cols))
     ifshift = np.fft.ifftshift(fshift)
@@ -146,7 +146,7 @@ def visualize_im(img: np.ndarray, title: str = "Image"):
 
 def downsample_test():
     img = draw_sign_wave(511, 1001, wavelength=1001/1)
-    downsampled_img = dowsample(img, factor=12)
+    downsampled_img = dowsample(img, factor=5.6)
     print("Original shape:", img.shape)
     print("Downsampled shape:", downsampled_img.shape)
     plt.figure()
