@@ -1,11 +1,10 @@
 import numpy as np
 from scipy import special
-import matplotlib.pyplot as plt
-import scipy.io as sio
 
 def fuzzymask(n, r, origin=None, risetime=None):
     """
     Function that creates disk of radius r with fuzzy edges.
+    Function is adapted from MATLAB code by F. Singword
     """
     if np.isscalar(n):
         n = np.array((n, n))
@@ -44,8 +43,8 @@ def fuzzymask(n, r, origin=None, risetime=None):
     return mask
 
 if __name__ == "__main__":
-
-
+    import scipy.io as sio
+    from matplotlib import pyplot as plt
     n = np.array([60, 120])
     matfpath = r"/home/astar/Projects/Freds_downsampling/disk1.mat"
     # Load the .mat file into a dictionary
