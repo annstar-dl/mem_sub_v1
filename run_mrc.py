@@ -1,16 +1,11 @@
 import os
-import torch
 import numpy as np
 from PIL import Image
-from scipy.ndimage import gaussian_filter
-from sympy.tensor.tensor import substitute_indices
-
 from membrane_subtract_mrc import membrane_subtract
 from tqdm import tqdm
 import argparse
 from scipy.io import savemat
-from mrc2jpg import load_mrc, downsample_mrc
-import mrcfile
+from mrc_utils import load_mrc, downsample_mrc, save_im_mrc
 from run import read_img
 
 
@@ -24,34 +19,17 @@ def read_mrc(fpath):
     img = img.astype(np.float64)
     return img, header, voxel_size
 
-
-
 def save_im(img, fpath):
     """Save the image to a file after normalizing it to the range [0, 255].
     Args:
         img (numpy.ndarray): Image array to save.
         fpath (str): Path to save the image file.
     """
-    img = img.detach().cpu().numpy()
+    img = img - np.min(img)
+    img = img / np.max(img) * 255
     img = img.astype(np.uint8)
     img = Image.fromarray(img,"L")
     img.save(fpath)
-
-def save_im_mrc(img, fpath, header):
-    """Save the image to a MRC file.
-    Args:
-        img (numpy.ndarray): Image array to save.
-        fpath (str): Path to save the image file.
-    """
-    img = img.detach().cpu().numpy()
-    with mrcfile.new(fpath, overwrite=True) as mrc_new:
-        #Do not change nx,ny,nz values in the header
-        #Do not chnage dmin, dmax, dmean, and rms
-        field_names = mrc_new.header.dtype.names
-        for field in field_names:
-            if field!="nx" and field!="ny" and field!="nz" and field!="dmin" and field!="dmax" and field!="dmean" and field!="rms":
-                mrc_new.header[field] = header[field]
-        mrc_new.set_data(img.astype(np.float32))
 
 def upsample_to_original(img_downsampled, original_shape):
     """Upsample the downsampled image to the original shape using nearest neighbor interpolation.
@@ -84,19 +62,20 @@ def main(args):
         mask = read_img(os.path.join(masks_path, basename + ".png"),"png",1,True)
         img_downsampled = downsample_mrc(img, voxel_size)
         # check if the image is the same size as the mask
-        if img.shape[:2] != mask.shape[:2]:
+        if img_downsampled.shape[:2] != mask.shape[:2]:
             raise ValueError(
-                f"Image {img_fname} and mask {basename}.png must have the same dimensions. Image shape: {img.shape}, Mask shape: {mask.shape}")
+                f"Image {img_fname} and mask {basename}.png must have the same dimensions. "
+                f"Image shape: {img.shape}, Mask shape: {mask.shape}")
         # run membrane subtraction algorithm
         imgout_downsampled = membrane_subtract(img_downsampled, mask)
         #upsample the membrane estimate to the original size
-        imgout = upsample_to_original(img_downsampled, img.shape)
+        imgout = upsample_to_original(imgout_downsampled, img.shape)
         sub_img = img - imgout
         # add background back to the subtracted image
         if "mat" in args.out_format:
             # Save as .mat file if specified
             savemat(os.path.join(args.imgsout_path+"_mat", basename + ".mat"),
-                    {'img': img, 'label': mask, 'mem': imgout.numpy(), 'sub': sub_img.numpy()})
+                    {'img': img, 'label': mask, 'mem': imgout, 'sub': sub_img})
         if "jpeg" in args.out_format:
             # Save as .png file if specified
             save_im(sub_img, os.path.join(args.imgsout_path+"_jpeg", basename + ".jpeg"))
