@@ -5,90 +5,13 @@
 
 
 import argparse
-import mrcfile as mrc
 import numpy as np
 import os
 from PIL import Image
 from glob import glob
 from tqdm import tqdm
 from skimage import io
-from downsample import dowsample
-
-MRC_MODE_DICT = {
-    0: np.int8,
-    1: np.int16,
-    2: np.float32,
-    3: np.complex64,
-    4: np.complex128,
-    6: np.uint16,
-    12: np.float16,
-    101: None,
-}
-FILE_TYPES = ["mrc", "st"]
-
-def calc_downsampling_factor_based_on_voxel_size(voxel_size):
-    """
-    Calculate the downsampling factor based on the voxel size.
-
-    Args:
-        voxel_size (float): Original voxel size.
-    Returns:
-        int: Downsampling factor.
-    """
-    target_voxel_size = 4.2 # in Angstroms.
-    # This is a voxel size that is approximately correspond to voxel size of membrane detection training data
-    if voxel_size <= 0 or target_voxel_size <= 0:
-        raise ValueError("Voxel sizes must be positive values.")
-    downsample_factor = target_voxel_size / voxel_size
-    if downsample_factor < 1:
-        downsample_factor = 1
-    return downsample_factor
-
-def downsample_mrc(data: np.ndarray, voxel_size: tuple) -> np.ndarray:
-    """
-    Downsample the MRC data based on the voxel size.
-
-    Args:
-        data (np.ndarray): Input image data.
-        voxel_size (tuple): Voxel size in each dimension.
-
-    Returns:
-        np.ndarray: Downsampled image data.
-    """
-    if len(set(np.array(voxel_size[:2]).round(2))) != 1:
-        raise ValueError("Voxel size must be isotropic for downsampling.")
-    downsample_factor = calc_downsampling_factor_based_on_voxel_size(voxel_size[0])
-    if downsample_factor > 1:
-        data = dowsample(data, factor=downsample_factor)
-    return data
-
-def load_mrc(in_file: str = None, transpose: tuple = None):
-    """
-    Load an MRC-like file (.mrc or .st) and return the data as a numpy array.
-
-    Args:
-        in_file (str): path to the MRC-like file (.mrc or .st - default: self.mrc_file)
-        transpose (tuple): transpose the data array (default: no transpose)
-        dawnsample_factor (int): factor by which to downsample the data (default: 1 - no downsampling)
-
-    Returns:
-        np.ndarray: data array of the MRC-like file
-    """
-    with mrc.open(in_file, permissive=True) as f:
-        header = f.header
-        data = f.data.astype(MRC_MODE_DICT[f.header["mode"].item()])
-        voxel_size = f.voxel_size.item()
-    #assert len(set(np.array(voxel_size).round(4))) == 1, "Voxel size must be isotropic"
-    del in_file, f
-    if data.ndim > 2:
-        if data.shape[0] == 1:
-            data = data[0]
-        else:
-            raise ValueError("Data has more than 2 dimensions, which is not supported.")
-    if transpose is not None:
-        data = data.transpose(transpose)
-    return data, header, voxel_size
-
+from mrc_utils import load_mrc, FILE_TYPES, downsample_mrc
 
 def main(args: argparse.Namespace) -> None:
     """
@@ -108,16 +31,24 @@ def main(args: argparse.Namespace) -> None:
     #   convert MRC-like files to TIFF and JPEG file formats
     for file in tqdm(files):
         #   read in the MRC-like file data
-        data,_,_ = load_mrc(file, downsample_factor=args.downsample_factor)
+        data,_,voxel_size = load_mrc(file)
+        org_shape = data.shape
+        print(f"Original data mean: {np.mean(data)},min: {np.min(data)}, max: {np.max(data)}")
+        #  downsample the data if the voxel size is greater than the target voxel size
+        if args.downsampling_allowed:
+            data = downsample_mrc(data, voxel_size)
 
-        #   save as TIFF image
+            print(f"Processing {file}, original voxel size: {voxel_size[0]:.2f} Å,"
+                  f" old file shape {org_shape} new shape: {data.shape}")
+
+        #save as TIFF image
         basename, _ = os.path.splitext(os.path.basename(file))
+        print(f"Downsample data mean: {np.mean(data)}, min: {np.min(data)}, max: {np.max(data)}")
+        if args.scale:
+            data = (data - np.min(data)) / (np.max(data) - np.min(data)) * 255
         if args.format == "tif":
-            data_tif = data
-            Image.fromarray(data_tif).save(os.path.join(args.out_dir, f"{basename}.tif"))
+            Image.fromarray(data).save(os.path.join(args.out_dir, f"{basename}.tif"))
         elif args.format == "jpeg" or args.format == "jpg":
-            if args.scale:
-                data = (data - np.min(data)) / (np.max(data) - np.min(data)) * 255
             #   save as JPEG image
             # Normalize the data to the range [0, 255] for JPEG saving
             # tiff.imwrite(
@@ -125,12 +56,12 @@ def main(args: argparse.Namespace) -> None:
             #     cv2.normalize(data, None, 0, 1, cv2.NORM_MINMAX),
             #     photometric="minisblack",
             # )
-            data_jpg = data.astype(np.uint8)
-            io.imsave(os.path.join(args.out_dir, f"{basename}.{args.format}"), data_jpg)
+            data = data.astype(np.uint8)
+            io.imsave(os.path.join(args.out_dir, f"{basename}.{args.format}"), data)
         elif args.format == "png":
-            data_png = data.astype(np.uint8)
-            print("Data range", np.min(data_png), np.max(data_png))
-            io.imsave(os.path.join(args.out_dir, f"{basename}.{args.format}"), data_png)
+            data = data.astype(np.uint8)
+            print(f"{basename} mean", np.mean(data))
+            io.imsave(os.path.join(args.out_dir, f"{basename}.{args.format}"), data)
 
 
 if __name__ == "__main__":
@@ -156,31 +87,24 @@ if __name__ == "__main__":
         help="Output file format (default: jpeg)",
     )
     parser.add_argument(
-        "-ds",
-        "--downsample_factor",
-        type=int,
-        default=4,
-        help="Factor by which to downsample the images (default: 4)",
-    )
-    parser.add_argument(
         "--scale",
         action="store_true",
         help="Scale images to 0-255 for JPEG output (default: False)",
+    )
+    parser.add_argument("-dsa",
+        "--downsampling_allowed",
+        action="store_true",
+        help="Allow downsampling based on voxel size (default: False)",
     )
     args = parser.parse_args()
 
     assert os.path.isdir(args.in_dir), f"Input directory does not exist: {args.in_dir}"
     data_dir_name = os.path.basename(os.path.normpath(args.in_dir))
-    args.out_dir = os.path.join(args.out_dir, data_dir_name +"_"+args.format+"_"+f"ds{args.downsample_factor}")
-    if args.out_dir is None:
-        # set output directory to input directory if not specified
-        args.out_dir = args.in_dir
-    else:
-        # create output directory if it does not exist
-        os.makedirs(args.out_dir, exist_ok=True)
-
+    print("Data directory name:", data_dir_name)
+    args.out_dir = os.path.join(args.out_dir, data_dir_name + "_ds" if args.downsampling_allowed else data_dir_name)
+    os.makedirs(args.out_dir, exist_ok=True)
+    if args.downsampling_allowed:
+        print("Downsampling based on voxel size is allowed.")
     if args.format not in ["tif", "jpeg", "jpg", "png"]:
         parser.error(f"Unsupported format: {args.format}. Supported formats are 'tif' and 'jpeg'.")
-    if args.downsample_factor > 1:
-        print(f"Downsample images by {args.downsample_factor}.")
     main(args)
