@@ -5,7 +5,7 @@ from membrane_subtract_mrc import membrane_subtract
 from tqdm import tqdm
 import argparse
 from scipy.io import savemat
-from mrc_utils import load_mrc, downsample_mrc, save_im_mrc
+from mrc_utils import load_mrc, downsample_mrc, save_im_mrc_same_size,  calc_new_shape_based_on_voxel_size
 from run import read_img
 
 
@@ -31,16 +31,19 @@ def save_im(img, fpath):
     img = Image.fromarray(img,"L")
     img.save(fpath)
 
-def upsample_to_original(img_downsampled, original_shape):
+def upsample_to_original(img_downsampled, original_shape, voxel_size):
     """Upsample the downsampled image to the original shape using nearest neighbor interpolation.
     Args:
         img_downsampled (numpy.ndarray): Downsampled image array.
         original_shape (tuple): Original shape of the image (height, width).
+        padded_org_shape (tuple): Padded original shape of the image (height, width).
     Returns:
         numpy.ndarray: Upsampled image array.
     """
     img_downsampled = img_downsampled.detach().cpu().numpy()
-    upsampled_img = np.array(Image.fromarray(img_downsampled).resize((original_shape[1], original_shape[0]), Image.NEAREST))
+    padded_org_shape,new_shape, ds_factor = calc_new_shape_based_on_voxel_size(original_shape, voxel_size[0])
+    upsampled_img = np.array(Image.fromarray(img_downsampled).resize((padded_org_shape[1], padded_org_shape[0]), Image.NEAREST))
+    upsampled_img = upsampled_img[:original_shape[0], :original_shape[1]]
     return upsampled_img
 
 def main(args):
@@ -69,7 +72,7 @@ def main(args):
         # run membrane subtraction algorithm
         imgout_downsampled = membrane_subtract(img_downsampled, mask)
         #upsample the membrane estimate to the original size
-        imgout = upsample_to_original(imgout_downsampled, img.shape)
+        imgout = upsample_to_original(imgout_downsampled, img.shape, voxel_size)
         sub_img = img - imgout
         # add background back to the subtracted image
         if "mat" in args.out_format:
@@ -84,7 +87,7 @@ def main(args):
             save_im(sub_img, os.path.join(args.imgsout_path+"_png", basename + ".png"))
         if "mrc" in args.out_format:
             # Save as .png file if specified
-            save_im_mrc(sub_img, os.path.join(args.imgsout_path+"_mrc", basename + ".mrc"), header)
+            save_im_mrc_same_size(sub_img, os.path.join(args.imgsout_path+"_mrc", basename + ".mrc"), header)
         if args.save_reconstruction:
             save_im(imgout, os.path.join(args.imgsout_reconstructed_path, basename + ".tif"))
             np.save(os.path.join(args.imgsout_reconstructed_path, basename + ".npy"), imgout)

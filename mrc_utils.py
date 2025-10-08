@@ -1,6 +1,6 @@
 import mrcfile
 import numpy as np
-from temp.new_downsample import down_sample
+from downsample import down_sample
 from fuzzymask import fuzzymask
 from math import ceil
 
@@ -14,6 +14,7 @@ MRC_MODE_DICT = {
     12: np.float16,
     101: None,
 }
+
 FILE_TYPES = ["mrc", "st"]
 
 def save_im_mrc_same_size(img, fpath, header):
@@ -71,7 +72,7 @@ def calc_new_shape_based_on_voxel_size(old_shape,voxel_size,downsample_factor=No
     Returns:
         int: Downsampling factor.
     """
-    target_voxel_size = 4 # in Angstroms.
+    target_voxel_size = 4.5 # in Angstroms.
     # This is a voxel size that is approximately correspond to voxel
     # size of membrane detection training data
     if voxel_size <= 0 or target_voxel_size <= 0:
@@ -96,14 +97,17 @@ def downsample_mrc(data: np.ndarray, voxel_size: tuple) -> np.ndarray:
 
     Returns:
         np.ndarray: Downsampled image data.
+        new_shape (tuple): New shape of the padded original image data.
     """
     if len(set(np.array(voxel_size[:2]).round(2))) != 1:
         raise ValueError("Voxel size must be isotropic for downsampling, but got: "
                          f"{voxel_size[0]:.2f}, {voxel_size[1]:.2f}")
-    old_shape, new_shape, ds_factor = calc_new_shape_based_on_voxel_size(data.shape, voxel_size[0], )
+    padded_shape, new_shape, ds_factor = calc_new_shape_based_on_voxel_size(data.shape, voxel_size[0], )
+    print("Padded shape: {}, old shape: {}".format(padded_shape, data.shape))
     if ds_factor > 1:
-        if np.any(np.array(old_shape) > data.shape):
-            data = pad_im(data, old_shape, padding_value=np.mean(data), mode="right_down")
+        if np.any(np.array(padded_shape) > data.shape):
+            print(f"Padding the image with shape {data.shape} to the new shape {padded_shape} before downsampling.")
+            data = pad_im(data, padded_shape, padding_value=np.mean(data), mode="right_down")
         print(f"Downsampling factor  {ds_factor:.2f} is higher than 1, downsampling the data."
               f"Org voxel size: {voxel_size[0]:.2f} Å. Org data shape {data.shape} new data shape: {new_shape}")
         msk = fuzzymask(new_shape, r=0.48 * np.array(new_shape))

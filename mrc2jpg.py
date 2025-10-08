@@ -30,6 +30,7 @@ def main(args: argparse.Namespace) -> None:
 
     #   convert MRC-like files to TIFF and JPEG file formats
     for file in tqdm(files):
+        print(f"Processing {file}")
         #   read in the MRC-like file data
         data,_,voxel_size = load_mrc(file)
         org_shape = data.shape
@@ -37,13 +38,10 @@ def main(args: argparse.Namespace) -> None:
         #  downsample the data if the voxel size is greater than the target voxel size
         if args.downsampling_allowed:
             data = downsample_mrc(data, voxel_size)
-
-            print(f"Processing {file}, original voxel size: {voxel_size[0]:.2f} Å,"
-                  f" old file shape {org_shape} new shape: {data.shape}")
-
+            print(f"Downsample data mean: {np.mean(data)}, min: {np.min(data)}, max: {np.max(data)}")
         #save as TIFF image
         basename, _ = os.path.splitext(os.path.basename(file))
-        print(f"Downsample data mean: {np.mean(data)}, min: {np.min(data)}, max: {np.max(data)}")
+
         if args.scale:
             data = (data - np.min(data)) / (np.max(data) - np.min(data)) * 255
         if args.format == "tif":
