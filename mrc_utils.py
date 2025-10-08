@@ -2,6 +2,7 @@ import mrcfile
 import numpy as np
 from temp.new_downsample import down_sample
 from fuzzymask import fuzzymask
+from math import ceil
 
 MRC_MODE_DICT = {
     0: np.int8,
@@ -14,20 +15,25 @@ MRC_MODE_DICT = {
     101: None,
 }
 FILE_TYPES = ["mrc", "st"]
-def save_im_mrc(img, fpath, header):
-    """Save the image to a MRC file.
+
+def save_im_mrc_same_size(img, fpath, header):
+    """Save the image to a MRC file keeping the same header information.
+    Only the image data and statistic are changed.
     Args:
         img (numpy.ndarray): Image array to save.
         fpath (str): Path to save the image file.
+        header (mrcfile.header): Header information to keep.
+    Returns:
+        None
     """
     with mrcfile.new(fpath, overwrite=True) as mrc_new:
-        #Do not change nx,ny,nz values in the header
         #Do not chnage dmin, dmax, dmean, and rms
         field_names = mrc_new.header.dtype.names
         for field in field_names:
-            if field!="nx" and field!="ny" and field!="nz" and field!="dmin" and field!="dmax" and field!="dmean" and field!="rms":
+            if field!="dmin" and field!="dmax" and field!="dmean" and field!="rms":
                 mrc_new.header[field] = header[field]
         mrc_new.set_data(img.astype(np.float32))
+        mrc_new.update_header_stats()
 
 def load_mrc(in_file: str = None, transpose: tuple = None):
     """
@@ -56,7 +62,7 @@ def load_mrc(in_file: str = None, transpose: tuple = None):
         data = data.transpose(transpose)
     return data, header, voxel_size
 
-def calc_downsampling_factor_based_on_voxel_size(voxel_size):
+def calc_new_shape_based_on_voxel_size(old_shape,voxel_size,downsample_factor=None):
     """
     Calculate the downsampling factor based on the voxel size.
 
@@ -65,15 +71,19 @@ def calc_downsampling_factor_based_on_voxel_size(voxel_size):
     Returns:
         int: Downsampling factor.
     """
-    target_voxel_size = 4.2 # in Angstroms.
+    target_voxel_size = 4 # in Angstroms.
     # This is a voxel size that is approximately correspond to voxel
     # size of membrane detection training data
     if voxel_size <= 0 or target_voxel_size <= 0:
         raise ValueError("Voxel sizes must be positive values.")
-    downsample_factor = target_voxel_size / voxel_size
-    if downsample_factor < 1:
-        downsample_factor = 1
-    return downsample_factor
+    ds_factor = int(target_voxel_size / voxel_size)
+    if downsample_factor is not None:
+        ds_factor = downsample_factor
+    if ds_factor < 1:
+        ds_factor = 1
+    old_shape = [next_multiple(old_shape[0],ds_factor), next_multiple(old_shape[1], ds_factor)]
+    new_shape = int(old_shape[0]/ds_factor),int(old_shape[1]/ds_factor)
+    return old_shape,new_shape, ds_factor
 
 def downsample_mrc(data: np.ndarray, voxel_size: tuple) -> np.ndarray:
     """
@@ -90,9 +100,53 @@ def downsample_mrc(data: np.ndarray, voxel_size: tuple) -> np.ndarray:
     if len(set(np.array(voxel_size[:2]).round(2))) != 1:
         raise ValueError("Voxel size must be isotropic for downsampling, but got: "
                          f"{voxel_size[0]:.2f}, {voxel_size[1]:.2f}")
-    downsample_factor = calc_downsampling_factor_based_on_voxel_size(voxel_size[0])
-    if downsample_factor > 1:
-        new_shape = (int(data.shape[0]/downsample_factor), int(data.shape[1]/downsample_factor))
-        msk = fuzzymask(new_shape, r=0.45 * np.array(new_shape), risetime=0.05 * new_shape[0])
+    old_shape, new_shape, ds_factor = calc_new_shape_based_on_voxel_size(data.shape, voxel_size[0], )
+    if ds_factor > 1:
+        if np.any(np.array(old_shape) > data.shape):
+            data = pad_im(data, old_shape, padding_value=np.mean(data), mode="right_down")
+        print(f"Downsampling factor  {ds_factor:.2f} is higher than 1, downsampling the data."
+              f"Org voxel size: {voxel_size[0]:.2f} Å. Org data shape {data.shape} new data shape: {new_shape}")
+        msk = fuzzymask(new_shape, r=0.48 * np.array(new_shape))
         data = down_sample(data, new_shape, fuzzy_mask=msk)
     return data
+
+def pad_im(im, new_shape, padding_value, mode="right_down"):
+    """Pad the image to the new shape with the given padding value.
+    Args:
+        im (numpy.ndarray): Image array to pad,
+        new_shape (tuple): New shape of the image (height, width),
+        padding_value (float): Value to use for padding,
+        mode (str): Padding mode, either "right_down" or "center". Default is "right_down".
+    Returns:
+        numpy.ndarray: Padded image array.
+
+        """
+
+    pad_height = new_shape[0] - im.shape[0]
+    pad_width = new_shape[1] - im.shape[1]
+
+    if mode == "right_down":
+        pad_top = 0
+        pad_bottom = pad_height
+        pad_left = 0
+        pad_right = pad_width
+    elif mode == "center":
+        pad_top = int(pad_height // 2)
+        pad_bottom = pad_height - pad_top
+        pad_left = int(pad_width // 2)
+        pad_right = pad_width - pad_left
+    else:
+        raise ValueError("Invalid padding mode. Supported modes are 'right_down' and 'center'.")
+    padded_im = np.pad(im, ((pad_top, pad_bottom), (pad_left, pad_right)), mode='constant', constant_values=padding_value)
+    return padded_im
+
+def convert_to_even(n):
+    """Convert an integer to the nearest even integer."""
+    return n if n % 2 == 0 else n + 1
+
+def next_multiple(n, base):
+    """Convert an integer to the next multiple of base."""
+
+    n = n if n % base == 0 else ceil(n / base) * base
+    n = convert_to_even(n/base)*base
+    return int(n)

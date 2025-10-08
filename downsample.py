@@ -31,4 +31,10 @@ def down_sample(img,new_size, fuzzy_mask=None):
 
 
 if __name__ == "__main__":
-    pass
+    fpath = r"/home/astar/Projects/vesicles_data/from_Fred/subtracted/20211122/20211122/slot6_100_0001.mrc"
+    from mrc_utils import load_mrc, calc_downsampling_factor_based_on_voxel_size
+    data, _, voxel_size = load_mrc(fpath)
+    print("Original shape: {}".format(data.shape))
+    downsample_factor = calc_downsampling_factor_based_on_voxel_size(voxel_size[0])
+    new_shape = (int(data.shape[0] / downsample_factor), int(data.shape[1] / downsample_factor))
+    ds_data = down_sample(data, new_shape)
