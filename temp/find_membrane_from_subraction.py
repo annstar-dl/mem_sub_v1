@@ -12,21 +12,42 @@ def find_membrane_from_subtraction(org_img, sub_img):
     return membrane
 
 if __name__ == "__main__":
-    org_path = r"/home/astar/Projects/vesicles_data/patri_subtractions/patri_02132024/FoilHole_14439761_Data_14437927_14437929_20231114_214246_fractions_aligned_mic_DW.mrc"
-    sub_path_10_dilation = r"/home/astar/Projects/vesicles_data/patri_subtractions/reconstructions_10_dilation/subtracted_mrc/FoilHole_14439761_Data_14437927_14437929_20231114_214246_fractions_aligned_mic_DW.mrc"
-    sub_path_10_dilation_longer = r"/home/astar/Projects/vesicles_data/patri_subtractions/reconstructions/subtracted_mrc/FoilHole_14439761_Data_14437927_14437929_20231114_214246_fractions_aligned_mic_DW.mrc"
-    start_row, end_row = 3446, 3728
-    start_col, end_col = 1638, 1860
+    org_sub_path = r"/home/astar/Projects/vesicles_data/patri_test_crop/subtracted/test_crop.mrc"
+    sub_sub_path = r"/home/astar/Projects/vesicles_data/patri_test_crop/subtracted/reconstructions/subtracted_mrc/test_crop.mrc"
+    org_path = r"/home/astar/Projects/vesicles_data/patri_test_crop/org/test_crop.mrc"
+    sub_path = r"/home/astar/Projects/vesicles_data/patri_test_crop/org/reconstructions/subtracted_mrc/test_crop.mrc"
+    org_sub_img, _, _ = load_mrc(org_sub_path)
+    sub_sub, _, _ = load_mrc(sub_sub_path)
     org_img, _, _ = load_mrc(org_path)
-    sub_img_10_dilation, _, _ = load_mrc(sub_path_10_dilation)
-    sub_img_10_dilation_longer, _, _ = load_mrc(sub_path_10_dilation_longer)
+    sub, _, _ = load_mrc(sub_path)
     #org_img = org_img[start_row:end_row, start_col:end_col]
     #sub_img = sub_img[start_row:end_row, start_col:end_col]
-    membrane_10_dilation = find_membrane_from_subtraction(org_img, sub_img_10_dilation)
-    membrane_10_dilation_longer = find_membrane_from_subtraction(org_img, sub_img_10_dilation_longer)
-    visualize_im(org_img, title="Original Image", vmin=8, vmax=10)
-    visualize_im(membrane_10_dilation, title="Membrane Image 10 dilation")
-    visualize_im(membrane_10_dilation_longer, title="Membrane Image 10 dilation longer")
-    visualize_im(sub_img_10_dilation, title="Subtracted Image 10 dilation", vmin=8, vmax=10)
-    visualize_im(sub_img_10_dilation_longer, title="Subtracted Image 10 dilation longer", vmin=8, vmax=10)
+    membrane_sub = find_membrane_from_subtraction(org_sub_img, sub_sub)
+    membrane = find_membrane_from_subtraction(org_img, sub)
+    corr = np.corrcoef(membrane_sub[650,:], membrane[650,:])
+    print("Correlation between membranes: {}".format(corr))
+
+
+    visualize_im(membrane_sub, title="Membrane sub")
+    visualize_im(membrane, title="Membrane")
+    #membrane = membrane/np.mean(np.abs(membrane))
+    #membrane_sub = membrane_sub / np.mean(np.abs(membrane_sub))
+
+    plt.figure(figsize=(12, 6))
+    plt.plot(membrane[650, :], label='Membrane Original', alpha=0.7)
+    plt.plot(membrane_sub[650, :], label='Membrane Subtracted', alpha=0.7)
+    plt.title('Membrane Profiles Comparison')
+    plt.xlabel('Pixel Index')
+    plt.ylabel('Normalized Intensity')
+    plt.legend()
+
+    plt.figure()
+    #membrane[500, :] = -1
+    plt.imshow(membrane, cmap='gray')
+    plt.title('Membrane Original')
+
+    plt.figure()
+    plt.imshow(membrane+membrane_sub, cmap='gray')
+    plt.title('Membrane Original + Membrane Subtracted')
+
     plt.show()
