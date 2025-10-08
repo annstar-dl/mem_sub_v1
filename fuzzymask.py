@@ -5,6 +5,23 @@ def fuzzymask(n, r, origin=None, risetime=None):
     """
     Function that creates disk of radius r with fuzzy edges.
     Function is adapted from MATLAB code by F. Singword
+    Args:
+        n (int or tuple of int): Size of the output array. If an integer is
+            provided, the output will be a square array of shape (n, n).
+            If a tuple is provided, it should be of the form (n_rows, n_cols).
+        r (float or tuple of float): Radius of the disk. If a single float is
+            provided, the disk will be circular. If a tuple is provided, it should
+            be of the form (r_rows, r_cols) to create an elliptical disk.
+        origin (tuple of int, optional): Center of the disk. If None, the center
+            of the array will be used.
+        risetime (float, optional): Width of the fuzzy edge. If None, it will be
+            set to r/10.
+    Returns:
+        numpy.ndarray: 2D array of shape (n_rows, n_cols) with values between 0 and 1,
+            where 1 represents the inside of the disk and 0 represents the outside.
+            The transition from 1 to 0 occurs over the distance specified by risetime.
+    Note:
+        The function uses the error function (erf) to create the fuzzy edge.
     """
     if np.isscalar(n):
         n = np.array((n, n))
@@ -14,10 +31,11 @@ def fuzzymask(n, r, origin=None, risetime=None):
         n = np.array(n)
 
     if risetime is None:
-        risetime = r / 10  # default risetime is 1/10 of the radius
+        if np.isscalar(r):
+            risetime = r / 10
+        else:
+            risetime = r[0] / 10  # default risetime is 1/10 of the radius
 
-    if not np.isscalar(risetime):
-        raise ValueError("Risetime must be a scalar, not a tuple or an array.")
 
     if risetime == 0:
         k=0
