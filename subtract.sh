@@ -19,7 +19,7 @@ MRC_DIR=$(basename "$2")
 cd $1
 # Subtract the predicted masks from the original micrographs
 conda run -n ves_seg python "${MEMBRANE_SUBTRACTION_DIR}/run_mrc.py" \
- -dp ${PWD} -id ${MRC_DIR} -md "labels_dilated" \
+ -dp ${PWD} -id ${MRC_DIR} -md "labels" \
  --in_format ${INPUT_FILE_FORMAT} \
  --out_format "mrc" "png"
 echo "Subtracted masks from original micrographs and saved results in $PWD/reconstructions"

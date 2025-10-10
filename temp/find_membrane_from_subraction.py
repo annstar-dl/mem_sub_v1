@@ -11,7 +11,7 @@ def find_membrane_from_subtraction(org_img, sub_img):
     membrane = org_img - sub_img
     return membrane
 
-if __name__ == "__main__":
+def patri_img():
     org_sub_path = r"/home/astar/Projects/vesicles_data/patri_test_crop/subtracted/test_crop.mrc"
     sub_sub_path = r"/home/astar/Projects/vesicles_data/patri_test_crop/subtracted/reconstructions/subtracted_mrc/test_crop.mrc"
     org_path = r"/home/astar/Projects/vesicles_data/patri_test_crop/org/test_crop.mrc"
@@ -51,3 +51,25 @@ if __name__ == "__main__":
     plt.title('Membrane Original + Membrane Subtracted')
 
     plt.show()
+
+def freds_img_test():
+    org_path = r"/home/astar/Projects/vesicles_data/from_Fred/subtracted/20211122/20211122/slot6_100_0001.mrc"
+    sub_path = r"/home/astar/Projects/vesicles_data/from_Fred/subtracted/20211122/reconstructions/subtracted_mrc/slot6_100_0001.mrc"
+    org_img, old_header, old_voxel_size = load_mrc(org_path)
+    sub, new_header, new_voxel_size = load_mrc(sub_path)
+    membrane = find_membrane_from_subtraction(org_img, sub)
+    visualize_im(membrane, title="Membrane")
+    #compare headers:
+    for key in old_header.dtype.names:
+        if key in new_header.dtype.names:
+            if np.any(old_header[key] != new_header[key]):
+                print(f"Header key {key} differs: old {old_header[key]}, new {new_header[key]}")
+        else:
+            print(f"Header key {key} not in new header")
+    print(f"Old voxel size: {old_voxel_size}, New voxel size: {new_voxel_size}")
+
+
+    plt.show()
+
+if __name__ == "__main__":
+    freds_img_test()

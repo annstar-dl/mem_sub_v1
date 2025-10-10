@@ -18,11 +18,11 @@ if __name__ == "__main__":
     print("Scaled data range: min {}, max {}".format(np.min(scaled_data), np.max(scaled_data)))
     my_ds = downsample_mrc(data, voxel_size)
     my_fuzzy_mask = fuzzymask(my_ds.shape, r=0.48 * np.array(my_ds.shape))
-    fpath_ds = r"/home/astar/Projects/vesicles_data/from_Fred/subtracted/20211122/20211122/slot6_100_0002ms.mrc"
-    fred_ds, _, _ = load_mrc(fpath_ds)
+    #fpath_ds = r"/home/astar/Projects/vesicles_data/from_Fred/subtracted/20211122/20211122/slot6_100_0002ms.mrc"
+    #fred_ds, _, _ = load_mrc(fpath_ds)
     freds_fuzzy_mask_path = r"/home/astar/Projects/Freds_code/fz_mask.mat"
     freds_fuzzy_mask = io.loadmat(freds_fuzzy_mask_path)['msk']
-    fred_ds_path = r"/home/astar/Projects/Freds_code/ds_micrograph.mat"
+    fred_ds_path = r"/home/astar/Projects/Freds_code/ds_slot6_100_0002.mat"
     fred_ds = io.loadmat(fred_ds_path)['mOut']
     #compare fuzzy masks
     plt.figure(figsize=(12, 6))
