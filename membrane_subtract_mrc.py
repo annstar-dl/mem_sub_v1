@@ -60,4 +60,5 @@ def  membrane_subtract(img, mask):
     # Subtract the membrane from the original image
     imgout = imgout.to(mask.device)
     imgout = imgout * mask
+    imgout = imgout.detach().cpu().numpy()
     return imgout
