@@ -1,4 +1,5 @@
 import numpy as np
+from matplotlib import pyplot as plt
 
 
 def get_fft_center(n):
@@ -12,15 +13,15 @@ def get_start_stop_indices(n,m):
     right=m+offset
     return left,right
 
+
 def down_sample(img,new_size, fuzzy_mask=None):
     """Downsample an image using FFT and an optional fuzzy mask."""
     #Get indices
     if fuzzy_mask is None:
         fuzzy_mask = 1 #no fuzzy mask
-    n,m=img.shape
-    center=(get_fft_center(n),get_fft_center(m))
-    row_start, row_end = get_start_stop_indices(n, new_size[0])
-    col_start, col_end = get_start_stop_indices(m, new_size[1])
+    old_size=img.shape
+    row_start, row_end = get_start_stop_indices(old_size[0], new_size[0])
+    col_start, col_end = get_start_stop_indices(old_size[1], new_size[1])
     #Do the ffts and downsample
     x_fft = np.fft.fftshift(np.fft.fft2(img))
     x_ds_fft = x_fft[row_start:row_end, col_start:col_end]*fuzzy_mask
@@ -28,13 +29,23 @@ def down_sample(img,new_size, fuzzy_mask=None):
     x_ds = x_ds * np.prod(x_ds.shape) / np.prod(x_fft.shape)
     return np.real(x_ds)
 
-
+def up_sample(img,new_size, fuzzy_mask=None):
+    """Downsample an image using FFT and an optional fuzzy mask."""
+    #Get indices
+    if fuzzy_mask is None:
+        fuzzy_mask = 1 #no fuzzy mask
+    old_size=img.shape
+    row_start, row_end = get_start_stop_indices(new_size[0], old_size[0])
+    col_start, col_end = get_start_stop_indices(new_size[1], old_size[1])
+    #Do the ffts and downsample
+    x_fft = np.fft.fftshift(np.fft.fft2(img))
+    x_fft = x_fft * fuzzy_mask
+    # Create an array of zeros for the upsampled FFT
+    upsampled_fft = np.zeros(new_size, dtype=complex)
+    upsampled_fft[row_start:row_end, col_start:col_end] = x_fft
+    x_us = np.fft.ifft2(np.fft.ifftshift(upsampled_fft))
+    x_us = x_us * np.prod(x_us.shape) / np.prod(x_fft.shape)
+    return np.real(x_us)
 
 if __name__ == "__main__":
-    fpath = r"/home/astar/Projects/vesicles_data/from_Fred/subtracted/20211122/20211122/slot6_100_0001.mrc"
-    from mrc_utils import load_mrc, calc_downsampling_factor_based_on_voxel_size
-    data, _, voxel_size = load_mrc(fpath)
-    print("Original shape: {}".format(data.shape))
-    downsample_factor = calc_downsampling_factor_based_on_voxel_size(voxel_size[0])
-    new_shape = (int(data.shape[0] / downsample_factor), int(data.shape[1] / downsample_factor))
-    ds_data = down_sample(data, new_shape)
+    pass
