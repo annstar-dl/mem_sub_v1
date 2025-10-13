@@ -181,8 +181,8 @@ def select_points_within_boundary(image, r, row_idxs, col_idxs):
         torch.Tensor: Filtered y coordinates within the boundary.
     """
     row_size, col_size = image.shape[-2], image.shape[-1]  # Assuming square image
-    mask = ((row_idxs >= r) & (row_idxs < row_size - r) &
-            (col_idxs >= r) & (col_idxs < col_size - r))
+    mask = ((row_idxs >= 2*r) & (row_idxs < row_size - 2*r) &
+            (col_idxs >= 2*r) & (col_idxs < col_size - 2*r))
     row_idxs = row_idxs[mask]  # Filter row indices within the boundary
     col_idxs = col_idxs[mask]  # Filter col indices within the boundary
     #sort the indices by x

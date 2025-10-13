@@ -46,7 +46,6 @@ def fit_basis_to_data_batched(img, basis, row_idx, col_idx, r, rho, max_iter, st
 
         imgout = add_patches_to_image_batched(rho*gradient*basis, imgout, r_in, batched_row_idxs, batched_col_idxs, bases_idxs)
 
-
         diff_norm.append(
             torch.linalg.norm(img - imgout)) # Compute the difference norm
 
