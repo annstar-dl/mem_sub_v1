@@ -1,14 +1,10 @@
 import os
-import torch
 import numpy as np
 from PIL import Image
-from scipy.ndimage import gaussian_filter
-from membrane_subtract import membrane_subtract
+from temp.membrane_subtract import membrane_subtract
 from tqdm import tqdm
 import argparse
 from scipy.io import savemat
-from mrc2jpg import load_mrc
-import mrcfile
 from skimage import transform
 
 
