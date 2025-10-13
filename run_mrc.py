@@ -5,10 +5,23 @@ from membrane_subtract_mrc import membrane_subtract
 from tqdm import tqdm
 import argparse
 from scipy.io import savemat
-from mrc_utils import load_mrc, downsample_mrc, save_im_mrc_same_size,  upsample_mrc_to_original
-from run import read_img
+from mrc_utils import load_mrc, downsample_micrograph, save_im_mrc_same_size, \
+    upsample_micrograph, new_ds_shape
+from utils import read_dict_from_yaml_file
 
-
+def read_img(fpath, mask=False):
+    #check if the file exists
+    print(f"Processing image: {fpath}")
+    if not os.path.exists(fpath):
+        raise FileNotFoundError(f"File {fpath} does not exist.")
+    else:
+        img = Image.open(fpath)
+        img = np.array(img,dtype = np.float64)
+        if mask:
+            img = img - np.min(img)
+            img = img / np.max(img)
+            img = (img >0.5).astype(np.float64)
+    return img
 
 def read_mrc(fpath):
     #check if the file exists
@@ -46,9 +59,13 @@ def main(args):
             continue
 
         img_fname = basename+".mrc"
+        # read radius size from parameters file
+        parameters = read_dict_from_yaml_file()
+        border = parameters["r"]  # Radius of neighboring around grid point
         img, header, voxel_size = read_mrc(os.path.join(imgs_path, img_fname))
-        mask = read_img(os.path.join(masks_path, basename + ".png"),"png",1,True)
-        img_downsampled = downsample_mrc(img, voxel_size)
+        mask = read_img(os.path.join(masks_path, basename + ".png"),True)
+        padded_org_shape, ds_shape, ds_factor = new_ds_shape(img.shape, voxel_size[0])
+        img_downsampled = downsample_micrograph(img, padded_org_shape,ds_shape,ds_factor,border, "center")
         # check if the image is the same size as the mask
         if img_downsampled.shape[:2] != mask.shape[:2]:
             raise ValueError(
@@ -57,7 +74,7 @@ def main(args):
         # run membrane subtraction algorithm
         imgout_ds = membrane_subtract(img_downsampled, mask)
         #upsample the membrane estimate to the original size
-        imgout = upsample_mrc_to_original(imgout_ds, img.shape, voxel_size)
+        imgout = upsample_micrograph(imgout_ds, img.shape, padded_org_shape, border, "center")
         sub_img = img - imgout
         # add background back to the subtracted image
         if "mat" in args.out_format:
