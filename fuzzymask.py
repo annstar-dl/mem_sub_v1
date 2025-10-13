@@ -1,7 +1,8 @@
 import numpy as np
 from scipy import special
+from scipy.ndimage import gaussian_filter
 
-def fuzzymask(n, r, origin=None, risetime=None):
+def fuzzy_disk(n, r, origin=None, risetime=None):
     """
     Function that creates disk of radius r with fuzzy edges.
     Function is adapted from MATLAB code by F. Singword
@@ -60,6 +61,26 @@ def fuzzymask(n, r, origin=None, risetime=None):
 
     return mask
 
+def fuzzy_rectangle(shape, border):
+    """
+    Create a 2D fuzzy rectangle mask.
+    Args:
+        shape (tuple): Shape of the output mask (height, width).
+        border (tuple): Shape of the inner rectangle (height, width).
+    Returns:
+        np.ndarray: 2D array representing the fuzzy rectangle mask.
+    """
+    mask = np.zeros(shape, dtype=np.float32)
+    sigma = int(border / 6)
+    ih, iw = np.array(shape) - border
+    top = (shape[0] - ih) // 2
+    left = (shape[1] - iw) // 2
+    mask[top:top + ih, left:left + iw] = 1.0
+    fuzzy_mask = gaussian_filter(mask, sigma=sigma)
+    fuzzy_mask = np.clip(fuzzy_mask, 0, 1)
+    return fuzzy_mask
+
+
 if __name__ == "__main__":
     import scipy.io as sio
     from matplotlib import pyplot as plt
@@ -72,7 +93,7 @@ if __name__ == "__main__":
     mask_matlab = mat_data['msk']
     r = 0.45 * n
     risetime = 0.05*n[0]
-    mask = fuzzymask(n, r, risetime=risetime)
+    mask = fuzzy_disk(n, r, risetime=risetime)
     plt.subplot(1,3,1)
     plt.imshow(mask_matlab, cmap='gray')
     plt.title('Matlab Mask')
