@@ -1,4 +1,5 @@
 import numpy as np
+
 from matplotlib import pyplot as plt
 
 
@@ -13,15 +14,14 @@ def get_start_stop_indices(n,m):
     right=m+offset
     return left,right
 
-
-def down_sample(img,new_size, fuzzy_mask=None):
+def down_sample(img,new_shape, fuzzy_mask=None):
     """Downsample an image using FFT and an optional fuzzy mask."""
     #Get indices
     if fuzzy_mask is None:
         fuzzy_mask = 1 #no fuzzy mask
-    old_size=img.shape
-    row_start, row_end = get_start_stop_indices(old_size[0], new_size[0])
-    col_start, col_end = get_start_stop_indices(old_size[1], new_size[1])
+
+    row_start, row_end = get_start_stop_indices(img.shape[0], new_shape[0])
+    col_start, col_end = get_start_stop_indices(img.shape[1], new_shape[1])
     #Do the ffts and downsample
     x_fft = np.fft.fftshift(np.fft.fft2(img))
     x_ds_fft = x_fft[row_start:row_end, col_start:col_end]*fuzzy_mask
@@ -29,19 +29,18 @@ def down_sample(img,new_size, fuzzy_mask=None):
     x_ds = x_ds * np.prod(x_ds.shape) / np.prod(x_fft.shape)
     return np.real(x_ds)
 
-def up_sample(img,new_size, fuzzy_mask=None):
+def up_sample(img, new_shape, fuzzy_mask=None):
     """Downsample an image using FFT and an optional fuzzy mask."""
     #Get indices
     if fuzzy_mask is None:
         fuzzy_mask = 1 #no fuzzy mask
-    old_size=img.shape
-    row_start, row_end = get_start_stop_indices(new_size[0], old_size[0])
-    col_start, col_end = get_start_stop_indices(new_size[1], old_size[1])
+    row_start, row_end = get_start_stop_indices(new_shape[0], img.shape[0])
+    col_start, col_end = get_start_stop_indices(new_shape[1], img.shape[1])
     #Do the ffts and downsample
     x_fft = np.fft.fftshift(np.fft.fft2(img))
     x_fft = x_fft * fuzzy_mask
     # Create an array of zeros for the upsampled FFT
-    upsampled_fft = np.zeros(new_size, dtype=complex)
+    upsampled_fft = np.zeros(new_shape, dtype=complex)
     upsampled_fft[row_start:row_end, col_start:col_end] = x_fft
     x_us = np.fft.ifft2(np.fft.ifftshift(upsampled_fft))
     x_us = x_us * np.prod(x_us.shape) / np.prod(x_fft.shape)
