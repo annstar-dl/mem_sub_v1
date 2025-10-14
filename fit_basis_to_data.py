@@ -47,7 +47,7 @@ def fit_basis_to_data_batched(img, basis, row_idx, col_idx, r, rho, max_iter, st
         imgout = add_patches_to_image_batched(rho*gradient*basis, imgout, r_in, batched_row_idxs, batched_col_idxs, bases_idxs)
 
         diff_norm.append(
-            torch.linalg.norm(img - imgout)) # Compute the difference norm
+            torch.linalg.norm((img - imgout)[r:-r,r:-r])) # Compute the difference norm
 
         dataimg = img - imgout  # Update the data image with the output image
         # Stop condition: if the difference norm is less than a threshold
@@ -99,7 +99,7 @@ def fit_basis_to_data(img, basis, row_idx, col_idx, r, rho, max_iter,step):
 
         imgout = add_patches_to_image(rho*gradient*basis, imgout, r_in, row_idx, col_idx)
         diff_norm.append(
-            torch.linalg.norm(img - imgout)) # Compute the difference norm
+            torch.linalg.norm((img - imgout)[r:-r,r:-r])) # Compute the difference norm
 
         dataimg = img - imgout  # Update the data image with the output image
         # Stop condition: if the difference norm is less than a threshold
