@@ -6,8 +6,9 @@ from tqdm import tqdm
 import argparse
 from scipy.io import savemat
 from mrc_utils import load_mrc, downsample_micrograph, save_im_mrc_same_size, \
-    upsample_micrograph, new_ds_shape
+    upsample_micrograph, new_shape_mrc_downsampling
 from utils import read_dict_from_yaml_file
+from bg_estimation import get_background
 
 def read_img(fpath, mask=False):
     #check if the file exists
@@ -63,18 +64,21 @@ def main(args):
         parameters = read_dict_from_yaml_file()
         border = parameters["r"]  # Radius of neighboring around grid point
         img, header, voxel_size = read_mrc(os.path.join(imgs_path, img_fname))
-        mask = read_img(os.path.join(masks_path, basename + ".png"),True)
-        padded_org_shape, ds_shape, ds_factor = new_ds_shape(img.shape, voxel_size[0])
-        img_downsampled = downsample_micrograph(img, padded_org_shape,ds_shape,ds_factor,border, "center")
+        mask = read_img(os.path.join(masks_path, basename + ".png"), True)
+
+        img_ds = downsample_micrograph(img,voxel_size[0],border, "center")
+
+        print(f"Image {img_fname} downsampled range: min {np.min(img_ds)}, max {np.max(img_ds)}, mean {np.mean(img_ds)}")
         # check if the image is the same size as the mask
-        if img_downsampled.shape[:2] != mask.shape[:2]:
+        if img_ds.shape[:2] != mask.shape[:2]:
             raise ValueError(
                 f"Image {img_fname} and mask {basename}.png must have the same dimensions. "
                 f"Image shape: {img.shape}, Mask shape: {mask.shape}")
         # run membrane subtraction algorithm
-        imgout_ds = membrane_subtract(img_downsampled, mask)
+
+        imgout_ds = membrane_subtract(img_ds, mask, True if np.any(img.shape>img_ds.shape) else False)
         #upsample the membrane estimate to the original size
-        imgout = upsample_micrograph(imgout_ds, img.shape, padded_org_shape, border, "center")
+        imgout = upsample_micrograph(imgout_ds, img.shape, voxel_size[0], border, "center")
         sub_img = img - imgout
         # add background back to the subtracted image
         if "mat" in args.out_format:
