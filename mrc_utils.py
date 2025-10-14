@@ -1,8 +1,9 @@
 import mrcfile
 import numpy as np
 from downsample import down_sample, up_sample
-from fuzzymask import fuzzymask
+from fuzzymask import fuzzy_disk, fuzzy_rectangle
 from math import ceil
+from matplotlib import pyplot as plt
 
 MRC_MODE_DICT = {
     0: np.int8,
@@ -63,7 +64,7 @@ def load_mrc(in_file: str = None, transpose: tuple = None):
         data = data.transpose(transpose)
     return data, header, voxel_size
 
-def calc_new_shape_based_on_voxel_size(old_shape,voxel_size,ds_factor=None):
+def new_shape_mrc_downsampling(old_shape,voxel_size,ds_factor=None):
     """
     Calculate the downsampling factor based on the voxel size.
 
@@ -71,9 +72,11 @@ def calc_new_shape_based_on_voxel_size(old_shape,voxel_size,ds_factor=None):
         voxel_size (float): Original voxel size.
         ds_factor (int, optional): Downsampling factor. If None, it will be calculated based on the voxel size.
     Returns:
-        int: Downsampling factor.
+        padded_shape (tuple): New shape of the padded original image data.
+        new_shape (tuple): New shape of the downsampled image data.
+        ds_factor (int): Downsampling factor.
     """
-###!!!TODO: chose the target voxel size number in a range from 3.8 to 4.5 such that the padded size image multiple by ds_factor
+    ###!!!TODO: chose the target voxel size number in a range from 3.8 to 4.5 such that the padded size image multiple by ds_factor
     target_voxel_size = 4.5 # in Angstroms.
     # This is a voxel size that is approximately correspond to voxel
     # size of membrane detection training data
@@ -84,57 +87,62 @@ def calc_new_shape_based_on_voxel_size(old_shape,voxel_size,ds_factor=None):
         ds_factor = ds_factor
     else:
         ds_factor = int(target_voxel_size / voxel_size)
+        print(f"Calculating downsampling factor based on voxel size. Org voxel size: {voxel_size:.2f} Å. Downsampling factor: {ds_factor}. Target voxel size: {target_voxel_size} Å.")
     if ds_factor < 1:
         ds_factor = 1
-    old_shape = [next_multiple(old_shape[0],ds_factor), next_multiple(old_shape[1], ds_factor)]
+    padded_shape = [next_even_multiple(old_shape[0],ds_factor), next_even_multiple(old_shape[1], ds_factor)]
     new_shape = int(old_shape[0]/ds_factor),int(old_shape[1]/ds_factor)
-    return old_shape,new_shape, ds_factor
+    return padded_shape,new_shape, ds_factor
 
-def downsample_mrc(data: np.ndarray, voxel_size: tuple,downsample_factor=None) -> np.ndarray:
+def downsample_micrograph(data: np.ndarray,voxel_size: float, border = 0,padding_mode = "center") -> np.ndarray:
     """
     Downsample the MRC data based on the voxel size. If the voxel size is isotropic and greater than the target voxel size, downsample the data.
     Otherwise, return the data as is.
 
     Args:
         data (np.ndarray): Input image data.
+        pad_org_shape (tuple): New shape of the padded original image data.
         voxel_size (tuple): Voxel size in each dimension.
+        border (int): Border size for the fuzzy mask. Default is 0.
+        padding_mode (str): Padding mode, either "right_down" or "center". Default is "center".
 
     Returns:
         np.ndarray: Downsampled image data.
-        new_shape (tuple): New shape of the padded original image data.
     """
-    if len(set(np.array(voxel_size[:2]).round(2))) != 1:
-        raise ValueError("Voxel size must be isotropic for downsampling, but got: "
-                         f"{voxel_size[0]:.2f}, {voxel_size[1]:.2f}")
-    padded_org_shape, ds_shape, ds_factor = calc_new_shape_based_on_voxel_size(data.shape, voxel_size[0],downsample_factor)
-    print("Padded shape: {}, old shape: {}".format(padded_org_shape, data.shape))
+
+    pad_org_shape, ds_shape, ds_factor = new_shape_mrc_downsampling(data.shape, voxel_size)
     if ds_factor > 1:
-        if np.any(np.array(padded_org_shape) > data.shape):
-            print(f"Padding the image with shape {data.shape} to the new shape {padded_org_shape} before downsampling.")
-            data = pad_im(data, padded_org_shape, padding_value=0, mode="center")
+        if border > 0:
+            fuzzy_rec = fuzzy_rectangle(shape=data.shape, border=border * ds_factor)
+            data = data * fuzzy_rec
+        if np.any(np.array(pad_org_shape) > data.shape):
+            print(f"Padding the image with shape {data.shape} to the new shape {pad_org_shape} before downsampling.")
+            data = pad_im(data, pad_org_shape, padding_value=0, mode=padding_mode)
         print(f"Downsampling factor  {ds_factor:.2f} is higher than 1, downsampling the data."
-              f"Org voxel size: {voxel_size[0]:.2f} Å. Org data shape {data.shape} new data shape: {ds_shape}")
-        msk = fuzzymask(ds_shape, r=0.48 * np.array(ds_shape))
+              f"Org data shape {data.shape} new data shape: {ds_shape}")
+
+        msk = fuzzy_disk(ds_shape, r=0.48 * np.array(ds_shape))
         data = down_sample(data, ds_shape, fuzzy_mask=msk)
     return data
 
-def upsample_mrc_to_original(img_ds, original_shape, voxel_size, downsample_factor=None):
+def upsample_micrograph(img_ds, original_shape,voxel_size,border=0,padding_mode = "center") -> np.ndarray:
     """
     Upsample the downsampled image to the original shape using nearest neighbor interpolation.
     Args:
         img_ds (numpy.ndarray): Downsampled image array.
         original_shape (tuple): Original shape of the image (height, width).
-        padded_org_shape (tuple): Padded original shape of the image (height, width).
+        voxel_size (tuple): Voxel size in each dimension.
+        border (int): Border size to set to zero after upsampling. Default is 0.
+        padding_mode (str): Padding mode, either "right_down" or "center". Default is "center".
     Returns:
         numpy.ndarray: Upsampled image array.
     """
-    padded_org_shape,new_shape, ds_factor = calc_new_shape_based_on_voxel_size(original_shape, voxel_size[0], downsample_factor)
-    fuzzy_mask = fuzzymask(img_ds.shape, r=0.48 * np.array(img_ds.shape))
-    #upsampled_img = up_sample(img_ds, original_shape, fuzzy_mask)
-    upsampled_img = up_sample(img_ds, padded_org_shape, fuzzy_mask)
+    padded_org_shape, ds_shape, ds_factor = new_shape_mrc_downsampling(original_shape, voxel_size)
+    msk = fuzzy_disk(img_ds.shape, r=0.48 * np.array(img_ds.shape))
+    upsampled_img = up_sample(img_ds, padded_org_shape, msk)
     if np.any(np.array(padded_org_shape) > np.array(original_shape)):
         print(f"Cropping the upsampled image with shape {upsampled_img.shape} to the original shape {original_shape}.")
-        upsampled_img = crop_im(upsampled_img, original_shape, mode="center")
+        upsampled_img = crop_im(upsampled_img, original_shape, mode=padding_mode)
     return upsampled_img
 
 def pad_im(im, new_shape, padding_value, mode="right_down"):
@@ -188,10 +196,38 @@ def crop_im(im, new_shape, mode="right_down"):
         raise ValueError("Invalid cropping mode. Supported modes are 'right_down' and 'center'.")
     return cropped_im
 
+def next_even_multiple(n, base):
+    """Find even padding value such that the new value is multiple of base."""
+    n_delta = 0
+    while (n+2*n_delta) % base != 0:
+        n_delta += 1
+    return int(n+2*n_delta)
+
 def next_multiple(n, base):
     """Convert an integer to the next multiple of base."""
     n = n if n % base == 0 else ceil(n / base) * base
     return int(n)
 
 if __name__ == "__main__":
-    pass
+    import matplotlib.pyplot as plt
+    im = np.random.rand(101, 101)
+    voxel_size = (1.07, 1.07)
+    padded_org_shape, new_shape, ds_factor = new_shape_mrc_downsampling(im.shape, voxel_size[0])
+    print("Padded original shape:", padded_org_shape)
+    print("Downsampled shape:", new_shape)
+    print("Downsampling factor:", ds_factor)
+    padded_im = pad_im(im, padded_org_shape, padding_value=0, mode="center")
+    print("Padded image shape:", padded_im.shape)
+    cropped_im = crop_im(padded_im, im.shape, mode="center")
+    print("Cropped image shape:", cropped_im.shape)
+    plt.figure()
+    plt.subplot(1, 3, 1)
+    plt.imshow(im, cmap='gray')
+    plt.title('Original Image')
+    plt.subplot(1, 3, 2)
+    plt.imshow(padded_im, cmap='gray')
+    plt.title('Padded Image')
+    plt.subplot(1, 3, 3)
+    plt.imshow(cropped_im, cmap='gray')
+    plt.title('Cropped Image')
+    plt.show()
