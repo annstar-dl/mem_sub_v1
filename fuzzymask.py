@@ -71,37 +71,13 @@ def fuzzy_rectangle(shape, border):
         np.ndarray: 2D array representing the fuzzy rectangle mask.
     """
     mask = np.zeros(shape, dtype=np.float32)
-    sigma = int(border / 6)
-    ih, iw = np.array(shape) - border
-    top = (shape[0] - ih) // 2
-    left = (shape[1] - iw) // 2
-    mask[top:top + ih, left:left + iw] = 1.0
+    sigma = border / 8
+    small_border = border // 2
+    mask[small_border:-small_border, small_border:-small_border] = 1.0
     fuzzy_mask = gaussian_filter(mask, sigma=sigma)
     fuzzy_mask = np.clip(fuzzy_mask, 0, 1)
     return fuzzy_mask
 
 
 if __name__ == "__main__":
-    import scipy.io as sio
-    from matplotlib import pyplot as plt
-    n = np.array([60, 120])
-    matfpath = r"/home/astar/Projects/Freds_downsampling/disk1.mat"
-    # Load the .mat file into a dictionary
-    mat_data = sio.loadmat(matfpath)
-    n = mat_data['n']
-    n = np.squeeze(n)
-    mask_matlab = mat_data['msk']
-    r = 0.45 * n
-    risetime = 0.05*n[0]
-    mask = fuzzy_disk(n, r, risetime=risetime)
-    plt.subplot(1,3,1)
-    plt.imshow(mask_matlab, cmap='gray')
-    plt.title('Matlab Mask')
-    plt.subplot(1,3,2)
-    plt.imshow(mask, cmap='gray')
-    plt.title('Python Mask')
-    plt.subplot(1,3,3)
-    plt.imshow(mask-mask_matlab, cmap='gray')
-    plt.colorbar()
-    plt.title(f'Fuzzy Mask: radius={r}, risetime={risetime}')
-    plt.show()
+    pass
