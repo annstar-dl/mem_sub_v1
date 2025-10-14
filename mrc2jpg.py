@@ -11,7 +11,7 @@ from PIL import Image
 from glob import glob
 from tqdm import tqdm
 from skimage import io
-from mrc_utils import load_mrc, FILE_TYPES, downsample_mrc
+from mrc_utils import load_mrc, FILE_TYPES, downsample_micrograph, new_shape_mrc_downsampling
 
 def main(args: argparse.Namespace) -> None:
     """
@@ -37,7 +37,7 @@ def main(args: argparse.Namespace) -> None:
         print(f"Original data mean: {np.mean(data)},min: {np.min(data)}, max: {np.max(data)}")
         #  downsample the data if the voxel size is greater than the target voxel size
         if args.downsampling_allowed:
-            data = downsample_mrc(data, voxel_size)
+            data = downsample_micrograph(data,voxel_size[0],0, "center")
             print(f"Downsample data mean: {np.mean(data)}, min: {np.min(data)}, max: {np.max(data)}")
         #save as TIFF image
         basename, _ = os.path.splitext(os.path.basename(file))
