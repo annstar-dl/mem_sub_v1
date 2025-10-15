@@ -18,11 +18,12 @@ def add_border_to_mask(mask, border):
     mask_w_border[:, -border:] = 1
     return mask_w_border
 
-def  membrane_subtract(img, mask,mask_the_border = False):
+def  membrane_subtract(img,mask,border = 0):
     """    Subtract the membrane mask from the patch.
     Args:
         img (torch.Tensor): The micrograph(image with membranes) image tensor of shape (H, W).
         mask (torch.Tensor): The micrograph mask tensor of shape (H, W).
+        border (int): The size of the border to be masked out for background estimation. Default is 0.
     Returns:
         torch.Tensor: The reconstructed membrane image, tensor of shape (H, W).
         torch.Tensor: The image with subtracted membranes, tensor of shape (H, W).
@@ -47,9 +48,9 @@ def  membrane_subtract(img, mask,mask_the_border = False):
     r = parameters["r"]  # Radius of neighboring around grid point
     nb_iter = parameters["nb_iter"]  # Number of iterations for fitting
     # create mask with border to estimate the background
-    if mask_the_border:
+    if border>0:
         print("Masking the border of the image for background estimation")
-        mask_with_border = add_border_to_mask(mask, r)
+        mask_with_border = add_border_to_mask(mask, border)
         bg, img = get_background(img, mask_with_border, sigma=30.0)
     else:
         bg, img = get_background(img, mask, sigma=30.0)
