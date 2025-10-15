@@ -4,7 +4,13 @@ import numpy as np
 
 
 def calculate_mse_loss(original, rotated):
-    """Calculate the Mean Squared Error (MSE) loss between original and rotated images."""
+    """Calculate the Mean Squared Error (MSE) loss between original and rotated images.
+    Args:
+        original (torch.Tensor): Original images tensor of shape (B, C, H, W).
+        rotated (torch.Tensor): Rotated images tensor of shape (B, C, H, W).
+    Returns:
+        torch.Tensor: MSE loss for each image in the batch, shape (B,).
+    """
     return torch.sum((original - rotated) ** 2, dim=(1, 2, 3))  # MSE across batch, height, and width
 
 def rotate_images_kornia(images, angles):
