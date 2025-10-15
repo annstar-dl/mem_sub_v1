@@ -43,7 +43,7 @@ def get_patches_from_image_adv_indexing(img, r, row_idxs, col_idxs):
 
 def creat_idx_batches_for_parl_sum(row_idx, col_idx, r, step):
     """
-    Stack the indices of the nonoverlapping patches into batches for parallel summation.
+    Stack the indices of the non-overlapping patches into batches for parallel summation.
     Args:
         row_idx
         (torch.Tensor): Row indices of the patches.
@@ -57,9 +57,6 @@ def creat_idx_batches_for_parl_sum(row_idx, col_idx, r, step):
             - bases_idxs: List of tensors with indices of patches corresponding to each batch.
         """
 
-    init_rows = []
-    init_cols = []
-    nb_batches_1d = (2*r+1)//step+(1 if (2*r+1)%step!=0 else 0) # Number of batches in one dimension
     nb_batches_1d = (2 * r + 1) // step + (1 if (2 * r + 1) % step != 0 else 0)  # Number of batches in one dimension
     batch_id_init_row_idx = torch.arange(nb_batches_1d) * step + min(row_idx)  # Initial indices for the batches
     batch_id_init_col_idx = torch.arange(nb_batches_1d) * step + min(col_idx)  # Initial indices for the batches
