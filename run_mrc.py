@@ -21,7 +21,7 @@ def read_img(fpath, mask=False):
         if mask:
             img = img - np.min(img)
             img = img / np.max(img)
-            img = (img >0.5).astype(np.float64)
+            img = ( img > 0.5 ).astype(np.float64)
     return img
 
 def read_mrc(fpath):
@@ -76,7 +76,7 @@ def main(args):
                 f"Image shape: {img.shape}, Mask shape: {mask.shape}")
         # run membrane subtraction algorithm
 
-        imgout_ds = membrane_subtract(img_ds, mask, True if np.any(img.shape>img_ds.shape) else False)
+        imgout_ds = membrane_subtract(img_ds, mask, border if np.any(img.shape>img_ds.shape) else 0)
         #upsample the membrane estimate to the original size
         imgout = upsample_micrograph(imgout_ds, img.shape, voxel_size[0], border, "center")
         sub_img = img - imgout
