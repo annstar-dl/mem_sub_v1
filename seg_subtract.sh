@@ -7,7 +7,7 @@ MEMBRANE_DETECTION_DIR="/home/astar/Projects/membrane_detection"
 SEGMENTATION_DIR="/home/astar/Projects/membrane_detection/out/unet_membrane_256x256_500000"
 MEMBRANE_SUBTRACTION_DIR="/home/astar/Projects/VesicleProjection" # Path to the VesicleProjection project directory
 INPUT_FILE_FORMAT="mrc"  # Change to "tif" if input files are in TIFF format
-SEGMENTATION_MODEL_FORMAT="paddleseg" # "onnx" or "paddleseg"
+SEGMENTATION_MODEL_FORMAT="onnx" # "onnx" or "paddleseg"
 PADDLESEG_DIR="/home/astar/Projects/PaddleSeg" # Path to the PaddleSeg project directory
 # Check if the directory argument is provided
 if [ $# -lt 2 ]; then
@@ -36,7 +36,7 @@ echo "Converted MRC files to JPG in $PWD/images_jpg"
 
 if [ ${SEGMENTATION_MODEL_FORMAT} == "onnx" ]; then
     echo "Using ONNX segmentation model format."
-    conda run -n paddleseg_onnx python "$MEMBRANE_DETECTION_DIR/export_onnx/run_onnx.py" \
+    conda run -n ves_seg python "$MEMBRANE_DETECTION_DIR/export_onnx/run_onnx.py" \
     --model_dir "${SEGMENTATION_DIR}/result" \
     --onnx_fname model.onnx \
     --data_path "${PWD}/images_jpg/${MRC_DIR}_ds" \
