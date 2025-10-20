@@ -65,17 +65,20 @@ def main(args):
         border = parameters["r"]  # Radius of neighboring around grid point
         img, header, voxel_size = read_mrc(os.path.join(imgs_path, img_fname))
         mask = read_img(os.path.join(masks_path, basename + ".png"), True)
+        if np.any(np.isnan(img)):
+            print(f"Nan in {img_fname}")
+            continue
+
 
         img_ds = downsample_micrograph(img,voxel_size[0],border, "center")
-
         print(f"Image {img_fname} downsampled range: min {np.min(img_ds)}, max {np.max(img_ds)}, mean {np.mean(img_ds)}")
         # check if the image is the same size as the mask
         if img_ds.shape[:2] != mask.shape[:2]:
             raise ValueError(
                 f"Image {img_fname} and mask {basename}.png must have the same dimensions. "
                 f"Image shape: {img.shape}, Mask shape: {mask.shape}")
-        # run membrane subtraction algorithm
 
+        # run membrane subtraction algorithm
         imgout_ds = membrane_subtract(img_ds, mask, border if np.any(img.shape>img_ds.shape) else 0)
         #upsample the membrane estimate to the original size
         imgout = upsample_micrograph(imgout_ds, img.shape, voxel_size[0], border, "center")
