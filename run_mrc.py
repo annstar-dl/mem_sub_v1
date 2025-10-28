@@ -66,7 +66,7 @@ def main(args):
         img, header, voxel_size = read_mrc(os.path.join(imgs_path, img_fname))
         mask = read_img(os.path.join(masks_path, basename + ".png"), True)
         if np.any(np.isnan(img)):
-            print(f"Nan in {img_fname}")
+            print(f"Skipping empty file, Nan in {img_fname}")
             continue
 
 
