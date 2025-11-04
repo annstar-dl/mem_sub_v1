@@ -7,10 +7,12 @@ import os
 from sampling_grid import get_sampling_grid, select_points_within_boundary
 from basis_fn import get_basis
 from fit_basis_to_data import fit_basis_to_data_batched
-from utils import read_dict_from_yaml_file
+from sub_utils import read_dict_from_yaml_file
 from bg_estimation import get_background
 
 def add_border_to_mask(mask, border):
+    """Add the border to the mask to compensate
+    for zero padding during downsampling"""
     mask_w_border = copy.deepcopy(mask)
     mask_w_border[:border, :] = 1
     mask_w_border[-border:, :] = 1

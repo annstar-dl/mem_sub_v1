@@ -209,25 +209,4 @@ def next_multiple(n, base):
     return int(n)
 
 if __name__ == "__main__":
-    import matplotlib.pyplot as plt
-    im = np.random.rand(101, 101)
-    voxel_size = (1.07, 1.07)
-    padded_org_shape, new_shape, ds_factor = new_shape_mrc_downsampling(im.shape, voxel_size[0])
-    print("Padded original shape:", padded_org_shape)
-    print("Downsampled shape:", new_shape)
-    print("Downsampling factor:", ds_factor)
-    padded_im = pad_im(im, padded_org_shape, padding_value=0, mode="center")
-    print("Padded image shape:", padded_im.shape)
-    cropped_im = crop_im(padded_im, im.shape, mode="center")
-    print("Cropped image shape:", cropped_im.shape)
-    plt.figure()
-    plt.subplot(1, 3, 1)
-    plt.imshow(im, cmap='gray')
-    plt.title('Original Image')
-    plt.subplot(1, 3, 2)
-    plt.imshow(padded_im, cmap='gray')
-    plt.title('Padded Image')
-    plt.subplot(1, 3, 3)
-    plt.imshow(cropped_im, cmap='gray')
-    plt.title('Cropped Image')
-    plt.show()
+    pass

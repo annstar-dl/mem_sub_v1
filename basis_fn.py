@@ -1,7 +1,7 @@
 import math
 from align_image import align_single_patch, align_multiple_patches
 from recon_patch import recon_patch, recon_mult_patches
-from utils import get_patches_from_image_adv_indexing
+from sub_utils import get_patches_from_image_adv_indexing
 import torch
 
 

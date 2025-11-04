@@ -1,5 +1,15 @@
-#!/usr/bin/env bash
-export CUDA_VISIBLE_DEVICES=0
+#!/bin/bash
+#SBATCH --array=1-1000
+#SBATCH --output=slurm-%A.%a.out
+#SBATCH --job-name=array-job
+#SBATCH --mem-per-cpu=4g
+#SBATCH -t 20:00
+#SBATCH --mail-type=ALL
+
+module reset
+module load miniconda
+conda activate env_name
+
 
 # Path to the membrane detection project directory
 MEMBRANE_DETECTION_DIR="/home/astar/Projects/membrane_detection"
