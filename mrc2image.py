@@ -38,11 +38,9 @@ def convert_dir(args: argparse.Namespace) -> None:
 def convert_file(args: argparse.Namespace) -> None:
     data, _, voxel_size = load_mrc(args.file_path)
     org_shape = data.shape
-    print(f"Original data mean: {np.mean(data)},min: {np.min(data)}, max: {np.max(data)}")
     #  downsample the data if the voxel size is greater than the target voxel size
     if args.downsampling_allowed:
         data = downsample_micrograph(data, voxel_size[0], 0, "center")
-        print(f"Downsample data mean: {np.mean(data)}, min: {np.min(data)}, max: {np.max(data)}")
     # save as TIFF image
     basename, _ = os.path.splitext(os.path.basename(args.file_path))
 
@@ -62,7 +60,6 @@ def convert_file(args: argparse.Namespace) -> None:
         io.imsave(os.path.join(args.out_dir, f"{basename}.{args.format}"), data)
     elif args.format == "png":
         data = data.astype(np.uint8)
-        print(f"{basename} mean", np.mean(data))
         io.imsave(os.path.join(args.out_dir, f"{basename}.{args.format}"), data)
 
 if __name__ == "__main__":
@@ -107,7 +104,6 @@ if __name__ == "__main__":
 
     assert os.path.isdir(args.in_dir), f"Input directory does not exist: {args.in_dir}"
     data_dir_name = os.path.basename(os.path.normpath(args.in_dir))
-    print("Data directory name:", data_dir_name)
     args.out_dir = os.path.join(args.out_dir,"images_"+args.format, data_dir_name + "_ds" if args.downsampling_allowed else data_dir_name)
     os.makedirs(args.out_dir, exist_ok=True)
     if args.downsampling_allowed:

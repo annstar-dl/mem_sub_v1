@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-export CUDA_VISIBLE_DEVICES=0
+export CUDA_VISIBLE_DEVICES=0,1
 
 # Path to the membrane detection project directory
 MEMBRANE_DETECTION_DIR="/home/astar/Projects/membrane_detection"
@@ -14,7 +14,6 @@ if [ $# -lt 2 ]; then
     echo "Usage: $0 <output_directory_path> <input_files_directory>"
     exit 1
 fi
-
 MRC_DIR=$(basename "$2")
 # create a new directory to store the results
 mkdir -p $1
@@ -31,13 +30,13 @@ mkdir -p "labels"
 # Convert mrc files to jpg for segmentation
 echo "Converting MRC files to JPG..."
 echo "Using Membrane Subtraction directory: $PWD/${MRC_DIR}"
-conda run -n ves_seg python "${MEMBRANE_SUBTRACTION_DIR}/mrc2jpg.py" "$PWD/${MRC_DIR}" -o "$PWD" --format "jpg" -dsa --scale
+conda run -n ves_seg python "${MEMBRANE_SUBTRACTION_DIR}/mrc2image.py" "$PWD/${MRC_DIR}" -o "$PWD" --format "jpg" -dsa --scale
 echo "Converted MRC files to JPG"
 
 DS_MICROGRAPHS_PATH="$PWD/images_jpg/${MRC_DIR}_ds"
 if [ ${SEGMENTATION_MODEL_FORMAT} == "onnx" ]; then
     echo "Using ONNX segmentation model format."
-    conda run -n ves_seg python "$MEMBRANE_DETECTION_DIR/export_onnx/run_onnx.py" \
+    conda run -n ves_seg python "${MEMBRANE_SUBTRACTION_DIR}/seg_onnx.py" \
     --model_dir "${SEGMENTATION_DIR}/result" \
     --onnx_fname model.onnx \
     --data_path ${DS_MICROGRAPHS_PATH} \
@@ -60,9 +59,8 @@ fi
 echo "Converted pseudo-color masks to binary masks in $PWD/labels"
 
 # Subtract the predicted masks from the original micrographs
-conda run -n ves_seg python "${MEMBRANE_SUBTRACTION_DIR}/run_mrc.py" \
+conda run -n ves_seg python "${MEMBRANE_SUBTRACTION_DIR}/run_mrc_subtraction.py" \
  -dp ${PWD} -ip "$PWD/${MRC_DIR}" \
- --in_format ${INPUT_FILE_FORMAT} \
  --out_format "mrc" "png"
 echo "Subtracted masks from original micrographs and saved results in $PWD/reconstructions"
 

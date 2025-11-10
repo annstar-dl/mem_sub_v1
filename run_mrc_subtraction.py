@@ -12,7 +12,6 @@ from bg_estimation import get_background
 
 def read_img(fpath, mask=False):
     #check if the file exists
-    print(f"Processing image: {fpath}")
     if not os.path.exists(fpath):
         raise FileNotFoundError(f"File {fpath} does not exist.")
     else:
@@ -26,7 +25,6 @@ def read_img(fpath, mask=False):
 
 def read_mrc(fpath):
     #check if the file exists
-    print(f"Processing image: {fpath}")
     if not os.path.exists(fpath):
         raise FileNotFoundError(f"File {fpath} does not exist.")
     img, header, voxel_size = load_mrc(fpath)
@@ -60,7 +58,6 @@ def process_file(args: argparse.Namespace):
         raise ValueError(f"Empty file, Nan in {args.file_name}")
 
     img_ds = downsample_micrograph(img, voxel_size[0], border, "center")
-    print(f"Image {args.file_name} downsampled range: min {np.min(img_ds)}, max {np.max(img_ds)}, mean {np.mean(img_ds)}")
     # check if the image is the same size as the mask
     if img_ds.shape[:2] != mask.shape[:2]:
         raise ValueError(

@@ -87,7 +87,6 @@ def process_file(args):
     output = sess.run(None, {input_name: img})
     filename = os.path.basename(fpath)
     filename = os.path.splitext(filename)[0] + '.png'
-    print(f"Processing {filename}...")
     save_output_as_image(output, os.path.join(args.output_dir_image, filename))
     save_output_as_label(output,os.path.join(args.output_dir_label, filename))
 
