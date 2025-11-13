@@ -59,7 +59,7 @@ fi
 echo "Converted pseudo-color masks to binary masks in $PWD/labels"
 
 # Subtract the predicted masks from the original micrographs
-conda run -n ves_seg python "${MEMBRANE_SUBTRACTION_DIR}/run_mrc_subtraction.py" \
+time conda run -n ves_seg python "${MEMBRANE_SUBTRACTION_DIR}/run_mrc_subtraction.py" \
  -dp ${PWD} -ip "$PWD/${MRC_DIR}" \
  --out_format "mrc" "png"
 echo "Subtracted masks from original micrographs and saved results in $PWD/reconstructions"

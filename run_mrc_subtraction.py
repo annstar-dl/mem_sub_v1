@@ -9,6 +9,7 @@ from mrc_utils import load_mrc, downsample_micrograph, save_im_mrc_same_size, \
     upsample_micrograph, new_shape_mrc_downsampling, FILE_TYPES
 from sub_utils import read_dict_from_yaml_file
 from bg_estimation import get_background
+import time
 
 def read_img(fpath, mask=False):
     #check if the file exists
@@ -94,7 +95,9 @@ def process_dir(args):
             continue
         args.file_name = file_name
         try:
+            start_time = time.time()
             process_file(args)
+            print(f"Processed {file_name} in {time.time() - start_time:.2f} seconds.")
         except Exception as e:
             print(f"Error processing file {file_name}: {e}")
 

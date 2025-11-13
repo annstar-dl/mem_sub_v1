@@ -5,7 +5,7 @@ from scipy.ndimage import gaussian_filter
 import argparse
 from PIL import Image
 import os
-
+import time
 # Check if a GPU is available
 if 'CUDAExecutionProvider' in onnxruntime.get_available_providers():
     print("Using CUDAExecutionProvider")
@@ -62,8 +62,9 @@ def process_dir(args):
     sess = onnxruntime.InferenceSession(args.onnx_model_path, providers=providers)
     input_name = sess.get_inputs()[0].name
     fpaths = load_img_paths(args.data_path)
-    print(fpaths)
+
     for fpath in fpaths:
+        start_time = time.time()
         img = np.array(Image.open(fpath), dtype=np.float32)
         img = standartize(img)
         img = np.stack([img, img, img], axis=0) if img.ndim == 2 else img
@@ -74,7 +75,7 @@ def process_dir(args):
         print(f"Processing {filename}...")
         save_output_as_image(output, os.path.join(args.output_dir_image, filename))
         save_output_as_label(output,os.path.join(args.output_dir_label, filename))
-
+        print(f"Processing time of {fpath}: {time.time() - start_time}")
 def process_file(args):
     """Process a single image file."""
     sess = onnxruntime.InferenceSession(args.onnx_model_path, providers=providers)

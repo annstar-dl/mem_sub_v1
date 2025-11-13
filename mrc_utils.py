@@ -59,7 +59,7 @@ def load_mrc(in_file: str = None, transpose: tuple = None):
         if data.shape[0] == 1:
             data = data[0]
         else:
-            raise ValueError("Data has more than 2 dimensions, which is not supported.")
+            raise ValueError(f"Data has {data.shape[0]} channels, which is not supported.")
     if transpose is not None:
         data = data.transpose(transpose)
     return data, header, voxel_size
