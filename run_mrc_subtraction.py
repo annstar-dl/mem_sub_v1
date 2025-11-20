@@ -95,9 +95,7 @@ def process_dir(args):
             continue
         args.file_name = file_name
         try:
-            start_time = time.time()
             process_file(args)
-            print(f"Processed {file_name} in {time.time() - start_time:.2f} seconds.")
         except Exception as e:
             print(f"Error processing file {file_name}: {e}")
 

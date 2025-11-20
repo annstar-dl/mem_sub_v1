@@ -1,9 +1,3 @@
-#!/usr/bin/env python3
-#
-#   mrc2tif.py - Convert MRC-like files to TIFF or JPEG file formats
-#   author: Christopher JF Cameron
-
-
 import argparse
 import numpy as np
 import os
@@ -46,6 +40,7 @@ def convert_file(args: argparse.Namespace) -> None:
 
     if args.scale:
         data = (data - np.min(data)) / (np.max(data) - np.min(data)) * 255
+
     if args.format == "tif":
         Image.fromarray(data).save(os.path.join(args.out_dir, f"{basename}.tif"))
     elif args.format == "jpeg" or args.format == "jpg":

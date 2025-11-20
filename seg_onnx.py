@@ -36,7 +36,6 @@ def load_img_paths(data_path):
     for root, _, files in os.walk(data_path):
         print(f"Searching for images in: {root}")
         # Filter files to include only image files
-        print(f"Files found: {files}")
         for file in files:
             if file.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp', '.tiff')):
                 img_paths.append(os.path.join(root, file))
@@ -72,10 +71,10 @@ def process_dir(args):
         output = sess.run(None, {input_name: img})
         filename = os.path.basename(fpath)
         filename = os.path.splitext(filename)[0] + '.png'
-        print(f"Processing {filename}...")
         save_output_as_image(output, os.path.join(args.output_dir_image, filename))
         save_output_as_label(output,os.path.join(args.output_dir_label, filename))
         print(f"Processing time of {fpath}: {time.time() - start_time}")
+
 def process_file(args):
     """Process a single image file."""
     sess = onnxruntime.InferenceSession(args.onnx_model_path, providers=providers)

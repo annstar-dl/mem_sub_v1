@@ -22,18 +22,12 @@ cd $1
 # copy input files directory to an output directory
 cp -r $2 .
 echo "Copied MRC files from $2 to $PWD/$MRC_DIR"
-# create a jpg directory to store the converted images
-mkdir -p "images_jpg"
 # create a directory to store predicted masks
 mkdir -p "labels"
+# create a jpg directory to store the converted images
+mkdir -p "images_jpg"
 
-# Convert mrc files to jpg for segmentation
-echo "Converting MRC files to JPG..."
-echo "Using Membrane Subtraction directory: $PWD/${MRC_DIR}"
-conda run -n ves_seg python "${MEMBRANE_SUBTRACTION_DIR}/mrc2image.py" "$PWD/${MRC_DIR}" -o "$PWD" --format "jpg" -dsa --scale
-echo "Converted MRC files to JPG"
-
-DS_MICROGRAPHS_PATH="$PWD/images_jpg/${MRC_DIR}_ds"
+DS_MICROGRAPHS_PATH="$PWD/${MRC_DIR}"
 if [ ${SEGMENTATION_MODEL_FORMAT} == "onnx" ]; then
     echo "Using ONNX segmentation model format."
     conda run -n ves_seg python "${MEMBRANE_SUBTRACTION_DIR}/seg_onnx.py" \
@@ -43,6 +37,7 @@ if [ ${SEGMENTATION_MODEL_FORMAT} == "onnx" ]; then
     --save_dir "${PWD}"
 elif [ ${SEGMENTATION_MODEL_FORMAT} == "paddleseg" ]; then
     echo "Using PaddleSeg segmentation model format."
+
     # Perform segmentation using PaddleSeg
     conda run -n paddleseg python "${PADDLESEG_DIR}/deploy/python/infer.py" \
     --config "${SEGMENTATION_DIR}/result/deploy.yaml" \
@@ -58,9 +53,9 @@ fi
 echo "Converted pseudo-color masks to binary masks in $PWD/labels"
 
 # Subtract the predicted masks from the original micrographs
-conda run -n ves_seg python "${MEMBRANE_SUBTRACTION_DIR}/run_mrc_subtraction.py" \
+conda run -n ves_seg python "${MEMBRANE_SUBTRACTION_DIR}/run_subtraction.py" \
  -dp ${PWD} -ip "$PWD/${MRC_DIR}" \
- --out_format "mrc" "png"
+ --out_format "png"
 echo "Subtracted masks from original micrographs and saved results in $PWD/reconstructions"
 
 

@@ -22,8 +22,8 @@ def create_gaussian_disc(im_size, radius):
     y, x = torch.meshgrid(torch.arange(cols), torch.arange(rows))
     y = y.to(torch.float64)  # Ensure y is in double precision
     x = x.to(torch.float64)  # Ensure x is in double precision
-    centerX = cols /2-0.5 # Center X coordinate
-    centerY = rows /2 -0.5 # Center Y coordinate
+    centerX = cols /2 - 0.5 # Center X coordinate
+    centerY = rows /2 - 0.5 # Center Y coordinate
     centerX = torch.tensor(centerX, dtype=torch.float64)  # Center X coordinate
     centerY = torch.tensor(centerY, dtype=torch.float64)  # Center Y coordinate
     #compute radius of each pixel from the center

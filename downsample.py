@@ -1,7 +1,5 @@
 import numpy as np
 
-from matplotlib import pyplot as plt
-
 
 def get_fft_center(n):
     """Return the center index for FFT operations."""

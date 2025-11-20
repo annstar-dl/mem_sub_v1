@@ -1,12 +1,12 @@
 #!/bin/bash
 
 FILENAME=$1
-#extract name of the dataset from the path
+# extract name of the dataset from the path
 MRC_DIR=$(basename "$INPUTDIR")
 # create a new directory to store the results
-mkdir -p $SAVEDIR
-#go into the new directory
-cd $SAVEDIR
+mkdir -p ${SAVEDIR}
+mkdir -p "${SAVEDIR}/${MRC_DIR}"
+# go into the new directory
 # copy input files directory to an output directory
 cp "${INPUTDIR}/${FILENAME}.mrc" "${SAVEDIR}/${MRC_DIR}/${FILENAME}.mrc"
 # Convert mrc files to jpg for segmentation
@@ -25,8 +25,8 @@ python "run_mrc_subtraction.py" \
  -dp ${SAVEDIR} -ip "${SAVEDIR}/${MRC_DIR}" \
  --out_format "mrc" "png" \
  -fn "${FILENAME}.mrc"
+# delete copied mrc file to save space
+rm "${SAVEDIR}/${MRC_DIR}/${FILENAME}.mrc"
 echo "Subtracted masks from original micrographs and saved results in ${SAVEDIR}/reconstructions/subtracted_png/${FILENAME}"
-
-
 
 
