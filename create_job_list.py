@@ -1,15 +1,31 @@
 import os
-from typing import Iterable, List, Generator
+from typing import Iterable, List, Generator, Optional
 from argparse import ArgumentParser
-from typing import List, Optional
 
 def list_files_in_directory(input_dir: str) -> List[str]:
-    """List all files in the given directory."""
+    """
+    List all files in the given directory that have a `.mrc` extension.
+
+    Args:
+        input_dir (str): Path to the directory to scan for files.
+
+    Returns:
+        List[str]: A list of `.mrc` file names in the directory.
+    """
     return [ f for f in os.listdir(input_dir)
             if os.path.isfile(os.path.join(input_dir, f)) and f.lower().endswith('.mrc')]
 
 def chunked(iterable: Iterable, size: int) -> Generator[List, None, None]:
-    """Yield successive `size`-sized lists from `iterable`."""
+    """
+    Yield successive chunks of a specified size from an iterable.
+
+    Args:
+        iterable (Iterable): The input iterable to split into chunks.
+        size (int): The size of each chunk.
+
+    Yields:
+        Generator[List, None, None]: A generator yielding lists of items from the iterable.
+    """
     it = iter(iterable)
     while True:
         chunk = []
@@ -30,7 +46,7 @@ def read_filelist(filelist_path):
         filelist_path (str): Path to the job list file.
 
     Returns:
-        list: List of file paths.
+        List[str]: List of file paths.
     """
     with open(filelist_path, 'r') as f:
         file_paths = [line.strip() for line in f if line.strip()]
@@ -48,6 +64,8 @@ def create_job_list(data_dir_path, job_file_path,seg_model_path, save_dir_path,
         nb_of_jobs (int): Maximum number of job batches to write (use None for all).
         batch_size (int): Number of files per batch written on each line.
         file_mode (str): Mode to write into a jobfile, "w" or "a".
+    Returns:
+        None
     """
 
     filelist = list_files_in_directory(data_dir_path)
@@ -76,6 +94,16 @@ def create_job_list(data_dir_path, job_file_path,seg_model_path, save_dir_path,
                 break
 
 def delete_processed_files_from_fnamelist(fnames, save_dir_path):
+    """
+    Filter out files that have already been processed.
+
+    Args:
+        fnames (List[str]): List of file names to check.
+        save_dir_path (str): Path to the directory where processed files are saved.
+
+    Returns:
+        List[str]: List of unprocessed file names.
+    """
     mrc_reconstruction_dir = os.path.join(save_dir_path, "reconstructions", "subtracted_mrc")
     unprocessed_fnames = []
     for fname in fnames:
@@ -116,7 +144,7 @@ def exists_ospath(path: str) -> bool:
 if __name__ == "__main__":
     args = ArgumentParser(description="Create job list for processing MRC files")
     args.add_argument("-ddp","--data_dir_path", type=str, help="Path to the directory containing MRC files")
-    args.add_argument("-jfp", "--job_file_path", type=str, default=None, help="Path to the job file to create")
+    args.add_argument("-jfp", "--job_file_path", type=str, default=None, help="Path to the txt job file to create")
     args.add_argument("-segmp", "--seg_model_path", type=str, help="Path to the segmentation model")
     args.add_argument("-savedp", "--save_dir_path", type=str, help="Path to the dir where results will be saved")
     parsed_args = args.parse_args()
