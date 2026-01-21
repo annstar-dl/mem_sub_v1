@@ -17,7 +17,7 @@ def add_border_to_mask(mask, border):
     mask_w_border[:, -border:] = 1
     return mask_w_border
 
-def  membrane_subtract(img,mask,border = 0):
+def  membrane_estimation(img, mask, border = 0):
     """    Subtract the membrane mask from the patch.
     Args:
         img (torch.Tensor): The micrograph(image with membranes) image tensor of shape (H, W).
@@ -62,19 +62,16 @@ def  membrane_subtract(img,mask,border = 0):
     row_idx, col_idx = select_points_within_boundary(img, r, row_idx,
                                                      col_idx)
 
-    # Ensure the image is centered around zero
-    ###!!!TODO: GET RID OF THE MEAN SUBTRACTION IN THE FUTURE OR ADD IT BACK AFTER SUBTRACTION
-    #img = img - torch.mean(img)
-
     # Clone the original image to avoid modifying it
     dataimg = img.detach().clone()
+    # Find the membrane using basis functions and fit it to the data
     # Fit basis to the previous reconstruction to achieve better results
     for _ in range(nb_iter):
         basis = get_basis(dataimg, mask, row_idx, col_idx, r)
         imgout = fit_basis_to_data_batched(img,basis, row_idx, col_idx,r, rho, max_iter_gd,w)
         dataimg = imgout
 
-    # Subtract the membrane from the original image
+    # Smooth the edges of membrane estimate using the smoothed mask
     imgout = imgout.to(mask.device)
     imgout = imgout * mask
     imgout = imgout.detach().cpu().numpy()

@@ -2,7 +2,7 @@ from kornia.geometry import scale
 
 from mrc_utils import load_mrc, downsample_micrograph, upsample_micrograph
 from fuzzymask import fuzzy_disk, fuzzy_rectangle
-from membrane_subtract_mrc import add_border_to_mask
+from membrane_estimation import add_border_to_mask
 from bg_estimation import get_background
 import numpy as np
 from matplotlib import pyplot as plt

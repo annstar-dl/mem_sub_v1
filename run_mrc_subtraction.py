@@ -1,7 +1,7 @@
 import os
 import numpy as np
 from PIL import Image
-from membrane_subtract_mrc import membrane_subtract
+from membrane_estimation import membrane_estimation
 from tqdm import tqdm
 import argparse
 from scipy.io import savemat
@@ -66,7 +66,7 @@ def process_file(args: argparse.Namespace):
             f"Image shape: {img.shape}, Mask shape: {mask.shape}")
 
     # run membrane subtraction algorithm
-    imgout_ds = membrane_subtract(img_ds, mask, border if np.any(img.shape > img_ds.shape) else 0)
+    imgout_ds = membrane_estimation(img_ds, mask, border if np.any(img.shape > img_ds.shape) else 0)
     # upsample the membrane estimate to the original size
     imgout = upsample_micrograph(imgout_ds, img.shape, voxel_size[0], border, "center")
     sub_img = img - imgout
