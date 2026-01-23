@@ -32,6 +32,26 @@ conda activate mem_sub
 ```bash
    bash seg_subtract.sh /path/to/save/results /path/to/mrc/files 
 ```
+This files contains two main parts:
+- Segmentation of membrane outlines using pretrained U-Net model.
+- Subtraction of the segmented membrane outlines from the original images.
+
+The first step requires downloading U-Net model weights. These weights can be downloaded from:
+[U-Net Weights Download Link](https://example.com/unet_weights.pth)
+Make sure to place the downloaded weights in the appropriate directory and specify the path to model.onnx file in the `seg_subtract.sh` script in SEGMENTATION_DIR variable.
+Also before the segmentation step, the mrc files are downsapled to have voxel size of 4.5 Angstroms. As a result, you will see in the output folder images_jpg/{input_folder_name}_ds with downsampled images in jpg format.
+The structure of the output folder will be as follows:
+```/your/save/path/
+    ├── images_jpg/{input_folder_name}_ds/  # Downsampled images in jpg format
+    ├── labels/                     # Segmented membrane masks
+    ├── labels_pseodcolor/          # Segmented membrane masks in pseudocolor
+    ├── input_mrc_folder_name/      # Original mrc files
+    ├── reconstructions/  
+    ├──────subtractions_mrc/ # Images after membrane subtraction in mrc format
+    ├──────subtractions_png/ # Images after membrane subtraction in png format
+    ├──────reconstructed_membranes/ # Reconstracted membrane images
+```
+Additionally original mrc files are copied to the output folder for convenience. This could be prevented by commenting out "cp -r $2 ." line in the `seg_subtract.sh` script.
 4. HPC Usage. Membrane subtraction on Yale HPC cluster is done using Deadly Simple Queue (DSQ) scheduler.
    The idea is that every image can be processed independently, so we can submit many jobs to the cluster,
 each processing a single image. This way we can "scavenge" free GPU resources from other users.

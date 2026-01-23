@@ -84,6 +84,8 @@ def process_file(args: argparse.Namespace):
     if "mrc" in args.out_format:
         # Save as .png file if specified
         save_im_mrc_same_size(sub_img, os.path.join(args.imgsout_path + "_mrc", basename + ".mrc"), header)
+        if args.save_reconstruction:
+            save_im_mrc_same_size(imgout, os.path.join(args.imgsout_reconstructed_path, basename + ".mrc"), header)
     if args.save_reconstruction:
         save_im(imgout, os.path.join(args.imgsout_reconstructed_path, basename + ".tif"))
         np.save(os.path.join(args.imgsout_reconstructed_path, basename + ".npy"), imgout)

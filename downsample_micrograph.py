@@ -1,7 +1,7 @@
 import numpy as np
 from downsample import down_sample
 from fuzzymask import fuzzy_disk, fuzzy_rectangle
-from mrc_utils import new_shape_mrc_downsampling, pad_im
+from mrc_utils import new_shape_mrc_downsampling, pad_im, load_mrc
 import argparse
 import os
 from run_mrc_subtraction import read_img, save_im
@@ -51,13 +51,18 @@ if __name__ == "__main__":
     if not os.path.exists(args.output_path):
         os.makedirs(args.output_path)
     for filename in os.listdir(args.imgs_path):
-        img = read_img(os.path.join(args.imgs_path, filename))
-        for i in range(4):
-            plt.figure()
-            plt.imshow(img[:,:,i], cmap='gray')
-            plt.title(f'Original Image Channel {i}')
-        plt.show()
+        if  filename.endswith(".mrc"):
+            img,_,voxel_size = load_mrc(os.path.join(args.imgs_path, filename))
+            args.voxel_size = voxel_size[0]
+            print("Loaded MRC file:", filename, "with voxel size:", voxel_size)
+        elif filename.endswith((".png", ".jpeg", ".jpg", ".tif", ".tiff")):
+            img = read_img(os.path.join(args.imgs_path, filename))
+        else:
+            print("Skipping non-image file:", filename)
+            continue
+
 
         img = downsample_micrograph(img, args.voxel,border, "center")
         print("Shape of ds data:", img.shape)
-        save_im(img, os.path.join(args.output_path,filename))
+        basename = os.path.splitext(filename)[0]
+        save_im(img, os.path.join(args.output_path,basename+".png"))
