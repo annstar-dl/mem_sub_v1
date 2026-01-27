@@ -1,8 +1,6 @@
 import torch
 import kornia
 import numpy as np
-
-
 def calculate_mse_loss(original, rotated):
     """Calculate the Mean Squared Error (MSE) loss between original and rotated images.
     Args:

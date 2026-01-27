@@ -153,7 +153,7 @@ def read_parameter_from_yaml_file(parameter):
         config = yaml.safe_load(file)
     return config[parameter]
 
-def read_dict_from_yaml_file():
+def read_parameters_from_yaml_file():
     """
     Read a YAML configuration file and return its contents as a dictionary.
 

@@ -112,6 +112,7 @@ def downsample_micrograph(data: np.ndarray,voxel_size: float, border = 0,padding
 
     pad_org_shape, ds_shape, ds_factor = new_shape_mrc_downsampling(data.shape, voxel_size)
     if ds_factor > 1:
+        # Apply fuzzy rectangle mask to the data to reduce edge artifacts
         if border > 0:
             fuzzy_rec = fuzzy_rectangle(shape=data.shape, border=border * ds_factor)
             data = data * fuzzy_rec

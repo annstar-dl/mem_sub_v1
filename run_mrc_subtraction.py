@@ -7,7 +7,7 @@ import argparse
 from scipy.io import savemat
 from mrc_utils import load_mrc, downsample_micrograph, save_im_mrc_same_size, \
     upsample_micrograph, new_shape_mrc_downsampling, FILE_TYPES
-from sub_utils import read_dict_from_yaml_file
+from sub_utils import read_parameters_from_yaml_file
 from bg_estimation import get_background
 import time
 
@@ -49,8 +49,8 @@ def process_file(args: argparse.Namespace):
     """Process a single MRC file to subtract membranes and save the results."""
     basename = os.path.splitext(args.file_name)[0] #file name without extension
     # read radius size from parameters file
-    parameters = read_dict_from_yaml_file()
-    border = parameters["r"]  # Radius of neighboring around grid point
+    parameters = read_parameters_from_yaml_file()
+    border = parameters["r"]  # Border size for fuzzy mask
     #read micrograph from mrc file
     img, header, voxel_size = read_mrc(os.path.join(args.imgs_path, args.file_name))
     #read downsampled membrane mask of a micrograph from png file
@@ -66,15 +66,16 @@ def process_file(args: argparse.Namespace):
             f"Image shape: {img.shape}, Mask shape: {mask.shape}")
 
     # run membrane subtraction algorithm
-    imgout_ds = membrane_estimation(img_ds, mask, border if np.any(img.shape > img_ds.shape) else 0)
+
+    membrane_ds = membrane_estimation(img_ds, mask, border if np.any(img.shape > img_ds.shape) else 0)
     # upsample the membrane estimate to the original size
-    imgout = upsample_micrograph(imgout_ds, img.shape, voxel_size[0], border, "center")
-    sub_img = img - imgout
+    membrane = upsample_micrograph(membrane_ds, img.shape, voxel_size[0], border, "center")
+    sub_img = img - membrane
     # add background back to the subtracted image
     if "mat" in args.out_format:
         # Save as .mat file if specified
         savemat(os.path.join(args.imgsout_path + "_mat", basename + ".mat"),
-                {'img': img, 'label': mask, 'mem': imgout, 'sub': sub_img})
+                {'img': img, 'label': mask, 'mem': membrane, 'sub': sub_img})
     if "jpeg" in args.out_format:
         # Save as .png file if specified
         save_im(sub_img, os.path.join(args.imgsout_path + "_jpeg", basename + ".jpeg"))
@@ -85,10 +86,10 @@ def process_file(args: argparse.Namespace):
         # Save as .png file if specified
         save_im_mrc_same_size(sub_img, os.path.join(args.imgsout_path + "_mrc", basename + ".mrc"), header)
         if args.save_reconstruction:
-            save_im_mrc_same_size(imgout, os.path.join(args.imgsout_reconstructed_path, basename + ".mrc"), header)
+            save_im_mrc_same_size(membrane, os.path.join(args.imgsout_reconstructed_path, basename + ".mrc"), header)
     if args.save_reconstruction:
-        save_im(imgout, os.path.join(args.imgsout_reconstructed_path, basename + ".tif"))
-        np.save(os.path.join(args.imgsout_reconstructed_path, basename + ".npy"), imgout)
+        save_im(membrane, os.path.join(args.imgsout_reconstructed_path, basename + ".tif"))
+        np.save(os.path.join(args.imgsout_reconstructed_path, basename + ".npy"), membrane)
 
 def process_dir(args):
     """Process all MRC files in a directory to subtract membranes and save the results."""

@@ -4,7 +4,7 @@ import torch
 from sampling_grid import get_sampling_grid, select_points_within_boundary
 from basis_fn import get_basis
 from fit_basis_to_data import fit_basis_to_data_batched
-from sub_utils import read_dict_from_yaml_file
+from sub_utils import read_parameters_from_yaml_file
 from bg_estimation import get_background
 
 def add_border_to_mask(mask, border):
@@ -17,7 +17,7 @@ def add_border_to_mask(mask, border):
     mask_w_border[:, -border:] = 1
     return mask_w_border
 
-def  membrane_estimation(img, mask, border = 0):
+def  prepare_micrograph(img, mask, border = 0):
     """    Subtract the membrane mask from the patch.
     Args:
         img (torch.Tensor): The micrograph(image with membranes) image tensor of shape (H, W).
@@ -39,13 +39,10 @@ def  membrane_estimation(img, mask, border = 0):
         raise ValueError("Mask must be a 2D tensor, got {} dimensions".format(mask.ndim))
 
     # read parameters from the YAML file
-    parameters = read_dict_from_yaml_file()
+    parameters = read_parameters_from_yaml_file()
     d = parameters["d"]  # Number of dilation iterations for the mask
     w = parameters["w"]  # Distance between grid points
-    max_iter_gd = parameters["max_nb_iter_GD"]  # Maximum number of iterations for gradient descent
-    rho = parameters["rho"]  # Learning rate for gradient descent
     r = parameters["r"]  # Radius of neighboring around grid point
-    nb_iter = parameters["nb_iter"]  # Number of iterations for fitting
     # create mask with border to estimate the background
     if border>0:
         print("Masking the border of the image for background estimation")
@@ -61,13 +58,48 @@ def  membrane_estimation(img, mask, border = 0):
     # Ensure that the extracted patch points stay within the boundary of the mask
     row_idx, col_idx = select_points_within_boundary(img, r, row_idx,
                                                      col_idx)
+    return img, mask, row_idx, col_idx
 
+def find_grid_angles(img, row_idx, col_idx):
+    """
+    Find the angles of the membrane profiles at each grid point.
+    :param img: Torch.Tensor. Input image tensor of micrograph of shape (H, W).
+    :param mask: Torch.Tensor. Smoothed segmentation mask tensor of shape (H, W).
+    :param row_idx: Torch.Tensor. Y coordinates of grid of shape (N), number of grid points.
+    :param col_idx: Torch.Tensor. X coordinates of grid of shape (N), number of grid points.
+    :return:
+    torch.Tensor: The angles of the membrane profiles at each grid point of shape (N,).
+    """
+    # read parameters from the YAML file
+    parameters = read_parameters_from_yaml_file()
+    r = parameters["r"]  # Radius of neighboring around grid point
+    dataimg = img.detach().clone()
+    _, thetas = get_basis(dataimg, row_idx, col_idx, r)
+    return thetas
+
+def fit_membrane(img, mask, row_idx, col_idx):
+    """
+    Fit basis functions to estimate the membrane in the image.
+    :param img: Torch.Tensor. Input image tensor of micrograph of shape (H, W).
+    :param mask: Torch.Tensor. Smoothed segmentation mask tensor of shape (H, W).
+    :param row_idx: Torch.Tensor. Y coordinates of grid of shape (N), number of grid points.
+    :param col_idx: Torch.Tensor. X coordinates of grid of shape (N), number of grid points.
+    :return:
+    np.ndarray: The estimated membrane image of shape (H, W).
+    """
+    # read parameters from the YAML file
+    parameters = read_parameters_from_yaml_file()
+    w = parameters["w"]  # Distance between grid points
+    max_iter_gd = parameters["max_nb_iter_GD"]  # Maximum number of iterations for gradient descent
+    rho = parameters["rho"]  # Learning rate for gradient descent
+    r = parameters["r"]  # Radius of neighboring around grid point
+    nb_iter = parameters["nb_iter"]  # Number of iterations for fitting
     # Clone the original image to avoid modifying it
     dataimg = img.detach().clone()
     # Find the membrane using basis functions and fit it to the data
     # Fit basis to the previous reconstruction to achieve better results
     for _ in range(nb_iter):
-        basis = get_basis(dataimg, mask, row_idx, col_idx, r)
+        basis, _ = get_basis(dataimg, row_idx, col_idx, r)
         imgout = fit_basis_to_data_batched(img,basis, row_idx, col_idx,r, rho, max_iter_gd,w)
         dataimg = imgout
 
@@ -76,3 +108,33 @@ def  membrane_estimation(img, mask, border = 0):
     imgout = imgout * mask
     imgout = imgout.detach().cpu().numpy()
     return imgout
+
+def membrane_angle_estimation(img, mask, border = 0, return_theta = False, return_membrane = True):
+    """
+    Estimate the angles of the membrane profiles at each grid point.
+    :param img: Torch.Tensor. Input image tensor of micrograph of shape (H, W).
+    :param mask: Torch.Tensor. Binary segmentation mask tensor of shape (H, W).
+    :param border: int. The size of the border to be masked out for background estimation. Default is 0.
+    :param return_theta: bool. Whether to return the angles of the membrane profiles at each grid point. Default is False.
+    :param return_membrane: bool. Whether to return the estimated membrane image. Default is True.
+    :return:
+    torch.Tensor: The angles of the membrane profiles at each grid point of shape (N,).
+    """
+    # Prepare the micrograph and get the sampling grid
+    img, mask, row_idx, col_idx = prepare_micrograph(img, mask, border)
+    # Find the angles of the membrane profiles at each grid point
+    if return_theta:
+        angles = find_grid_angles(img, row_idx, col_idx)
+    else:
+        angles = None
+    # Fit basis functions to estimate the membrane in the image
+    if return_membrane:
+        membrane = fit_membrane(img, mask, row_idx, col_idx)
+    else:
+        membrane = None
+    return angles, membrane
+
+
+
+
+

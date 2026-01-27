@@ -63,7 +63,7 @@ def get_radius_of_inner_circle(r):
     """
     return math.floor(r / math.sqrt(2.0)) - 1  # Radius of the inner circle
 
-def get_basis_sequential(dataimg,mask,row_idx,col_idx,r, return_theta=False):
+def get_basis_sequential(dataimg,row_idx,col_idx,r):
     """
     Get bases from the image data patch by patch. Basis is a membrane profile at a point.
 
@@ -77,9 +77,11 @@ def get_basis_sequential(dataimg,mask,row_idx,col_idx,r, return_theta=False):
         r (int): Radius of a neighbourhood.
 
     Returns:
-        torch.Tensor: Bases(Reconstructed images of neighbourhoods around grid point)
+        tuple: (torch.Tensor, torch.Tensor)
+        1.torch.Tensor: Bases(Reconstructed images of neighbourhoods around grid point)
          of shape (N,r,r), where N is the number of bases and r is inner radius of neighbourhood
          around sampling grid point.
+        2.torch.Tensor: The angles of the membrane profiles at each grid point of shape (N,).
     """
     # Check if the input image is 2D or 3D
     if dataimg.dim() != 2:
@@ -102,13 +104,12 @@ def get_basis_sequential(dataimg,mask,row_idx,col_idx,r, return_theta=False):
         patchImg = recon_patch(img1, cntr, r_in, w, gaussWt, theta)  # Reconstruct the patch using the basis functions
         basis[i] = patchImg  # Store the reconstructed patch in the basis tensor
         thetas[i] = theta  # Store the angle for the current grid point
-    if return_theta:
-        return basis, thetas
-    else:
-        return basis
+
+    return basis, thetas
 
 
-def get_basis(dataimg,mask,row_idx,col_idx,r, return_theta=False):
+
+def get_basis(dataimg,row_idx,col_idx,r):
     """
     Get bases from the image data multiple patches at once. Basis is a membrane profile at a point.
 
@@ -116,15 +117,16 @@ def get_basis(dataimg,mask,row_idx,col_idx,r, return_theta=False):
         img (torch.Tensor): Input image of shape (H,W), where N is the number of samples
                             and H, W are the height and width of the image.
         dataimg (torch.Tensor): The image from previous processing step of shape (H,W).
-        mask (torch.Tensor): Segmentation mask of shape (H,W) to apply on the image.
         row_idx (torch.Tensor): X coordinates of grid of shape (N), number of grid points.
         col_idx (torch.Tensor): Y coordinates of grid of shape (N), number of grid points.
         r (int): Radius of a neighbourhood.
 
     Returns:
-        torch.Tensor: Bases(Reconstructed images of neighbourhoods around grid point)
+        tuple: (torch.Tensor, torch.Tensor)
+        1.torch.Tensor: Bases(Reconstructed images of neighbourhoods around grid point)
          of shape (N,r,r), where N is the number of bases and r is inner radius of neighbourhood
          around sampling grid point.
+        2.torch.Tensor: The angles of the membrane profiles at each grid point of shape (N,).
     """
     # Check if the input image is 2D or 3D
     if dataimg.dim() != 2:
@@ -143,8 +145,7 @@ def get_basis(dataimg,mask,row_idx,col_idx,r, return_theta=False):
         gaussWt = gaussWt.to("cuda")
     theta = align_multiple_patches(imgs_subset,cntr, r_in,w,-90.,90.0,1.0)  # Align the image using the center and radius
     basis = recon_mult_patches(imgs_subset, cntr, r_in, w, gaussWt, theta)  # Reconstruct the patch using the basis functions
-    if return_theta:
-        return basis, theta
-    else:
-        return basis
+
+    return basis, theta
+
 

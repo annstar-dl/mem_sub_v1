@@ -5,7 +5,7 @@ import os
 from sampling_grid import get_sampling_grid, select_points_within_boundary
 from basis_fn import get_basis
 from fit_basis_to_data import fit_basis_to_data_batched
-from sub_utils import read_dict_from_yaml_file
+from sub_utils import read_parameters_from_yaml_file
 from bg_estimation import get_background
 
 
@@ -37,7 +37,7 @@ def  membrane_subtract(img, mask):
     ###!!!TODO: GET RID OF THE MEAN SUBTRACTION IN THE FUTURE OR ADD IT BACK AFTER SUBTRACTION
     #img = img - torch.mean(img)
     #read parameters from the YAML file
-    parameters = read_dict_from_yaml_file()
+    parameters = read_parameters_from_yaml_file()
     d = parameters["d"]  # Number of dilation iterations for the mask
     w = parameters["w"]  # Distance between grid points
     max_iter_gd = parameters["max_nb_iter_GD"]  # Maximum number of iterations for gradient descent

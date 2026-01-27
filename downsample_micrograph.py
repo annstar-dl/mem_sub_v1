@@ -5,7 +5,7 @@ from mrc_utils import new_shape_mrc_downsampling, pad_im, load_mrc
 import argparse
 import os
 from run_mrc_subtraction import read_img, save_im
-from sub_utils import read_dict_from_yaml_file
+from sub_utils import read_parameters_from_yaml_file
 from matplotlib import pyplot as plt
 
 def downsample_micrograph(data: np.ndarray,voxel_size: float, border = 0,padding_mode = "center") -> np.ndarray:
@@ -46,7 +46,7 @@ if __name__ == "__main__":
     parser.add_argument("-ip", "--imgs_path", default="/home/astar/Projects/vesicles_data/vb_flagella_png_sub/vb_flagella_png", type=str, help="Directory path containing mrc micrographs")
     parser.add_argument("-vs", "--voxel", default=1.068, type=float, )
     args = parser.parse_args()
-    parameters = read_dict_from_yaml_file()
+    parameters = read_parameters_from_yaml_file()
     border = parameters["r"]
     if not os.path.exists(args.output_path):
         os.makedirs(args.output_path)
