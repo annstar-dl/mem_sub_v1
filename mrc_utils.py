@@ -90,9 +90,9 @@ def new_shape_mrc_downsampling(old_shape,voxel_size,ds_factor=None):
         print(f"Calculating downsampling factor based on voxel size. Org voxel size: {voxel_size:.2f} Å. Downsampling factor: {ds_factor}. Target voxel size: {target_voxel_size} Å.")
     if ds_factor < 1:
         ds_factor = 1
-    padded_shape = [next_even_multiple(old_shape[0],ds_factor), next_even_multiple(old_shape[1], ds_factor)]
-    new_shape = int(old_shape[0]/ds_factor),int(old_shape[1]/ds_factor)
-    return padded_shape,new_shape, ds_factor
+    cropped_shape = [croped_value_even_multiple_of_ds_factor(old_shape[0],ds_factor), croped_value_even_multiple_of_ds_factor(old_shape[1], ds_factor)]
+
+    return cropped_shape,ds_factor
 
 def downsample_micrograph(data: np.ndarray,voxel_size: float, border = 0,padding_mode = "center") -> np.ndarray:
     """
@@ -103,7 +103,6 @@ def downsample_micrograph(data: np.ndarray,voxel_size: float, border = 0,padding
 
     Args:
         data (np.ndarray): Input image data.
-        pad_org_shape (tuple): New shape of the padded original image data.
         voxel_size (tuple): Voxel size in each dimension.
         border (int): Border size for the fuzzy mask. Default is 0.
         padding_mode (str): Padding mode, either "right_down" or "center". Default is "center".
@@ -115,8 +114,11 @@ def downsample_micrograph(data: np.ndarray,voxel_size: float, border = 0,padding
     # Assume voxel_size is isotropic
     # Recalculate the new shape for downsampling considering that after the downsampling the
     # image shape should be multiple of downsampling factor
-    pad_org_shape, ds_shape, ds_factor = new_shape_mrc_downsampling(data.shape, voxel_size)
+    cropped_shape, ds_factor = new_shape_mrc_downsampling(data.shape, voxel_size)
     if ds_factor > 1:
+        if np.any(np.array(cropped_shape) < data.shape):
+            print(f"Cropping the image with shape {data.shape} to the new shape {cropped_shape} before downsampling.")
+            data = crop_im(data, cropped_shape, mode=padding_mode)
         # Apply fuzzy rectangle mask to the data to reduce edge artifacts
         if border > 0:
             # making signal to look periodic to reduce edge artifacts during downsampling
@@ -126,34 +128,34 @@ def downsample_micrograph(data: np.ndarray,voxel_size: float, border = 0,padding
             # algorithm
             fuzzy_rec = fuzzy_rectangle(shape=data.shape, border=border * ds_factor)
             data = data * fuzzy_rec
-        if np.any(np.array(pad_org_shape) > data.shape):
-            print(f"Padding the image with shape {data.shape} to the new shape {pad_org_shape} before downsampling.")
-            data = pad_im(data, pad_org_shape, padding_value=0, mode=padding_mode)
+        ds_shape = (data.shape[0] // ds_factor, data.shape[1] // ds_factor)
         print(f"Downsampling factor  {ds_factor:.2f} is higher than 1, downsampling the data."
               f"Org data shape {data.shape} new data shape: {ds_shape}")
+
         # Create fuzzy disk mask for downsampling to reduce aliasing artifacts
+        # why 0.48? because the fuzzy disk radius should be less than half of the image size
+        # to avoid edge artifacts during downsampling
         msk = fuzzy_disk(ds_shape, r=0.48 * np.array(ds_shape))
         data = down_sample(data, ds_shape, fuzzy_mask=msk)
     return data
 
-def upsample_micrograph(img_ds, original_shape,voxel_size,border=0,padding_mode = "center") -> np.ndarray:
+def upsample_micrograph(img_ds, original_shape, voxel_size, padding_mode="center") -> np.ndarray:
     """
     Upsample the downsampled image to the original shape using nearest neighbor interpolation.
     Args:
         img_ds (numpy.ndarray): Downsampled image array.
         original_shape (tuple): Original shape of the image (height, width).
         voxel_size (tuple): Voxel size in each dimension.
-        border (int): Border size to set to zero after upsampling. Default is 0.
         padding_mode (str): Padding mode, either "right_down" or "center". Default is "center".
     Returns:
         numpy.ndarray: Upsampled image array.
     """
-    padded_org_shape, ds_shape, ds_factor = new_shape_mrc_downsampling(original_shape, voxel_size)
+    cropped_shape, ds_factor = new_shape_mrc_downsampling(original_shape, voxel_size)
     msk = fuzzy_disk(img_ds.shape, r=0.48 * np.array(img_ds.shape))
-    upsampled_img = up_sample(img_ds, padded_org_shape, msk)
-    if np.any(np.array(padded_org_shape) > np.array(original_shape)):
-        print(f"Cropping the upsampled image with shape {upsampled_img.shape} to the original shape {original_shape}.")
-        upsampled_img = crop_im(upsampled_img, original_shape, mode=padding_mode)
+    upsampled_img = up_sample(img_ds, cropped_shape, msk)
+    if np.any(np.array(cropped_shape) < np.array(original_shape)):
+        print(f"Padding the upsampled image with shape {upsampled_img.shape} to the original shape {original_shape}.")
+        upsampled_img = pad_im(upsampled_img, original_shape, padding_value=0, mode=padding_mode)
     return upsampled_img
 
 def pad_im(im, new_shape, padding_value, mode="right_down"):
@@ -207,12 +209,16 @@ def crop_im(im, new_shape, mode="right_down"):
         raise ValueError("Invalid cropping mode. Supported modes are 'right_down' and 'center'.")
     return cropped_im
 
-def next_even_multiple(n, base):
-    """Find even padding value such that the new value is multiple of base."""
-    n_delta = 0
-    while (n+2*n_delta) % base != 0:
-        n_delta += 1
-    return int(n+2*n_delta)
+def croped_value_even_multiple_of_ds_factor(value, ds_factor):
+    """
+    Crop the value to the nearest even multiple of the downsampling factor.
+    Args:
+        value (int): Value to crop,
+        ds_factor (int): Downsampling factor.
+    Returns:
+        int: Cropped value.
+    """
+    return (value // (2*ds_factor)) *(2* ds_factor)
 
 if __name__ == "__main__":
     pass

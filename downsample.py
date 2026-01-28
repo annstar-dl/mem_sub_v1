@@ -6,7 +6,14 @@ def get_fft_center(n):
     return n//2
 
 def get_start_stop_indices(n,m):
-    """Get start and stop indices for cropping FFT."""
+    """Get start and stop indices for cropping FFT.
+    Args:
+        n (int): Original size.
+        m (int): New size.
+    Returns:
+        left (int): Start index.
+        right (int): Stop index.
+    """
     offset=get_fft_center(n)-get_fft_center(m)
     left=offset
     right=m+offset
