@@ -6,10 +6,8 @@ from tqdm import tqdm
 import argparse
 from scipy.io import savemat
 from mrc_utils import load_mrc, downsample_micrograph, save_im_mrc_same_size, \
-    upsample_micrograph, new_shape_mrc_downsampling, FILE_TYPES
+    upsample_micrograph, FILE_TYPES
 from sub_utils import read_parameters_from_yaml_file
-from bg_estimation import get_background
-import time
 
 def read_img(fpath, mask=False):
     #check if the file exists
@@ -69,27 +67,28 @@ def process_file(args: argparse.Namespace):
 
     membrane_ds, angle_dict = membrane_angle_estimation(img_ds, mask, border if np.any(img.shape > img_ds.shape) else 0)
     # upsample the membrane estimate to the original size
-    membrane = upsample_micrograph(membrane_ds, img.shape, voxel_size[0], border, "center")
+    membrane = upsample_micrograph(membrane_ds, img.shape, voxel_size[0], "center")
     sub_img = img - membrane
     # add background back to the subtracted image
-    if "mat" in args.out_format:
+    if "mat" in args.out_format_sub:
         # Save as .mat file if specified
-        savemat(os.path.join(args.imgsout_path + "_mat", basename + ".mat"),
+        savemat(os.path.join(args.subtracted_path + "_mat", basename + ".mat"),
                 {'img': img, 'label': mask, 'mem': membrane, 'sub': sub_img})
-    if "jpeg" in args.out_format:
+    if "jpeg" in args.out_format_sub:
         # Save as .png file if specified
-        save_im(sub_img, os.path.join(args.imgsout_path + "_jpeg", basename + ".jpeg"))
-    if "png" in args.out_format:
+        save_im(sub_img, os.path.join(args.subtracted_path + "_jpeg", basename + ".jpeg"))
+    if "png" in args.out_format_sub:
         # Save as .png file if specified
-        save_im(sub_img, os.path.join(args.imgsout_path + "_png", basename + ".png"))
-    if "mrc" in args.out_format:
+        save_im(sub_img, os.path.join(args.subtracted_path + "_png", basename + ".png"))
+    if "mrc" in args.out_format_sub:
         # Save as .png file if specified
-        save_im_mrc_same_size(sub_img, os.path.join(args.imgsout_path + "_mrc", basename + ".mrc"), header)
-        if args.save_reconstruction:
-            save_im_mrc_same_size(membrane, os.path.join(args.imgsout_reconstructed_path, basename + ".mrc"), header)
-    if args.save_reconstruction:
-        save_im(membrane, os.path.join(args.imgsout_reconstructed_path, basename + ".tif"))
-        np.save(os.path.join(args.imgsout_reconstructed_path, basename + ".npy"), membrane)
+        save_im_mrc_same_size(sub_img, os.path.join(args.subtracted_mrc_path, basename + ".mrc"), header)
+    if "mrc" in args.out_format_mem:
+        save_im_mrc_same_size(membrane, os.path.join(args.membrane_path+"_mrc", basename + ".mrc"), header)
+    if "png" in args.out_format_mem:
+        save_im(membrane, os.path.join(args.membrane_path+"_png", basename + ".png"))
+    if "npy" in args.out_format_mem:
+        np.save(os.path.join(args.membrane_path + "_npy", basename + ".npy"), membrane)
 
 def process_dir(args):
     """Process all MRC files in a directory to subtract membranes and save the results."""
@@ -104,17 +103,21 @@ def process_dir(args):
 
 def main(args):
     """Main function to set up directories and process files."""
-    imgout_mainpath = os.path.join(args.output_path, "reconstructions")
-    if args.save_reconstruction:
-        args.imgsout_reconstructed_path = os.path.join(imgout_mainpath, "reconstructed_membranes")
-        if not os.path.exists(args.imgsout_reconstructed_path):
-            os.makedirs(args.imgsout_reconstructed_path)
-    args.imgsout_path = os.path.join(imgout_mainpath,"subtracted")
-    for fmt in args.out_format:
-        imgsout_path = args.imgsout_path + f"_{fmt}"
-        if not os.path.exists(imgsout_path):
-            os.makedirs(imgsout_path)
-    args.masks_path = os.path.join(args.output_path, "labels")
+    args.membrane_path = os.path.join(args.output_path, "misc", "membranes")
+    for fmt in args.out_format_mem:
+        membranes_path = args.membrane_path + f"_{fmt}"
+        if not os.path.exists(membranes_path):
+            os.makedirs(membranes_path)
+    args.subtracted_path = os.path.join(args.output_path,"misc","subtracted")
+    for fmt in args.out_format_sub:
+        if fmt!="mrc":
+            subtracted_path = args.subtracted_path + f"_{fmt}"
+        else:
+            subtracted_path = os.path.join(args.output_path,"subtracted_mrc")
+            args.subtracted_mrc_path = subtracted_path
+        if not os.path.exists(subtracted_path):
+            os.makedirs(subtracted_path)
+    args.masks_path = os.path.join(args.output_path,"misc", "labels")
     if args.file_name is None:
         process_dir(args)
     else:
@@ -129,8 +132,8 @@ if __name__=="__main__":
     parser.add_argument("-dp","--output_path", type=str,help="Directory path containing folders with images and labels")
     parser.add_argument("-ip","--imgs_path", type=str,  help="Directory path containing mrc micrographs")
     parser.add_argument("-s","--sigma", type=float, default=24.0, help="Sigma for Gaussian filter to flatten background.")
-    parser.add_argument("--out_format", nargs="+", default=["png"], help="List of file format to save subracted images. Choices are .mat,.png.,mrc formats")
-    parser.add_argument("--save_reconstruction", action="store_true", default=False, help="Save the reconstructed membranes.")
+    parser.add_argument("--out_format_sub", nargs="+", default=["png"], help="List of file format to save subracted images. Choices are mat, png, mrc formats")
+    parser.add_argument("--out_format_mem", nargs="+", default=["npy"],  help="List of file format to save estimates of membrane images. Choices are mrc, png, npy formats")
     parser.add_argument("-fn","--file_name",type=str, default=None,help="Name of file to convert (default: None), if None process all files in the folder")
     args = parser.parse_args()
     main(args)

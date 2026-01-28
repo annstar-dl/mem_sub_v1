@@ -5,7 +5,7 @@ from PIL import Image
 from glob import glob
 from tqdm import tqdm
 from skimage import io
-from mrc_utils import load_mrc, FILE_TYPES, downsample_micrograph, new_shape_mrc_downsampling
+from mrc_utils import load_mrc, FILE_TYPES, downsample_micrograph
 
 def convert_dir(args: argparse.Namespace) -> None:
     """
@@ -99,7 +99,7 @@ if __name__ == "__main__":
 
     assert os.path.isdir(args.in_dir), f"Input directory does not exist: {args.in_dir}"
     data_dir_name = os.path.basename(os.path.normpath(args.in_dir))
-    args.out_dir = os.path.join(args.out_dir,"images_"+args.format, data_dir_name + "_ds" if args.downsampling_allowed else data_dir_name)
+    args.out_dir = os.path.join(args.out_dir,data_dir_name +"_"+ args.format+ "_ds" if args.downsampling_allowed else data_dir_name)
     os.makedirs(args.out_dir, exist_ok=True)
     if args.downsampling_allowed:
         print("Downsampling based on voxel size is allowed.")

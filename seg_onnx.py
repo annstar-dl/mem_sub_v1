@@ -150,8 +150,8 @@ def process(args):
         output = sess.run(None, {input_name: img})
         filename = os.path.basename(fpath)
         filename = os.path.splitext(filename)[0] + '.png'
-        save_output_as_image(output, os.path.join(args.output_dir_image, filename))
-        save_output_as_label(output,os.path.join(args.output_dir_label, filename))
+        save_output_as_image(output, os.path.join(args.output_dir_label, filename))
+        #save_output_as_label(output,os.path.join(args.output_dir_label, filename))
         print(f"Processing time of {fpath}: {time.time() - start_time}")
 
 
@@ -166,8 +166,6 @@ if __name__ == "__main__":
     args = args.parse_args()
     args.onnx_model_path = os.path.join(args.model_dir, args.onnx_fname)
     args.output_dir_label = os.path.join(args.save_dir, 'labels')
-    args.output_dir_image = os.path.join(args.save_dir, 'labels_pseudcolor')
     os.makedirs(args.output_dir_label, exist_ok=True)
-    os.makedirs(args.output_dir_image, exist_ok=True)
     process(args)
 
