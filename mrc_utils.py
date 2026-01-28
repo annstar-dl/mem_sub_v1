@@ -96,7 +96,9 @@ def new_shape_mrc_downsampling(old_shape,voxel_size,ds_factor=None):
 
 def downsample_micrograph(data: np.ndarray,voxel_size: float, border = 0,padding_mode = "center") -> np.ndarray:
     """
-    Downsample the MRC data based on the voxel size. If the voxel size is isotropic and greater than the target voxel size, downsample the data.
+    Downsample the MRC data based on the voxel size. To prevent iliasing artifacts, the image is multiplied
+    by a fuzzy rectangle mask before downsampling that brings the signal to zero at the borders.
+    If the voxel size is isotropic and greater than the target voxel size, downsample the data.
     Otherwise, return the data as is.
 
     Args:
@@ -109,11 +111,19 @@ def downsample_micrograph(data: np.ndarray,voxel_size: float, border = 0,padding
     Returns:
         np.ndarray: Downsampled image data.
     """
-
+    # Find new shape for downsampling based on voxel size and calculate downsampling factor
+    # Assume voxel_size is isotropic
+    # Recalculate the new shape for downsampling considering that after the downsampling the
+    # image shape should be multiple of downsampling factor
     pad_org_shape, ds_shape, ds_factor = new_shape_mrc_downsampling(data.shape, voxel_size)
     if ds_factor > 1:
         # Apply fuzzy rectangle mask to the data to reduce edge artifacts
         if border > 0:
+            # making signal to look periodic to reduce edge artifacts during downsampling
+            # by applying fuzzy rectangle mask that smoothly goes to zero at the borders
+            # the border size is scaled according to the downsampling factor
+            # the border size is usually set to the radius of the neighborhood used in membrane estimation
+            # algorithm
             fuzzy_rec = fuzzy_rectangle(shape=data.shape, border=border * ds_factor)
             data = data * fuzzy_rec
         if np.any(np.array(pad_org_shape) > data.shape):
@@ -121,7 +131,7 @@ def downsample_micrograph(data: np.ndarray,voxel_size: float, border = 0,padding
             data = pad_im(data, pad_org_shape, padding_value=0, mode=padding_mode)
         print(f"Downsampling factor  {ds_factor:.2f} is higher than 1, downsampling the data."
               f"Org data shape {data.shape} new data shape: {ds_shape}")
-
+        # Create fuzzy disk mask for downsampling to reduce aliasing artifacts
         msk = fuzzy_disk(ds_shape, r=0.48 * np.array(ds_shape))
         data = down_sample(data, ds_shape, fuzzy_mask=msk)
     return data
@@ -203,11 +213,6 @@ def next_even_multiple(n, base):
     while (n+2*n_delta) % base != 0:
         n_delta += 1
     return int(n+2*n_delta)
-
-def next_multiple(n, base):
-    """Convert an integer to the next multiple of base."""
-    n = n if n % base == 0 else ceil(n / base) * base
-    return int(n)
 
 if __name__ == "__main__":
     pass

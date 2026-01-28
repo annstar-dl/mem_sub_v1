@@ -125,14 +125,15 @@ def membrane_angle_estimation(img, mask, border = 0, return_theta = False, retur
     # Find the angles of the membrane profiles at each grid point
     if return_theta:
         angles = find_grid_angles(img, row_idx, col_idx)
+        dict_angles = {'row_idx': row_idx.numpy(), 'col_idx': col_idx.numpy(), 'angles': angles.numpy()}
     else:
-        angles = None
+        dict_angles = {}
     # Fit basis functions to estimate the membrane in the image
     if return_membrane:
         membrane = fit_membrane(img, mask, row_idx, col_idx)
     else:
         membrane = None
-    return angles, membrane
+    return membrane, dict_angles
 
 
 
