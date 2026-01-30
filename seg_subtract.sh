@@ -22,7 +22,7 @@ mkdir -p $2
 cd $2
 mkdir -p "misc"
 # copy input files directory to an output directory
-cp -r $1 "$PWD/misc/$MRC_DIR"
+cp -r $1 "$PWD/misc/"
 echo "Copied MRC files from $1 to $PWD/misc/$MRC_DIR"
 # create a jpg directory to store the converted images
 # mkdir -p "images_jpg"
@@ -61,7 +61,9 @@ fi
 conda run -n ves_seg python "${MEMBRANE_SUBTRACTION_DIR}/run_mrc_subtraction.py" \
  -dp ${PWD} -ip "$PWD/misc/${MRC_DIR}" \
  --out_format_sub "mrc" "png" \
- --out_format_mem "mrc" "png"
+ --out_format_mem "mrc" "png" \
+ --save_angle
+
 echo "Subtracted masks from original micrographs and saved results in $PWD"
 
 

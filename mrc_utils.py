@@ -212,6 +212,8 @@ def crop_im(im, new_shape, mode="right_down"):
 def croped_value_even_multiple_of_ds_factor(value, ds_factor):
     """
     Crop the value to the nearest even multiple of the downsampling factor.
+    The value should be even after divading by the downsampling factor, due to the FFT algorithm
+     used during downsampling.
     Args:
         value (int): Value to crop,
         ds_factor (int): Downsampling factor.

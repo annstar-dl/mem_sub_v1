@@ -8,6 +8,8 @@ from scipy.io import savemat
 from mrc_utils import load_mrc, downsample_micrograph, save_im_mrc_same_size, \
     upsample_micrograph, FILE_TYPES
 from sub_utils import read_parameters_from_yaml_file
+import csv
+import pandas as pd
 
 def read_img(fpath, mask=False):
     #check if the file exists
@@ -55,7 +57,7 @@ def process_file(args: argparse.Namespace):
     mask = read_img(os.path.join(args.masks_path, basename + ".png"), True)
     if np.any(np.isnan(img)):
         raise ValueError(f"Empty file, Nan in {args.file_name}")
-
+    # downsample the micrograph if needed
     img_ds = downsample_micrograph(img, voxel_size[0], border, "center")
     # check if the image is the same size as the mask
     if img_ds.shape[:2] != mask.shape[:2]:
@@ -64,31 +66,51 @@ def process_file(args: argparse.Namespace):
             f"Image shape: {img.shape}, Mask shape: {mask.shape}")
 
     # run membrane subtraction algorithm
+    membrane_ds, angle_dict = membrane_angle_estimation(img_ds, mask, border if np.any(img.shape > img_ds.shape) else 0,
+                                                        args.save_angle, args.do_subtraction)
 
-    membrane_ds, angle_dict = membrane_angle_estimation(img_ds, mask, border if np.any(img.shape > img_ds.shape) else 0)
-    # upsample the membrane estimate to the original size
-    membrane = upsample_micrograph(membrane_ds, img.shape, voxel_size[0], "center")
-    sub_img = img - membrane
-    # add background back to the subtracted image
-    if "mat" in args.out_format_sub:
-        # Save as .mat file if specified
-        savemat(os.path.join(args.subtracted_path + "_mat", basename + ".mat"),
-                {'img': img, 'label': mask, 'mem': membrane, 'sub': sub_img})
-    if "jpeg" in args.out_format_sub:
-        # Save as .png file if specified
-        save_im(sub_img, os.path.join(args.subtracted_path + "_jpeg", basename + ".jpeg"))
-    if "png" in args.out_format_sub:
-        # Save as .png file if specified
-        save_im(sub_img, os.path.join(args.subtracted_path + "_png", basename + ".png"))
-    if "mrc" in args.out_format_sub:
-        # Save as .png file if specified
-        save_im_mrc_same_size(sub_img, os.path.join(args.subtracted_mrc_path, basename + ".mrc"), header)
-    if "mrc" in args.out_format_mem:
-        save_im_mrc_same_size(membrane, os.path.join(args.membrane_path+"_mrc", basename + ".mrc"), header)
-    if "png" in args.out_format_mem:
-        save_im(membrane, os.path.join(args.membrane_path+"_png", basename + ".png"))
-    if "npy" in args.out_format_mem:
-        np.save(os.path.join(args.membrane_path + "_npy", basename + ".npy"), membrane)
+
+    if args.do_subtraction:
+        # upsample the membrane estimate to the original size
+        membrane = upsample_micrograph(membrane_ds, img.shape, voxel_size[0], "center")
+        # subtract membrane from the original image
+        sub_img = img - membrane
+        #save subtracted image
+        for fmt in args.out_format_sub:
+            if "mat" in args.out_format_sub:
+                # Save as .mat file if specified
+                savemat(os.path.join(args.subtracted_path + "_mat", basename + ".mat"),
+                        {'img': img, 'label': mask, 'mem': membrane, 'sub': sub_img})
+            elif "mrc" in args.out_format_sub:
+                # Save as .png file if specified
+                save_im_mrc_same_size(sub_img, os.path.join(args.subtracted_mrc_path, basename + ".mrc"), header)
+            else:
+                # Save as .png file if specified
+                save_im(sub_img, os.path.join(args.subtracted_path + "_"+fmt, basename + "."+ fmt))
+
+        if len(args.out_format_mem)!=0:
+            for fmt in args.out_format_mem:
+                if fmt == "mrc":
+                    save_im_mrc_same_size(membrane, os.path.join(args.membrane_path, basename + ".mrc"), header)
+                elif fmt == "npy":
+                    np.save(os.path.join(args.membrane_path, basename + ".npy"), membrane)
+                else:
+                    save_im(membrane, os.path.join(args.membrane_path, basename + "." + fmt))
+
+    if args.save_angle:
+        save_angle_info(args, basename, angle_dict)
+
+def save_angle_info(args, basename, angle_dict):
+    """Save angle information to a .mat file.
+    Args:
+        args (argparse.Namespace): Command-line arguments.
+        basename (str): Base name of the file.
+        angle_dict (dict): Dictionary containing angle information.
+        """
+    print("Saving angle information...")
+    df = pd.DataFrame(angle_dict)
+    df.to_csv(os.path.join(args.angle_path, basename + "_angles.csv"), index=False)
+    savemat(os.path.join(args.angle_path, basename + "_angles.mat"), angle_dict)
 
 def process_dir(args):
     """Process all MRC files in a directory to subtract membranes and save the results."""
@@ -104,10 +126,9 @@ def process_dir(args):
 def main(args):
     """Main function to set up directories and process files."""
     args.membrane_path = os.path.join(args.output_path, "misc", "membranes")
-    for fmt in args.out_format_mem:
-        membranes_path = args.membrane_path + f"_{fmt}"
-        if not os.path.exists(membranes_path):
-            os.makedirs(membranes_path)
+    if not os.path.exists(args.membrane_path):
+        os.makedirs(args.membrane_path)
+
     args.subtracted_path = os.path.join(args.output_path,"misc","subtracted")
     for fmt in args.out_format_sub:
         if fmt!="mrc":
@@ -118,6 +139,11 @@ def main(args):
         if not os.path.exists(subtracted_path):
             os.makedirs(subtracted_path)
     args.masks_path = os.path.join(args.output_path,"misc", "labels")
+    if args.save_angle:
+        args.angle_path = os.path.join(args.output_path,"misc", "angles")
+        if not os.path.exists(args.angle_path):
+            os.makedirs(args.angle_path)
+    #process images
     if args.file_name is None:
         process_dir(args)
     else:
@@ -131,10 +157,11 @@ if __name__=="__main__":
     parser = argparse.ArgumentParser(description="Process membrane images and subtract membranes.")
     parser.add_argument("-dp","--output_path", type=str,help="Directory path containing folders with images and labels")
     parser.add_argument("-ip","--imgs_path", type=str,  help="Directory path containing mrc micrographs")
-    parser.add_argument("-s","--sigma", type=float, default=24.0, help="Sigma for Gaussian filter to flatten background.")
-    parser.add_argument("--out_format_sub", nargs="+", default=["png"], help="List of file format to save subracted images. Choices are mat, png, mrc formats")
-    parser.add_argument("--out_format_mem", nargs="+", default=["npy"],  help="List of file format to save estimates of membrane images. Choices are mrc, png, npy formats")
+    parser.add_argument("--out_format_sub", nargs="*", default=["png"], help="List of file format to save subracted images. Choices are mat, png, mrc formats")
+    parser.add_argument("--out_format_mem", nargs="*", default=["npy"],  help="List of file format to save estimates of membrane images. Choices are mrc, png, npy formats")
     parser.add_argument("-fn","--file_name",type=str, default=None,help="Name of file to convert (default: None), if None process all files in the folder")
+    parser.add_argument("-ang","--save_angle", action="store_true", help="Whether to save angle for every grid point information or not.")
+    parser.add_argument("-do_sub", "--do_subtraction", action="store_true", help="Whether to do membrane subtraction or not.")
     args = parser.parse_args()
     main(args)
 

@@ -6,6 +6,7 @@ from glob import glob
 from tqdm import tqdm
 from skimage import io
 from mrc_utils import load_mrc, FILE_TYPES, downsample_micrograph
+from sub_utils import read_parameters_from_yaml_file
 
 def convert_dir(args: argparse.Namespace) -> None:
     """
@@ -31,10 +32,15 @@ def convert_dir(args: argparse.Namespace) -> None:
 
 def convert_file(args: argparse.Namespace) -> None:
     data, _, voxel_size = load_mrc(args.file_path)
-    org_shape = data.shape
     #  downsample the data if the voxel size is greater than the target voxel size
+
     if args.downsampling_allowed:
-        data = downsample_micrograph(data, voxel_size[0], 0, "center")
+        if args.use_border:
+            parameters = read_parameters_from_yaml_file()
+            border = parameters["r"]
+        else:
+            border = 0
+        data = downsample_micrograph(data, voxel_size[0], border, "center")
     # save as TIFF image
     basename, _ = os.path.splitext(os.path.basename(args.file_path))
 
@@ -95,6 +101,7 @@ if __name__ == "__main__":
         type=str, default=None,
     help="Name of file to convert (default: None), if None process all files in the folder",
     )
+    parser.add_argument("-bd","--use_border", help="User border during downsampling as we do in membrane estimation", action="store_true")
     args = parser.parse_args()
 
     assert os.path.isdir(args.in_dir), f"Input directory does not exist: {args.in_dir}"
