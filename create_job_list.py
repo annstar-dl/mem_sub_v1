@@ -147,6 +147,7 @@ if __name__ == "__main__":
     args.add_argument("-jfp", "--job_file_path", type=str, default=None, help="Path to the txt job file to create")
     args.add_argument("-segmp", "--seg_model_path", type=str, help="Path to the segmentation model")
     args.add_argument("-savedp", "--save_dir_path", type=str, help="Path to the dir where results will be saved")
+    args.add_argument("-n", "--nb_of_jobs", type=int, help="Number of jobs to create, if None all files will be processed", default=None)
     parsed_args = args.parse_args()
     sub_dirs = list_nonempty_mrc_subdirs(parsed_args.data_dir_path)
     if len(sub_dirs) > 0:
@@ -157,8 +158,8 @@ if __name__ == "__main__":
                             job_file_path=parsed_args.job_file_path,
                             seg_model_path=parsed_args.seg_model_path,
                             save_dir_path=os.path.join(parsed_args.save_dir_path, sub_dir_name),
-                            nb_of_jobs=None,
+                            nb_of_jobs=args.nb_of_jobs,
                             batch_size=8,
                             file_mode="a")
     else:
-        create_job_list(**vars(parsed_args), nb_of_jobs=None,batch_size=8, file_mode="w")
+        create_job_list(**vars(parsed_args),batch_size=8, file_mode="w")
