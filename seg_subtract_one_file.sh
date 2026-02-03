@@ -31,12 +31,38 @@ python "seg_onnx.py" \
 --save_dir "${SAVEDIR}/misc"
 
 # Subtract the predicted masks from the original micrographs
-python "run_mrc_subtraction.py" \
+if [ $SAVE_ANGLE -eq 1 ] && [ $SAVE_SUB -eq 1 ]; then
+    python "run_mrc_subtraction.py" \
  -dp ${SAVEDIR} -ip "${SAVEDIR}/misc/${MRC_DIR}" \
  --out_format_sub "mrc" "png" \
   --out_format_mem "mrc" "png" \
   --save_angle \
- -fn "${FILENAME}.mrc"
+  -do_sub \
+  -fn "${FILENAME}.mrc"
+else
+    if [ $SAVE_ANGLE -eq 1 ]; then
+            python "run_mrc_subtraction.py" \
+   -dp ${SAVEDIR} -ip "${SAVEDIR}/misc/${MRC_DIR}" \
+   --out_format_sub "mrc" "png" \
+    --out_format_mem "mrc" "png" \
+    --save_angle \
+    -fn "${FILENAME}.mrc"
+    elif [ $SAVE_SUB -eq 1 ]; then
+        python "run_mrc_subtraction.py" \
+   -dp ${SAVEDIR} -ip "${SAVEDIR}/misc/${MRC_DIR}" \
+   --out_format_sub "mrc" "png" \
+    --out_format_mem "mrc" "png" \
+    -do_sub \
+    -fn "${FILENAME}.mrc"
+    else
+        python "run_mrc_subtraction.py" \
+   -dp ${SAVEDIR} -ip "${SAVEDIR}/misc/${MRC_DIR}" \
+   --out_format_sub "mrc" "png" \
+    --out_format_mem "mrc" "png" \
+    -fn "${FILENAME}.mrc"
+    fi
+fi
+
 # delete copied mrc file to save space
 rm "${SAVEDIR}/misc/${MRC_DIR}/${FILENAME}.mrc"
 echo "Subtracted micrographs are saved in ${SAVEDIR}/subtracted_mrc"

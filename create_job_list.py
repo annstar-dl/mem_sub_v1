@@ -1,4 +1,5 @@
 import os
+from os.path import basename
 from typing import Iterable, List, Generator, Optional
 from argparse import ArgumentParser
 
@@ -53,7 +54,7 @@ def read_filelist(filelist_path):
     return file_paths
 
 def create_job_list(data_dir_path, job_file_path,seg_model_path, save_dir_path,
-                    nb_of_jobs, batch_size, file_mode):
+                    nb_of_jobs, batch_size, file_mode, save_angle_flag=0, save_sub_flag=0):
     """
     Create a job list file containing paths of all files in the input directory.
 
@@ -70,12 +71,19 @@ def create_job_list(data_dir_path, job_file_path,seg_model_path, save_dir_path,
 
     filelist = list_files_in_directory(data_dir_path)
     filelist = delete_processed_files_from_fnamelist(filelist, save_dir_path)
-    print(f"Found {len(filelist)} MRC files in {data_dir_path}.")
+
+    if len(filelist) == 0:
+        print(f"No unprocessed MRC files found in {data_dir_path}. Exiting.")
+        return
+    else:
+        print(f"Found {len(filelist)} unprocessed MRC files in {data_dir_path}.")
     prefix = ("module load miniconda; conda activate ves_seg; "
               "export LD_LIBRARY_PATH=$CONDA_PREFIX/lib:$LD_LIBRARY_PATH; "
               f"export SEGMENTATION_DIR={seg_model_path}; "
               f"export SAVEDIR={save_dir_path}; "
-              f"export INPUTDIR={data_dir_path}; ")
+              f"export INPUTDIR={data_dir_path};"
+              f"export SAVE_ANGLE={save_angle_flag}; "
+              f"export SAVe_SUB={save_sub_flag}; ")
     if nb_of_jobs is None:
         nb_of_jobs = len(filelist)
     nb_of_jobs_iter = 0
@@ -104,10 +112,11 @@ def delete_processed_files_from_fnamelist(fnames, save_dir_path):
     Returns:
         List[str]: List of unprocessed file names.
     """
-    mrc_reconstruction_dir = os.path.join(save_dir_path, "reconstructions", "subtracted_mrc")
+    labels_dir = os.path.join(save_dir_path,"misc","angles")
     unprocessed_fnames = []
     for fname in fnames:
-        if not exists_ospath(os.path.join(mrc_reconstruction_dir, fname)):
+        basename = os.path.splitext(os.path.basename(fname))[0]
+        if not exists_ospath(os.path.join(labels_dir, basename + "_angles.mat")):
             unprocessed_fnames.append(fname)
         else:
             print(f"File already exist, skipping: {fname}")
@@ -148,6 +157,8 @@ if __name__ == "__main__":
     args.add_argument("-segmp", "--seg_model_path", type=str, help="Path to the segmentation model")
     args.add_argument("-savedp", "--save_dir_path", type=str, help="Path to the dir where results will be saved")
     args.add_argument("-n", "--nb_of_jobs", type=int, help="Number of jobs to create, if None all files will be processed", default=None)
+    args.add_argument("--save_angle_flag", type=int, help="Flag to save angle information (1 to save, 0 otherwise)", default=0)
+    args.add_argument("--save_sub_flag", type=int, help="Flag to save subtracted images (1 to save, 0 otherwise)", default=0)
     parsed_args = args.parse_args()
     sub_dirs = list_nonempty_mrc_subdirs(parsed_args.data_dir_path)
     if len(sub_dirs) > 0:
@@ -160,6 +171,8 @@ if __name__ == "__main__":
                             save_dir_path=os.path.join(parsed_args.save_dir_path, sub_dir_name),
                             nb_of_jobs=args.nb_of_jobs,
                             batch_size=8,
-                            file_mode="a")
+                            file_mode="a",
+                            save_angle_flag=parsed_args.save_angle_flag,
+                            save_sub_flag=parsed_args.save_sub_flag)
     else:
         create_job_list(**vars(parsed_args),batch_size=8, file_mode="w")
