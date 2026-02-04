@@ -134,6 +134,12 @@ def get_standardization_type(config):
 
 def process(args):
     """Segment membranes of image files in a folder or a single file."""
+    sess_options = onnxruntime.SessionOptions()
+    # Set this to the number of CPUs requested in your Slurm job (e.g., via --cpus-per-task)
+    # If you aren't sure, setting it to 4 or 8 is usually safe.
+    sess_options.intra_op_num_threads = 4
+    sess_options.inter_op_num_threads = 4
+    # Create ONNX Runtime session
     sess = onnxruntime.InferenceSession(args.onnx_model_path, providers=providers)
     input_name = sess.get_inputs()[0].name
     fpaths = load_img_paths(args.data_path)
