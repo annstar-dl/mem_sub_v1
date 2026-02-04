@@ -55,9 +55,16 @@ def  prepare_micrograph(img, mask, border = 0):
 
     # Get the sampling grid from the mask
     mask, row_idx, col_idx = get_sampling_grid(mask, d, w)
+    # check if there are any grid points detected
+    if row_idx.shape[0] == 0:
+        raise ValueError("No grid points detected for sampling grid. "
+                         "Please check the mask and input image.")
     # Ensure that the extracted patch points stay within the boundary of the mask
-    row_idx, col_idx = select_points_within_boundary(img, r, row_idx,
-                                                     col_idx)
+    row_idx, col_idx = select_points_within_boundary(img, r, row_idx, col_idx)
+    # check if there are any grid points left after selecting within boundary
+    if row_idx.shape[0] == 0:
+        raise ValueError("No grid points left after selecting within boundary. "
+                         "Please check the mask and input image.")
     return img, mask, row_idx, col_idx
 
 def find_grid_angles(img, row_idx, col_idx):

@@ -20,6 +20,8 @@ def read_img(fpath, mask=False):
         img = np.array(img,dtype = np.float64)
         if mask:
             img = img - np.min(img)
+            if np.max(img)==0:
+                raise ValueError(f"Empty mask file, max value is zero in {fpath}")
             img = img / np.max(img)
             img = ( img > 0.5 ).astype(np.float64)
     return img
