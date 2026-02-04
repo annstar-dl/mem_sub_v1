@@ -1,7 +1,7 @@
 #!/bin/bash
 
 FILENAME=$1
-
+echo "Processing file: ${FILENAME}"
 # Normalize INPUTDIR and SAVEDIR: remove trailing slash if present
 # This ensures basename and later path concatenations work whether the user
 # provides "/path/to/dir" or "/path/to/dir/".
@@ -65,4 +65,3 @@ fi
 
 # delete copied mrc file to save space
 rm "${SAVEDIR}/misc/${MRC_DIR}/${FILENAME}.mrc"
-echo "Subtracted micrographs are saved in ${SAVEDIR}/subtracted_mrc"
