@@ -70,7 +70,7 @@ def create_job_list(data_dir_path, job_file_path,seg_model_path, save_dir_path,
     """
 
     filelist = list_files_in_directory(data_dir_path)
-    filelist = delete_processed_files_from_fnamelist(filelist, save_dir_path)
+    filelist = delete_processed_files_from_fnamelist(filelist, save_dir_path, save_angle_flag, save_sub_flag)
 
     if len(filelist) == 0:
         print(f"No unprocessed MRC files found in {data_dir_path}. Exiting.")
@@ -78,12 +78,14 @@ def create_job_list(data_dir_path, job_file_path,seg_model_path, save_dir_path,
     else:
         print(f"Found {len(filelist)} unprocessed MRC files in {data_dir_path}.")
     prefix = ("module load miniconda; conda activate ves_seg; "
+              "module load CUDA/12.6.0; "
+              "module load cuDNN/9.5.1.17-CUDA-12.6.0; "
               "export LD_LIBRARY_PATH=$CONDA_PREFIX/lib:$LD_LIBRARY_PATH; "
               f"export SEGMENTATION_DIR={seg_model_path}; "
               f"export SAVEDIR={save_dir_path}; "
               f"export INPUTDIR={data_dir_path};"
               f"export SAVE_ANGLE={save_angle_flag}; "
-              f"export SAVe_SUB={save_sub_flag}; ")
+              f"export SAVE_SUB={save_sub_flag}; ")
     if nb_of_jobs is None:
         nb_of_jobs = len(filelist)
     nb_of_jobs_iter = 0
@@ -101,7 +103,7 @@ def create_job_list(data_dir_path, job_file_path,seg_model_path, save_dir_path,
                 print(f"Reached the maximum number of jobs: {nb_of_jobs}")
                 break
 
-def delete_processed_files_from_fnamelist(fnames, save_dir_path):
+def delete_processed_files_from_fnamelist(fnames, save_dir_path,save_angle_flag, save_sub_flag):
     """
     Filter out files that have already been processed.
 
@@ -113,14 +115,27 @@ def delete_processed_files_from_fnamelist(fnames, save_dir_path):
         List[str]: List of unprocessed file names.
     """
     labels_dir = os.path.join(save_dir_path,"misc","angles")
+    sub_dir = os.path.join(save_dir_path,"subtracted_mrc")
     unprocessed_fnames = []
     for fname in fnames:
         basename = os.path.splitext(os.path.basename(fname))[0]
-        if not exists_ospath(os.path.join(labels_dir, basename + "_angles.mat")):
+        file_was_processed = False
+        if save_angle_flag==1 and save_sub_flag==1:
+            if exists_ospath(os.path.join(labels_dir, basename + "_angles.mat")) and exists_ospath(os.path.join(sub_dir, basename + ".mrc")):
+                file_was_processed = True
+        elif save_angle_flag==1:
+            if exists_ospath(os.path.join(labels_dir, basename + "_angles.mat")):
+                file_was_processed = True
+        elif save_sub_flag==1:
+            if exists_ospath(os.path.join(sub_dir, basename + ".mrc")):
+                file_was_processed = True
+
+        if not file_was_processed:
             unprocessed_fnames.append(fname)
         else:
             print(f"File already exist, skipping: {fname}")
     return unprocessed_fnames
+
 
 def list_nonempty_mrc_subdirs(root: str) -> List[str]:
     """
@@ -161,6 +176,7 @@ if __name__ == "__main__":
     args.add_argument("--save_sub_flag", type=int, help="Flag to save subtracted images (1 to save, 0 otherwise)", default=0)
     parsed_args = args.parse_args()
     sub_dirs = list_nonempty_mrc_subdirs(parsed_args.data_dir_path)
+    batch_size = 10
     if len(sub_dirs) > 0:
         for sub_dir in sub_dirs:
             sub_dir_name = os.path.basename(os.path.normpath(sub_dir))
@@ -170,9 +186,9 @@ if __name__ == "__main__":
                             seg_model_path=parsed_args.seg_model_path,
                             save_dir_path=os.path.join(parsed_args.save_dir_path, sub_dir_name),
                             nb_of_jobs=args.nb_of_jobs,
-                            batch_size=8,
+                            batch_size=batch_size,
                             file_mode="a",
                             save_angle_flag=parsed_args.save_angle_flag,
                             save_sub_flag=parsed_args.save_sub_flag)
     else:
-        create_job_list(**vars(parsed_args),batch_size=8, file_mode="w")
+        create_job_list(**vars(parsed_args),batch_size=batch_size, file_mode="w")
