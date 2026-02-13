@@ -2,8 +2,6 @@ import mrcfile
 import numpy as np
 from downsample import down_sample, up_sample
 from fuzzymask import fuzzy_disk, fuzzy_rectangle
-from math import ceil
-from matplotlib import pyplot as plt
 
 MRC_MODE_DICT = {
     0: np.int8,
