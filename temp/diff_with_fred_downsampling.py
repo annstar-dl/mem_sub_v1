@@ -1,14 +1,9 @@
-from kornia.geometry import scale
-
-from mrc_utils import load_mrc, downsample_micrograph, upsample_micrograph
-from fuzzymask import fuzzy_disk, fuzzy_rectangle
+from mrc_utils import load_mrc
+from fuzzymask import fuzzy_rectangle
 from membrane_estimation import add_border_to_mask
-from bg_estimation import get_background
 import numpy as np
 from matplotlib import pyplot as plt
-from scipy import io
 from skimage import io as ioim
-from sampling_grid import  get_sampling_grid, select_points_within_boundary
 
 if __name__ == "__main__":
     fpath_org = r"/home/astar/Projects/vesicles_data/from_Fred/subtracted/20211122/20211122/slot6_100_0002.mrc"
