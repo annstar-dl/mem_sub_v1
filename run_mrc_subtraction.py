@@ -83,10 +83,10 @@ def process_file(args: argparse.Namespace):
                 # Save as .mat file if specified
                 savemat(os.path.join(args.subtracted_path + "_mat", basename + ".mat"),
                         {'img': img, 'label': mask, 'mem': membrane, 'sub': sub_img})
-            elif "mrc" in args.out_format_sub:
+            if "mrc" in args.out_format_sub:
                 # Save as .png file if specified
                 save_im_mrc_same_size(sub_img, os.path.join(args.subtracted_mrc_path, basename + ".mrc"), header)
-            else:
+            if not fmt in ["mat","mrc"]:
                 # Save as .png file if specified
                 save_im(sub_img, os.path.join(args.subtracted_path + "_"+fmt, basename + "."+ fmt))
 
@@ -94,9 +94,9 @@ def process_file(args: argparse.Namespace):
             for fmt in args.out_format_mem:
                 if fmt == "mrc":
                     save_im_mrc_same_size(membrane, os.path.join(args.membrane_path, basename + ".mrc"), header)
-                elif fmt == "npy":
+                if fmt == "npy":
                     np.save(os.path.join(args.membrane_path, basename + ".npy"), membrane)
-                else:
+                if not fmt in ["mrc","npy"]:
                     save_im(membrane, os.path.join(args.membrane_path, basename + "." + fmt))
 
     if args.save_angle:
