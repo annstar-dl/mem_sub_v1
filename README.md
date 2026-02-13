@@ -42,14 +42,14 @@ Make sure to place the downloaded weights in the appropriate directory and speci
 Also before the segmentation step, the mrc files are downsapled to have voxel size of 4.5 Angstroms. As a result, you will see in the output folder images_jpg/{input_folder_name}_ds with downsampled images in jpg format.
 The structure of the output folder will be as follows:
 ```/your/save/path/
-    ├── images_jpg/{input_folder_name}_ds/  # Downsampled images in jpg format
-    ├── labels/                     # Segmented membrane masks
-    ├── labels_pseodcolor/          # Segmented membrane masks in pseudocolor
-    ├── input_mrc_folder_name/      # Original mrc files
-    ├── reconstructions/  
-    ├──────subtractions_mrc/ # Images after membrane subtraction in mrc format
-    ├──────subtractions_png/ # Images after membrane subtraction in png format
-    ├──────reconstructed_membranes/ # Reconstracted membrane images
+    |---subtractions_mrc/ # Images after membrane subtraction in mrc format
+    |---misc/ # Miscellaneous files, including logs and intermediate results
+    ├──---images_jpg/{input_folder_name}_ds/  # Downsampled images in jpg format
+    ├──---labels/                     # Segmented membrane masks
+    ├──---input_mrc_folder_name/      # Original mrc files
+    ├──---reconstructions/  
+    ├─────subtractions_png/ # Images after membrane subtraction in png format
+    ├─────reconstructed_membranes/ # Reconstracted membrane images
 ```
 Additionally original mrc files are copied to the output folder for convenience. This could be prevented by commenting out "cp -r $2 ." line in the `seg_subtract.sh` script.
 4. HPC Usage. Membrane subtraction on Yale HPC cluster is done using Deadly Simple Queue (DSQ) scheduler.
