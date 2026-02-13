@@ -1,5 +1,5 @@
 import os
-from os.path import basename
+import torch
 from typing import Iterable, List, Generator, Optional
 from argparse import ArgumentParser
 
@@ -77,10 +77,10 @@ def create_job_list(data_dir_path, job_file_path,seg_model_path, save_dir_path,
         return
     else:
         print(f"Found {len(filelist)} unprocessed MRC files in {data_dir_path}.")
-    prefix = ("module load miniconda; conda activate ves_seg; "
-              "module load CUDA/12.6.0; "
-              "module load cuDNN/9.5.1.17-CUDA-12.6.0; "
-              "export LD_LIBRARY_PATH=$CONDA_PREFIX/lib:$LD_LIBRARY_PATH; "
+    torch_lib_path = os.path.join(os.path.dirname(torch.__file__), 'lib')
+    prefix = (#"module force purge; "
+            "module load miniconda; conda activate ves_seg; "
+              f"export LD_LIBRARY_PATH={torch_lib_path}:$CONDA_PREFIX/lib:$LD_LIBRARY_PATH; "
               f"export SEGMENTATION_DIR={seg_model_path}; "
               f"export SAVEDIR={save_dir_path}; "
               f"export INPUTDIR={data_dir_path};"

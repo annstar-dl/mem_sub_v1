@@ -4,8 +4,8 @@ export CUDA_VISIBLE_DEVICES=1
 # Path to the membrane detection project directory
 MEMBRANE_DETECTION_DIR="/home/astar/Projects/membrane_detection"
 # Path to the pretrained segmentation model directory
-#SEGMENTATION_DIR="/home/astar/Projects/membrane_detection/out/unet_membrane_256x256_500000"
-SEGMENTATION_DIR="${MEMBRANE_DETECTION_DIR}/out/mem_mad_2025_sep+dec_warmup_200000/result"
+SEGMENTATION_DIR="${MEMBRANE_DETECTION_DIR}/out/unet_membrane_256x256_500000/result"
+#SEGMENTATION_DIR="${MEMBRANE_DETECTION_DIR}/out/mem_mad_2025_sep+dec_warmup_200000/result"
 MEMBRANE_SUBTRACTION_DIR="/home/astar/Projects/VesicleProjection" # Path to the VesicleProjection project directory
 INPUT_FILE_FORMAT="mrc"  # Change to "tif" if input files are in TIFF format
 SEGMENTATION_MODEL_FORMAT="onnx" # "onnx" or "paddleseg"
@@ -62,7 +62,8 @@ conda run -n ves_seg python "${MEMBRANE_SUBTRACTION_DIR}/run_mrc_subtraction.py"
  -dp ${PWD} -ip "$PWD/misc/${MRC_DIR}" \
  --out_format_sub "mrc" "png" \
  --out_format_mem "mrc" "png" \
- --save_angle
+ --save_angle \
+ -do_sub
 
 echo "Subtracted masks from original micrographs and saved results in $PWD"
 

@@ -2,6 +2,8 @@
 
 FILENAME=$1
 echo "Processing file: ${FILENAME}"
+echo "nvidia-smi output:"
+nvidia-smi
 # Normalize INPUTDIR and SAVEDIR: remove trailing slash if present
 # This ensures basename and later path concatenations work whether the user
 # provides "/path/to/dir" or "/path/to/dir/".
