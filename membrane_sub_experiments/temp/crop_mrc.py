@@ -1,4 +1,4 @@
-from mrc_utils import load_mrc, save_im_mrc
+from membrane_sub.mrc_tools.mrc_utils import load_mrc, save_im_mrc
 import mrcfile
 import os
 import numpy as np

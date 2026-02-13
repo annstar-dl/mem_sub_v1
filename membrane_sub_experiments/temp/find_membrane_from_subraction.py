@@ -1,7 +1,6 @@
-from mrc_utils import load_mrc
+from membrane_sub.mrc_tools.mrc_utils import load_mrc
 from matplotlib import pyplot as plt
 import numpy as np
-from skimage import io
 from new_downsample import visualize_im
 def find_membrane_from_subtraction(org_img, sub_img):
 

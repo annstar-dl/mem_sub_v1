@@ -1,6 +1,6 @@
-from mrc_utils import load_mrc
-from fuzzymask import fuzzy_rectangle
-from membrane_estimation import add_border_to_mask
+from membrane_sub.mrc_tools.mrc_utils import load_mrc
+from membrane_sub.mrc_tools.fuzzymask import fuzzy_rectangle
+from membrane_sub.membrane_est.membrane_estimation import add_border_to_mask
 import numpy as np
 from matplotlib import pyplot as plt
 from skimage import io as ioim

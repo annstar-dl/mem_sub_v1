@@ -1,4 +1,4 @@
-from mrc_utils import load_mrc, downsample_mrc, upsample_mrc_to_original
+from membrane_sub.mrc_tools.mrc_utils import downsample_mrc, upsample_mrc_to_original
 from matplotlib import pyplot as plt
 import numpy as np
 import math
@@ -22,7 +22,6 @@ def create_sin_image(shape, bandwidth):
 
 if __name__ == "__main__":
     fpath = r"/home/astar/Projects/vesicles_data/from_Fred/subtracted/20211122/20211122/slot6_100_0001.mrc"
-    from mrc_utils import load_mrc
 
     #data, _, voxel_size = load_mrc(fpath)
     voxel_size = (0.1,0.1)

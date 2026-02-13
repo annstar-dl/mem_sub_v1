@@ -1,10 +1,10 @@
 import argparse
 import os
 import numpy as np
-from mrc_utils import downsample_micrograph
-from sub_utils import read_parameters_from_yaml_file
-from run_mrc_subtraction import read_img, read_mrc
-from membrane_estimation import prepare_micrograph, fit_membrane
+from membrane_sub.mrc_tools.mrc_utils import downsample_micrograph
+from membrane_sub.membrane_est.sub_utils import read_parameters_from_yaml_file
+from membrane_sub.run_mrc_subtraction import read_img, read_mrc
+from membrane_sub.membrane_est.membrane_estimation import prepare_micrograph, fit_membrane
 import matplotlib.pyplot as plt
 
 def plot_loss_hist(loss_hist, file_name):

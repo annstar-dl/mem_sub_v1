@@ -1,7 +1,7 @@
 import os
 import numpy as np
 from PIL import Image
-from temp.membrane_subtract import membrane_subtract
+from membrane_sub_experiments.temp.membrane_subtract import membrane_subtract
 from tqdm import tqdm
 import argparse
 from scipy.io import savemat

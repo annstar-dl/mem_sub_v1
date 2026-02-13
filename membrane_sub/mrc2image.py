@@ -5,8 +5,8 @@ from PIL import Image
 from glob import glob
 from tqdm import tqdm
 from skimage import io
-from mrc_utils import load_mrc, FILE_TYPES, downsample_micrograph
-from sub_utils import read_parameters_from_yaml_file
+from membrane_sub.mrc_tools.mrc_utils import load_mrc, FILE_TYPES, downsample_micrograph
+from membrane_sub.membrane_est.sub_utils import read_parameters_from_yaml_file
 
 def convert_dir(args: argparse.Namespace) -> None:
     """

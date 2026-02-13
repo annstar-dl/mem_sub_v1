@@ -146,7 +146,7 @@ def read_parameter_from_yaml_file(parameter):
     Returns:
         value: Contents of the YAML file parameter 
     """
-    filename = 'parameters.yml'  # Replace with your YAML file path
+    filename = '../parameters.yml'  # Replace with your YAML file path
     maindir = os.path.dirname(os.path.abspath(__file__))  # Get the directory of the current file
     filepath = os.path.join(maindir, filename)  # Construct the full path to the YAML file
     with open(filepath, 'r') as file:
@@ -160,7 +160,7 @@ def read_parameters_from_yaml_file():
     Returns:
         dict: Contents of the YAML file.
     """
-    filename = 'parameters.yml'  # Replace with your YAML file path
+    filename = '../parameters.yml'  # Replace with your YAML file path
     maindir = os.path.dirname(os.path.abspath(__file__))  # Get the directory of the current file
     filepath = os.path.join(maindir, filename)  # Construct the full path to the YAML file
     with open(filepath, 'r') as file:

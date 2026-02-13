@@ -1,5 +1,5 @@
 import torch
-from align_image import rotate_images_kornia
+from membrane_sub.membrane_est.align_image import rotate_images_kornia
 
 def recon_patch(img1, cntr, r_in, w, gaussWt, theta):
     """

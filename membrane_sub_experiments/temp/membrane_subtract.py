@@ -1,10 +1,10 @@
 import numpy as np
 import torch
-from sampling_grid import get_sampling_grid, select_points_within_boundary
-from basis_fn import get_basis
-from fit_basis_to_data import fit_basis_to_data_batched
-from sub_utils import read_parameters_from_yaml_file
-from bg_estimation import get_background
+from membrane_sub.membrane_est.sampling_grid import get_sampling_grid, select_points_within_boundary
+from membrane_sub.membrane_est.basis_fn import get_basis
+from membrane_sub.membrane_est.fit_basis_to_data import fit_basis_to_data_batched
+from membrane_sub.membrane_est.sub_utils import read_parameters_from_yaml_file
+from membrane_sub.membrane_est.bg_estimation import get_background
 
 
 def  membrane_subtract(img, mask):

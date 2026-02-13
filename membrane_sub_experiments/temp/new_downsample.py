@@ -1,6 +1,6 @@
 import numpy as np
 from matplotlib import pyplot as plt
-from fuzzymask import fuzzymask
+from membrane_sub.mrc_tools.fuzzymask import fuzzymask
 
 def get_fft_center(n):
     return n//2

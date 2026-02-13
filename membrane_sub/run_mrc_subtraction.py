@@ -1,14 +1,13 @@
 import os
 import numpy as np
 from PIL import Image
-from membrane_estimation import membrane_angle_estimation
+from membrane_sub.membrane_est.membrane_estimation import membrane_angle_estimation
 from tqdm import tqdm
 import argparse
 from scipy.io import savemat
-from mrc_utils import load_mrc, downsample_micrograph, save_im_mrc_same_size, \
+from membrane_sub.mrc_tools.mrc_utils import load_mrc, downsample_micrograph, save_im_mrc_same_size, \
     upsample_micrograph, FILE_TYPES
-from sub_utils import read_parameters_from_yaml_file
-import csv
+from membrane_sub.membrane_est.sub_utils import read_parameters_from_yaml_file
 import pandas as pd
 
 def read_img(fpath, mask=False):
