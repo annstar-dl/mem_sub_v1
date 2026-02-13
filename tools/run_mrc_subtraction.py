@@ -1,29 +1,15 @@
 import os
 import numpy as np
 from PIL import Image
-from membrane_sub.membrane_est.membrane_estimation import membrane_angle_estimation
+from src.mem_sub.membrane_est.membrane_estimation import membrane_angle_estimation
 from tqdm import tqdm
 import argparse
 from scipy.io import savemat
-from membrane_sub.mrc_tools.mrc_utils import load_mrc, downsample_micrograph, save_im_mrc_same_size, \
+from src.mem_sub.mrc_tools.mrc_utils import load_mrc, downsample_micrograph, save_im_mrc_same_size, \
     upsample_micrograph, FILE_TYPES
-from membrane_sub.membrane_est.sub_utils import read_parameters_from_yaml_file
+from src.mem_sub.membrane_est.utils import read_parameters_from_yaml_file, read_img
 import pandas as pd
 
-def read_img(fpath, mask=False):
-    #check if the file exists
-    if not os.path.exists(fpath):
-        raise FileNotFoundError(f"File {fpath} does not exist.")
-    else:
-        img = Image.open(fpath)
-        img = np.array(img,dtype = np.float64)
-        if mask:
-            img = img - np.min(img)
-            if np.max(img)==0:
-                raise ValueError(f"Empty mask file, max value is zero in {fpath}")
-            img = img / np.max(img)
-            img = ( img > 0.5 ).astype(np.float64)
-    return img
 
 def read_mrc(fpath):
     #check if the file exists

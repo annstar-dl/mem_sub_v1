@@ -1,6 +1,6 @@
 import torch
-from basis_fn import get_radius_of_inner_circle
-from sub_utils import add_patches_to_image, get_patches_from_image_adv_indexing, creat_idx_batches_for_parl_sum, add_patches_to_image_batched
+from mem_sub.membrane_est.basis_fn import get_radius_of_inner_circle
+from mem_sub.membrane_est.sub_utils import add_patches_to_image, get_patches_from_image_adv_indexing, creat_idx_batches_for_parl_sum, add_patches_to_image_batched
 
 
 

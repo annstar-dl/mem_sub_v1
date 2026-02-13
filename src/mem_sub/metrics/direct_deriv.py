@@ -1,7 +1,5 @@
 import numpy as np
 from skimage.feature import hessian_matrix
-from PIL import Image
-import matplotlib.pyplot as plt
 
 EPS=1e-8
 

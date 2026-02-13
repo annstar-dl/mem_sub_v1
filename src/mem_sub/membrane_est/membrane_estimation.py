@@ -1,11 +1,11 @@
 import copy
 import numpy as np
 import torch
-from sampling_grid import get_sampling_grid, select_points_within_boundary
-from basis_fn import get_basis
-from fit_basis_to_data import fit_basis_to_data_batched
-from sub_utils import read_parameters_from_yaml_file
-from bg_estimation import get_background
+from mem_sub.membrane_est.sampling_grid import get_sampling_grid, select_points_within_boundary
+from mem_sub.membrane_est.basis_fn import get_basis
+from mem_sub.membrane_est.fit_basis_to_data import fit_basis_to_data_batched
+from mem_sub.membrane_est.utils import read_parameters_from_yaml_file
+from mem_sub.membrane_est.bg_estimation import get_background
 
 def add_border_to_mask(mask, border):
     """Add the border to the mask to compensate

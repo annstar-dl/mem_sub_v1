@@ -1,4 +1,4 @@
-membrane_sub_experiments/test/
+mem_sub_experiments/test/
 .idea/
 __pycache__/
-membrane_sub_experiments/mc_metric/
+mem_sub_experiments/mc_metric/

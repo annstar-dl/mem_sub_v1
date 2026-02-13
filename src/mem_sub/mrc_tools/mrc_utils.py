@@ -1,7 +1,7 @@
 import mrcfile
 import numpy as np
-from downsample import down_sample, up_sample
-from fuzzymask import fuzzy_disk, fuzzy_rectangle
+from mem_sub.mrc_tools.downsample import down_sample, up_sample
+from mem_sub.mrc_tools.fuzzymask import fuzzy_disk, fuzzy_rectangle
 
 MRC_MODE_DICT = {
     0: np.int8,

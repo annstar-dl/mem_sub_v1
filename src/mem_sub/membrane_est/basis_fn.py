@@ -1,7 +1,7 @@
 import math
-from align_image import align_single_patch, align_multiple_patches
-from recon_patch import recon_patch, recon_mult_patches
-from sub_utils import get_patches_from_image_adv_indexing
+from mem_sub.membrane_est.align_image import align_single_patch, align_multiple_patches
+from mem_sub.membrane_est.recon_patch import recon_patch, recon_mult_patches
+from mem_sub.membrane_est.sub_utils import get_patches_from_image_adv_indexing
 import torch
 
 
