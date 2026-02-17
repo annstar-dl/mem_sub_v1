@@ -28,6 +28,7 @@ def get_patches_from_image_adv_indexing(img, r, row_idxs, col_idxs):
         img (torch.Tensor): Input image of shape (H,W), where H, W are the height and width of the image.
         r (int): Radius of a neighbourhood.
 
+
     Returns:
         torch.Tensor: Patches of shape (N, 2*r+1, 2*r+1), where N is the number of patches.
     """

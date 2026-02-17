@@ -4,8 +4,8 @@ export CUDA_VISIBLE_DEVICES=1
 # Path to the membrane detection project directory
 MEMBRANE_DETECTION_DIR="/home/astar/Projects/membrane_detection"
 # Path to the pretrained segmentation model directory
-SEGMENTATION_DIR="${MEMBRANE_DETECTION_DIR}/out/unet_membrane_256x256_500000/result"
-#SEGMENTATION_DIR="${MEMBRANE_DETECTION_DIR}/out/mem_mad_2025_sep+dec_warmup_200000/result"
+#SEGMENTATION_DIR="${MEMBRANE_DETECTION_DIR}/out/unet_membrane_256x256_500000/result"
+SEGMENTATION_DIR="${MEMBRANE_DETECTION_DIR}/out/mem_mad_2025_sep+dec_warmup_200000/result"
 MEMBRANE_SUBTRACTION_DIR="/home/astar/Projects/VesicleProjection" # Path to the VesicleProjection project directory
 INPUT_FILE_FORMAT="mrc"  # Change to "tif" if input files are in TIFF format
 SEGMENTATION_MODEL_FORMAT="onnx" # "onnx" or "paddleseg"
@@ -30,13 +30,13 @@ echo "Copied MRC files from $1 to $PWD/misc/$MRC_DIR"
 # mkdir -p "labels"
 
 # Convert mrc files to jpg for segmentation
-conda run -n ves_seg python "${MEMBRANE_SUBTRACTION_DIR}/mrc2image.py" "$PWD/misc/${MRC_DIR}" -o "$PWD/misc" --format "jpg" -dsa --scale
+conda run -n ves_seg python "${MEMBRANE_SUBTRACTION_DIR}/tools/mrc2image.py" "$PWD/misc/${MRC_DIR}" -o "$PWD/misc" --format "jpg" -dsa --scale
 echo "Converted MRC files to JPG"
 
 DS_MICROGRAPHS_PATH="$PWD/misc/${MRC_DIR}_jpg_ds"
 if [ ${SEGMENTATION_MODEL_FORMAT} == "onnx" ]; then
     echo "Using ONNX segmentation model format."
-    conda run -n ves_seg python "${MEMBRANE_SUBTRACTION_DIR}/seg_onnx.py" \
+    conda run -n ves_seg python "${MEMBRANE_SUBTRACTION_DIR}/membrane_seg/seg_onnx.py" \
     --model_dir "${SEGMENTATION_DIR}" \
     --onnx_fname model.onnx \
     --data_path ${DS_MICROGRAPHS_PATH} \
@@ -58,7 +58,7 @@ fi
 
 
 # Subtract the predicted masks from the original micrographs
-conda run -n ves_seg python "${MEMBRANE_SUBTRACTION_DIR}/run_mrc_subtraction.py" \
+conda run -n ves_seg python "${MEMBRANE_SUBTRACTION_DIR}/tools/run_mrc_subtraction.py" \
  -dp ${PWD} -ip "$PWD/misc/${MRC_DIR}" \
  --out_format_sub "mrc" "png" \
  --out_format_mem "mrc" "png" \

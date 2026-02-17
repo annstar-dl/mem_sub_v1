@@ -53,7 +53,8 @@ def fit_basis_to_data_batched(img, basis, row_idx, col_idx, r, rho, max_iter, st
         # Stop condition: if the difference norm is less than a threshold
         if torch.abs(diff_norm[-2] - diff_norm[-1])/diff_norm[-2] <=1e-3:
             stop_flag = 1
-            print(f"Converged at iteration {iter}, Difference Norm: {diff_norm[-1].item()}")
+            print(f"Converged at GD iteration {iter}, Difference Norm: {diff_norm[-1].item()}")
+
     return imgout
 
 

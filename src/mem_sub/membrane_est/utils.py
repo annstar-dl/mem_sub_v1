@@ -33,3 +33,16 @@ def read_img(fpath, mask=False):
             img = img / np.max(img)
             img = ( img > 0.5 ).astype(np.float64)
     return img
+
+
+def save_im(img, fpath):
+    """Save the image to a file after normalizing it to the range [0, 255].
+    Args:
+        img (numpy.ndarray): Image array to save.
+        fpath (str): Path to save the image file.
+    """
+    img = img - np.min(img)
+    img = img / np.max(img) * 255
+    img = img.astype(np.uint8)
+    img = Image.fromarray(img,"L")
+    img.save(fpath)

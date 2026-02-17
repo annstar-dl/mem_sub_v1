@@ -101,7 +101,7 @@ def get_basis_sequential(dataimg,row_idx,col_idx,r):
             raise ValueError(f"Extracted patch size {img1.shape} does not match expected size {(2 * r + 1, 2 * r + 1)}"
                              f" for grid point ({row_idx[i]}, {col_idx[i]}). ")
         theta = align_single_patch(img1, cntr, r_in,w,-90.,90.0,1.0)  # Align the image using the center and radius
-        patchImg = recon_patch(img1, cntr, r_in, w, gaussWt, theta)  # Reconstruct the patch using the basis functions
+        patchImg = recon_patch(img1, cntr, r_in, w, gaussWt, theta)  # Calculate the basis functions for the patch
         basis[i] = patchImg  # Store the reconstructed patch in the basis tensor
         thetas[i] = theta  # Store the angle for the current grid point
 

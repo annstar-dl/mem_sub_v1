@@ -19,7 +19,7 @@ def recon_patch(img1, cntr, r_in, w, gaussWt, theta):
     tmp = rotate_images_kornia(img1.unsqueeze(0).unsqueeze(0), theta)  # Rotate the image by the angle
     tmp = tmp.squeeze()  # Remove all dimensions of size 1
     tmp = tmp[cntr - r_in:cntr + r_in+1, cntr - r_in:cntr + r_in+1]  # Crop the image to the inner neighborhood size
-    prof = tmp * w  # Apply the Gaussian profile weights to the rotated image
+    prof = tmp * w  # Apply the weighted average function to the rotated image
     prof = prof.sum(dim=1)  # Sum the profile across the columns
     prof = prof.unsqueeze(1).expand(-1, 2 * r_in+1)  # Expand the profile into an image for each angle
     prof = rotate_images_kornia(prof.unsqueeze(0).unsqueeze(0), -theta)  # Rotate the profile back to the original orientation
@@ -51,5 +51,5 @@ def recon_mult_patches(imgs_subset, cntr, r_in, w, gaussWt, thetas):
     neg_thetas = -thetas
     prof = rotate_images_kornia(prof, neg_thetas)  # Rotate the profile back to the original orientation
     gaussWt = gaussWt.unsqueeze(0).unsqueeze(0)  # Ensure gaussWt is a 4D tensor for broadcasting
-    reconstructed_patchs = prof * gaussWt  # Scale the profile by the Gaussian weights
-    return reconstructed_patchs.squeeze()
+    reconstructed_patchs = prof * 1 #gaussWt  # Scale the profile by the Gaussian weights
+    return reconstructed_patchs.squeeze(1)

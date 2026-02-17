@@ -100,6 +100,7 @@ def fit_membrane(img, mask, row_idx, col_idx,parameters):
     rho = parameters["rho"]  # Learning rate for gradient descent
     r = parameters["r"]  # Radius of neighboring around grid point
     nb_iter = parameters["nb_iter"]  # Number of iterations for fitting
+    print("Fitting the membrane using basis functions with {} iterations".format(nb_iter))
     # Clone the original image to avoid modifying it
     dataimg = img.detach().clone()
     # Find the membrane using basis functions and fit it to the data

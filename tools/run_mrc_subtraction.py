@@ -1,13 +1,14 @@
 import os
 import numpy as np
-from PIL import Image
-from src.mem_sub.membrane_est.membrane_estimation import membrane_angle_estimation
+
+from mem_sub.membrane_est.utils import save_im
+from mem_sub.membrane_est.membrane_estimation import membrane_angle_estimation
 from tqdm import tqdm
 import argparse
 from scipy.io import savemat
-from src.mem_sub.mrc_tools.mrc_utils import load_mrc, downsample_micrograph, save_im_mrc_same_size, \
+from mem_sub.mrc_tools.mrc_utils import load_mrc, downsample_micrograph, save_im_mrc_same_size, \
     upsample_micrograph, FILE_TYPES
-from src.mem_sub.membrane_est.utils import read_parameters_from_yaml_file, read_img
+from mem_sub.membrane_est.utils import read_parameters_from_yaml_file, read_img
 import pandas as pd
 
 
@@ -18,18 +19,6 @@ def read_mrc(fpath):
     img, header, voxel_size = load_mrc(fpath)
     img = img.astype(np.float64)
     return img, header, voxel_size
-
-def save_im(img, fpath):
-    """Save the image to a file after normalizing it to the range [0, 255].
-    Args:
-        img (numpy.ndarray): Image array to save.
-        fpath (str): Path to save the image file.
-    """
-    img = img - np.min(img)
-    img = img / np.max(img) * 255
-    img = img.astype(np.uint8)
-    img = Image.fromarray(img,"L")
-    img.save(fpath)
 
 
 def process_file(args: argparse.Namespace):
@@ -73,7 +62,7 @@ def process_file(args: argparse.Namespace):
                 save_im_mrc_same_size(sub_img, os.path.join(args.subtracted_mrc_path, basename + ".mrc"), header)
             if not fmt in ["mat","mrc"]:
                 # Save as .png file if specified
-                save_im(sub_img, os.path.join(args.subtracted_path + "_"+fmt, basename + "."+ fmt))
+                save_im(sub_img, os.path.join(args.subtracted_path + "_" + fmt, basename + "." + fmt))
 
         if len(args.out_format_mem)!=0:
             for fmt in args.out_format_mem:
