@@ -1,4 +1,4 @@
-mem_sub_experiments/test/
 .idea/
 __pycache__/
-mem_sub_experiments/mc_metric/
+mem_sub.egg-info/
+
