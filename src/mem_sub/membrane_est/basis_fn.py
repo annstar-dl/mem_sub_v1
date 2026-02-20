@@ -104,7 +104,6 @@ def get_basis_sequential(dataimg,row_idx,col_idx,r):
         patchImg = recon_patch(img1, cntr, r_in, w, gaussWt, theta)  # Calculate the basis functions for the patch
         basis[i] = patchImg  # Store the reconstructed patch in the basis tensor
         thetas[i] = theta  # Store the angle for the current grid point
-
     return basis, thetas
 
 
@@ -145,7 +144,49 @@ def get_basis(dataimg,row_idx,col_idx,r):
         gaussWt = gaussWt.to("cuda")
     theta = align_multiple_patches(imgs_subset,cntr, r_in,w,-90.,90.0,1.0)  # Align the image using the center and radius
     basis = recon_mult_patches(imgs_subset, cntr, r_in, w, gaussWt, theta)  # Reconstruct the patch using the basis functions
-
     return basis, theta
 
+def get_basis_separate(smoothed_img, org_img,row_idx,col_idx,r):
+    """
+    Get bases from the image data multiple patches at once. Basis is a membrane profile at a point.
+
+    Args:
+        smoothed_img (torch.Tensor): The image from previous processing step of shape (H,W).Input image of shape (H,W), where N is the number of samples
+                            and H, W are the height and width of the image.
+        dataimg (torch.Tensor): Original image of micrograph of shape (H,W), H, W are the height and width of the image.
+        row_idx (torch.Tensor): X coordinates of grid of shape (N), number of grid points.
+        col_idx (torch.Tensor): Y coordinates of grid of shape (N), number of grid points.
+        r (int): Radius of a neighbourhood.
+
+    Returns:
+        tuple: (torch.Tensor, torch.Tensor)
+        1.torch.Tensor: Bases(Reconstructed images of neighbourhoods around grid point)
+         of shape (N,r,r), where N is the number of bases and r is inner radius of neighbourhood
+         around sampling grid point.
+        2.torch.Tensor: The angles of the membrane profiles at each grid point of shape (N,).
+    """
+    # Check if the input image is 2D or 3D
+    if smoothed_img.dim() != 2:
+        raise ValueError("Input image must be a 2D tensor, got {} dimensions".format(smoothed_img.dim()))
+    if org_img.dim() != 2:
+        raise ValueError("Input image must be a 2D tensor, got {} dimensions".format(org_img.dim()))
+    cntr = r
+    r_in = get_radius_of_inner_circle(r)
+    w = get_w_function(r_in)  # Get the weights for the Gaussian kernel
+
+    binaryImage, gaussWt = create_gaussian_disc(2*[(2*r_in+1)], r_in)  # Create a binary disc and Gaussian weights
+    smoothed_imgs_subset = get_patches_from_image_adv_indexing(smoothed_img, r, row_idx, col_idx)  # Get patches from the image using the specified radius
+    smoothed_imgs_subset = smoothed_imgs_subset.unsqueeze(1)  # Add channel dimension
+    org_imgs_subset = get_patches_from_image_adv_indexing(org_img, r, row_idx,
+                                                               col_idx)  # Get patches from the image using the specified radius
+    org_imgs_subset = org_imgs_subset.unsqueeze(1)  # Add channel dimension
+    # Move imgs_subset to GPU if available
+    if torch.cuda.is_available():
+        org_imgs_subset = org_imgs_subset.to("cuda")
+        smoothed_imgs_subset = smoothed_imgs_subset.to("cuda")
+        w = w.to("cuda")  # Move weights to GPU
+        gaussWt = gaussWt.to("cuda")
+    theta = align_multiple_patches(smoothed_imgs_subset,cntr, r_in,w,-90.,90.0,1.0)  # Align the image using the center and radius
+    basis = recon_mult_patches(org_imgs_subset, cntr, r_in, w, gaussWt, theta)  # Reconstruct the patch using the basis functions
+    return basis, theta
 
