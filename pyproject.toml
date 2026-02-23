@@ -1,24 +1,31 @@
 [build-system]
-requires = ["setuptools>=61.0", "wheel"]
+requires = ["setuptools>=61.0", "setuptools-scm>=8.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "mem_sub"
-version = "0.1.0"
+dynamic = ["version"]
 description = "Scientific framework for membrane subtraction and membrane estimation from CryoEM images."
 readme = "README.md"
 requires-python = ">=3.9"
 license = { text = "MIT" }
-authors = [ { name = "Anna Starynska", email = "you@example.com" } ]
+authors = [ { name = "Anna Starynska" } ]
 
 # Runtime dependencies - edit to match your environment if needed
 dependencies = []
 
+
 [project.optional-dependencies]
-dev = ["pytest", "black"]
+dev = [
+    "pytest",
+    "black",
+    "setuptools-scm"
+]
 
 [project.urls]
-"Repository" = "https://example.com/your-repo"
+"Repository" = "https://github.com/annstar-dl/mem_sub_v1#"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools_scm]
