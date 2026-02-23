@@ -113,8 +113,6 @@ def get_basis(dataimg,row_idx,col_idx,r):
     Get bases from the image data multiple patches at once. Basis is a membrane profile at a point.
 
     Args:
-        img (torch.Tensor): Input image of shape (H,W), where N is the number of samples
-                            and H, W are the height and width of the image.
         dataimg (torch.Tensor): The image from previous processing step of shape (H,W).
         row_idx (torch.Tensor): X coordinates of grid of shape (N), number of grid points.
         col_idx (torch.Tensor): Y coordinates of grid of shape (N), number of grid points.

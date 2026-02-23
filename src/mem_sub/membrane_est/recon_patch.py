@@ -9,7 +9,7 @@ def recon_patch(img1, cntr, r_in, w, gaussWt, theta):
         img1 (torch.Tensor): The image tensor of shape (C, H, W).
         cntr (int): Center of the patch.
         r_in (int): Radius of the inner circle.
-        w (torch.Tensor): Weights for the Gaussian kernel.
+        w (torch.Tensor): Weights for the weighting function.
         gaussWt (torch.Tensor): Gaussian weights for the patch.
         theta (float): Angle to rotate the image.
 
@@ -35,7 +35,7 @@ def recon_mult_patches(imgs_subset, cntr, r_in, w, gaussWt, thetas):
         img1 (torch.Tensor): The image tensor of shape (C, H, W).
         cntr (int): Center of the patch.
         r_in (int): Radius of the inner circle.
-        w (torch.Tensor): Weights for the Gaussian kernel.
+        w (torch.Tensor): Weights for the weighting function.
         gaussWt (torch.Tensor): Gaussian weights for the patch.
         thetas (list(float)): Angle to rotate the image.
 
