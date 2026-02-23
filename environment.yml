@@ -13,6 +13,8 @@ dependencies:
   - scikit-image
   - scipy
   - tifffile
+  - setuptools
+  - setuptools-scm
   - pip:
       - bm3d==4.0.3
       - bm4d==4.2.5
@@ -29,3 +31,4 @@ dependencies:
       - tqdm
       - pyyaml
       - pandas
+
