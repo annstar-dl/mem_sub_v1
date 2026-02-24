@@ -3,9 +3,11 @@ from mem_sub.membrane_est.align_image import align_single_patch, align_multiple_
 from mem_sub.membrane_est.basis_fn import get_radius_of_inner_circle
 from mem_sub.membrane_est.sub_utils import add_patches_to_image, get_patches_from_image_adv_indexing, creat_idx_batches_for_parl_sum, add_patches_to_image_batched
 from matplotlib import pyplot as plt
-from mem_sub.membrane_est.sampling_grid import get_sampling_grid, select_points_within_boundary
+from mem_sub.membrane_est.utils import read_parameters_from_yaml_file, read_img, save_im
 from mem_sub.membrane_est.basis_fn import create_gaussian_disc
+from  mem_sub.membrane_est.membrane_estimation import prepare_micrograph
 import PIL.Image as Image
+
 import numpy as np
 import torch
 
@@ -138,12 +140,18 @@ def get_membrane(dataimg, row_idx, col_idx, r, step):
     ones = torch.ones_like(dataimg)  # Create a tensor of ones with the same shape as the basis
     domains = get_patches_from_image_adv_indexing(ones, r_in, row_idx, col_idx)
     disk = create_disc(r_in)  # Create a disc-shaped weighting function for the membrane profile
+    empty_img = torch.zeros_like(dataimg)
+    if torch.cuda.is_available():
+        disk = disk.to("cuda")
+        domains = domains.to("cuda")
+        empty_img = empty_img.to("cuda")
     domains = domains * disk.unsqueeze(0)
     basis = basis * disk.unsqueeze(0)  # Apply the disc-shaped weighting function to the basis
 
-    imgout = add_patches_to_image_batched(basis, torch.zeros_like(dataimg), r_in, batched_row_idxs, batched_col_idxs,
+
+    imgout = add_patches_to_image_batched(basis, empty_img, r_in, batched_row_idxs, batched_col_idxs,
                                           bases_idxs)
-    domains_sum = add_patches_to_image_batched(domains,torch.zeros_like(dataimg), r_in, batched_row_idxs, batched_col_idxs,
+    domains_sum = add_patches_to_image_batched(domains,empty_img, r_in, batched_row_idxs, batched_col_idxs,
                                           bases_idxs)
     imgout/=domains_sum  # Normalize the output image by the sum of the domains to get the average membrane profile
     return imgout
@@ -161,14 +169,14 @@ def create_disc(r):
     return w
 
 if __name__ == "__main__":
-    fpath = r"C:\Data\Posdoc\vesicles_data\labeled_data\2025_sep+dec_separated_membrane\images\kcnq1(mackinnon)\008137117410956406710_VSM-71-3_345_005_Nov03_10.45.24_X+1Y-1-1_patch_aligned_doseweighted.jpg"
-    img = Image.open(fpath).convert('L')  # Load the image and convert to grayscale
-    fpath = r"C:\Data\Posdoc\vesicles_data\labeled_data\2025_sep+dec_separated_membrane\labels\kcnq1(mackinnon)\008137117410956406710_VSM-71-3_345_005_Nov03_10.45.24_X+1Y-1-1_patch_aligned_doseweighted.png"
-    mask = Image.open(fpath).convert('L')  # Load the image and convert to grayscale
-    img_tensor = torch.from_numpy(np.array(img)).double()  # Convert the image to a PyTorch tensor
-    masked_tensor = torch.from_numpy(np.array(mask)).double()  # Convert the mask to a PyTorch tensor
-    mask_blured , row_indices, col_indices = get_sampling_grid(masked_tensor,4,4)
-    row_indices, col_indices = select_points_within_boundary(masked_tensor,20,row_indices, col_indices)
+    fpath_img = r"/home/astar/Projects/vesicles_data/labeled_data/2025_sep+dec_separated_membrane/images/kcnq1(mackinnon)/008137117410956406710_VSM-71-3_345_005_Nov03_10.45.24_X+1Y-1-1_patch_aligned_doseweighted.jpg"
+
+    fpath_mask = r"/home/astar/Projects/vesicles_data/labeled_data/2025_sep+dec_separated_membrane/labels/kcnq1(mackinnon)/008137117410956406710_VSM-71-3_345_005_Nov03_10.45.24_X+1Y-1-1_patch_aligned_doseweighted.png"
+
+    img = read_img(fpath_img)  # Read the input image
+    mask = read_img(fpath_mask, mask=True)  # Read the segmentation mask
+    parameters = read_parameters_from_yaml_file()  # Read parameters from the YAML file
+    img_tensor, mask_blured, row_indices, col_indices = prepare_micrograph(img, mask, parameters, parameters["r"])
     membrane = get_membrane(img_tensor, row_indices, col_indices, 20,4)
     membrane = membrane.to("cpu").numpy()  # Move the membrane tensor to CPU and convert to NumPy array for visualization
     plt.figure()
