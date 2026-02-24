@@ -51,5 +51,5 @@ def recon_mult_patches(imgs_subset, cntr, r_in, w, gaussWt, thetas):
     neg_thetas = -thetas
     prof = rotate_images_kornia(prof, neg_thetas)  # Rotate the profile back to the original orientation
     gaussWt = gaussWt.unsqueeze(0).unsqueeze(0)  # Ensure gaussWt is a 4D tensor for broadcasting
-    reconstructed_patchs = prof * 1 #gaussWt  # Scale the profile by the Gaussian weights
+    reconstructed_patchs = prof * gaussWt  # Scale the profile by the Gaussian weights
     return reconstructed_patchs.squeeze(1)
