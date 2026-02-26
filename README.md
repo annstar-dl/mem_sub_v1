@@ -30,7 +30,7 @@ conda activate mem_sub
 ```
 3. Membrane subtraction on a folder of mrc files:
 ```bash
-   bash seg_subtract.sh /path/to/save/results /path/to/mrc/files 
+   bash script/seg_subtract.sh /path/to/save/results /path/to/mrc/files 
 ```
 This files contains two main parts:
 - Segmentation of membrane outlines using pretrained U-Net model.
