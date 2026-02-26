@@ -6,7 +6,7 @@ MEMBRANE_DETECTION_DIR="/home/astar/Projects/membrane_detection"
 # Path to the pretrained segmentation model directory
 #SEGMENTATION_DIR="${MEMBRANE_DETECTION_DIR}/out/unet_membrane_256x256_500000/result"
 SEGMENTATION_DIR="${MEMBRANE_DETECTION_DIR}/out/mem_mad_2025_sep+dec_warmup_200000/result"
-MEMBRANE_SUBTRACTION_DIR="/home/astar/Projects/VesicleProjection" # Path to the VesicleProjection project directory
+MEMBRANE_SUBTRACTION_DIR="/home/astar/Projects/membrane_subtraction_v1/" # Path to the VesicleProjection project directory
 INPUT_FILE_FORMAT="mrc"  # Change to "tif" if input files are in TIFF format
 SEGMENTATION_MODEL_FORMAT="onnx" # "onnx" or "paddleseg"
 PADDLESEG_DIR="/home/astar/Projects/PaddleSeg" # Path to the PaddleSeg project directory
@@ -66,5 +66,8 @@ conda run -n ves_seg python "${MEMBRANE_SUBTRACTION_DIR}/tools/run_mrc_subtracti
  -do_sub
 
 echo "Subtracted masks from original micrographs and saved results in $PWD"
-
+# Convert mrc files to jpg for segmentation
+conda run -n ves_seg python "${MEMBRANE_SUBTRACTION_DIR}/tools/mrc2image.py" "$PWD/misc/membranes" -o "$PWD/misc/membranes_ds" --format "png" -dsa --scale
+# Convert mrc files to jpg for segmentation
+conda run -n ves_seg python "${MEMBRANE_SUBTRACTION_DIR}/tools/mrc2image.py" "$PWD/subtracted_mrc" -o "$PWD/misc/subtracted_ds" --format "png" -dsa --scale
 
