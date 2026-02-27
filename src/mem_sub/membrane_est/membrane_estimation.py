@@ -2,7 +2,7 @@ import copy
 import numpy as np
 import torch
 from mem_sub.membrane_est.sampling_grid import get_sampling_grid, select_points_within_boundary
-from mem_sub.membrane_est.basis_fn import get_basis, get_basis_separate
+from mem_sub.membrane_est.basis_fn import get_basis
 from mem_sub.membrane_est.fit_basis_to_data import fit_basis_to_data_batched
 from mem_sub.membrane_est.utils import read_parameters_from_yaml_file
 from mem_sub.membrane_est.bg_estimation import get_background
@@ -106,7 +106,7 @@ def fit_membrane(img, mask, row_idx, col_idx,parameters):
     # Find the membrane using basis functions and fit it to the data
     # Fit basis to the previous reconstruction to achieve better results
     for _ in range(nb_iter):
-        basis, _ = get_basis_separate(dataimg,img, row_idx, col_idx, r)
+        basis, _ = get_basis(dataimg, row_idx, col_idx, r)
         imgout = fit_basis_to_data_batched(img,basis, row_idx, col_idx,r, rho, max_iter_gd,w)
         dataimg = imgout
 
