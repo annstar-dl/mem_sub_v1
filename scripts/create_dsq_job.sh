@@ -16,10 +16,9 @@ module load miniconda
 module load dSQ
 conda activate ves_seg
 export LD_LIBRARY_PATH=$CONDA_PREFIX/lib:$LD_LIBRARY_PATH
-python create_job_list.py -ddp ${DATASET_PATH} -jfp "./joblist.txt" \
+python scripts/create_job_list.py -ddp ${DATASET_PATH} -jfp "./joblist.txt" \
     -segmp ${SEG_MODEL_PATH} -savedp ${SAVE_DIR_PATH} \
     --save_angle_flag=${SAVE_ANGLE} --save_sub_flag=${SAVE_SUB} \
 # the joblist.txt will be created in the current directory
 # Now create the dsq job submission script
-dsq --job-file joblist.txt --mem=5G --cpus-per-task=4 --gres=gpu:1 -t 15:00 --partition=scavenge_gpu --mail-type ALL  --batch-file="${JOB_ARRAY_NAME}_${TIMESTEMP}_dsq_job.sh"
-#--output=/dev/null
+dsq --job-file joblist.txt --mem=5G --cpus-per-task=4 --gres=gpu:1 -t 15:00 --partition=scavenge_gpu --mail-type ALL  --batch-file="${JOB_ARRAY_NAME}_${TIMESTEMP}_dsq_job.sh" --output=/dev/null
