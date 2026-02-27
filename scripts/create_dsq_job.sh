@@ -11,6 +11,7 @@ SAVE_DIR_PATH=$3
 JOB_ARRAY_NAME=$4
 SAVE_ANGLE=$5
 SAVE_SUB=$6
+SHOW_OUTPUT=$7
 TIMESTEMP=$(date +"%Y%m%d_%H%M%S")
 module load miniconda
 module load dSQ
@@ -21,4 +22,8 @@ python scripts/create_job_list.py -ddp ${DATASET_PATH} -jfp "./joblist.txt" \
     --save_angle_flag=${SAVE_ANGLE} --save_sub_flag=${SAVE_SUB} \
 # the joblist.txt will be created in the current directory
 # Now create the dsq job submission script
-dsq --job-file joblist.txt --mem=5G --cpus-per-task=4 --gres=gpu:1 -t 15:00 --partition=scavenge_gpu --mail-type ALL  --batch-file="${JOB_ARRAY_NAME}_${TIMESTEMP}_dsq_job.sh" --output=/dev/null
+if [ "$SHOW_OUTPUT" -eq 1 ]; then
+    dsq --job-file joblist.txt --mem=5G --cpus-per-task=4 --gres=gpu:1 -t 15:00 --partition=scavenge_gpu --mail-type ALL  --batch-file="${JOB_ARRAY_NAME}_${TIMESTEMP}_dsq_job.sh"
+else
+    dsq --job-file joblist.txt --mem=5G --cpus-per-task=4 --gres=gpu:1 -t 15:00 --partition=scavenge_gpu --mail-type ALL  --batch-file="${JOB_ARRAY_NAME}_${TIMESTEMP}_dsq_job.sh" --output=/dev/null
+fi
