@@ -80,7 +80,8 @@ def create_job_list(data_dir_path, job_file_path,seg_model_path, save_dir_path,
     torch_lib_path = os.path.join(os.path.dirname(torch.__file__), 'lib')
     prefix = (#"module force purge; "
             "module load miniconda; conda activate ves_seg; "
-              f"export LD_LIBRARY_PATH={torch_lib_path}:$CONDA_PREFIX/lib:$LD_LIBRARY_PATH; "
+              #f"export LD_LIBRARY_PATH={torch_lib_path}:$CONDA_PREFIX/lib:$LD_LIBRARY_PATH; "
+              f"export LD_LIBRARY_PATH=$CONDA_PREFIX/lib:$LD_LIBRARY_PATH:{torch_lib_path};"
               f"export SEGMENTATION_DIR={seg_model_path}; "
               f"export SAVEDIR={save_dir_path}; "
               f"export INPUTDIR={data_dir_path};"

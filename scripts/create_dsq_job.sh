@@ -16,7 +16,6 @@ TIMESTEMP=$(date +"%Y%m%d_%H%M%S")
 module load miniconda
 module load dSQ
 conda activate ves_seg
-export LD_LIBRARY_PATH=$CONDA_PREFIX/lib:$LD_LIBRARY_PATH
 python scripts/create_job_list.py -ddp ${DATASET_PATH} -jfp "./joblist.txt" \
     -segmp ${SEG_MODEL_PATH} -savedp ${SAVE_DIR_PATH} \
     --save_angle_flag=${SAVE_ANGLE} --save_sub_flag=${SAVE_SUB} \
