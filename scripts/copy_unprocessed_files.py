@@ -20,4 +20,6 @@ if __name__ == "__main__":
     args.add_argument("-saf","--save_angle_flag", type=int, default=1, help="Flag indicating whether angle files are saved (1) or not (0)")
     args.add_argument("-ssf","--save_sub_flag", type=int, default=1, help="Flag indicating whether subtracted MRC files are saved (1) or not (0)")
     args = args.parse_args()
+    if not os.path.exists(args.new_save_path):
+        os.makedirs(args.new_save_path)
     main(args.data_dir_path, args.save_dir_path, args.new_save_path, args.save_angle_flag, args.save_sub_flag)
