@@ -1,7 +1,11 @@
 name: ves_seg
 channels:
+  - nvidia
+  - conda-forge
   - defaults
 dependencies:
+  - cuda-toolkit=12.2
+  - "libcudnn>=9"
   - imageio
   - mrcfile=1.5.4
   - pip=25.1
@@ -12,21 +16,18 @@ dependencies:
   - setuptools
   - setuptools-scm
   - pip:
-      - torch
-      - torchvision
-      - kornia
-      - onnxruntime-gpu
-      - nvidia-cuda-runtime-cu12
-      - nvidia-cublas-cu12
-      - nvidia-cudnn-cu12
       - bm3d==4.0.3
       - bm4d==4.2.5
       - h5py==3.14.0
+      - kornia==0.8.1
       - matplotlib
       - numpy==2.1.2
+      - onnxruntime-gpu==1.23.0
       - opencv-python==4.12.0.88
       - pillow
       - six==1.17.0
+      - torch==2.7.1
+      - torchvision==0.22.1
       - tqdm
       - pyyaml
       - pandas
