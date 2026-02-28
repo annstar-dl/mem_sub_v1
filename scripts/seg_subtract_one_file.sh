@@ -13,7 +13,6 @@ fi
 if [ -n "${SAVEDIR}" ]; then
     SAVEDIR="${SAVEDIR%/}"
 fi
-export LD_PRELOAD=$CONDA_PREFIX/lib/libcudnn.so.9
 # extract name of the dataset from the path
 MRC_DIR=$(basename "$INPUTDIR")
 # create a new directory to store the results
