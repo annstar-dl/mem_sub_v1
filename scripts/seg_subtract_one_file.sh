@@ -1,5 +1,4 @@
 #!/bin/bash
-export CUDA_VISIBLE_DEVICES=0
 FILENAME=$1
 echo "Processing file: ${FILENAME}"
 echo "nvidia-smi output:"
