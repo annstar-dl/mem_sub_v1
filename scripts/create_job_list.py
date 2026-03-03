@@ -80,8 +80,12 @@ def create_job_list(data_dir_path, job_file_path,seg_model_path, save_dir_path,
     torch_lib_path = os.path.join(os.path.dirname(torch.__file__), 'lib')
     prefix = (#"module force purge; "
             "module load miniconda; conda activate ves_seg; "
-              f"export LD_LIBRARY_PATH={torch_lib_path}:$CONDA_PREFIX/lib:$LD_LIBRARY_PATH; "
-              f"export SEGMENTATION_DIR={seg_model_path}; "
+              #f"export LD_LIBRARY_PATH={torch_lib_path}:$CONDA_PREFIX/lib:$LD_LIBRARY_PATH; "
+              #f"export LD_LIBRARY_PATH=$CONDA_PREFIX/lib:$LD_LIBRARY_PATH:{torch_lib_path};"
+            f"export LD_LIBRARY_PATH=$CONDA_PREFIX/lib:$LD_LIBRARY_PATH;"
+            f"export LD_LIBRARY_PATH=$CONDA_PREFIX/lib/python3.12/site-packages/nvidia/cublas/lib:$LD_LIBRARY_PATH;"
+            f"export LD_LIBRARY_PATH=$CONDA_PREFIX/lib/python3.12/site-packages/nvidia/cudnn/lib:$LD_LIBRARY_PATH;"
+            f"export LD_LIBRARY_PATH=$CONDA_PREFIX/lib/python3.12/site-packages/nvidia/cuda_runtime/lib:$LD_LIBRARY_PATH;"              f"export SEGMENTATION_DIR={seg_model_path}; "
               f"export SAVEDIR={save_dir_path}; "
               f"export INPUTDIR={data_dir_path};"
               f"export SAVE_ANGLE={save_angle_flag}; "
@@ -96,7 +100,7 @@ def create_job_list(data_dir_path, job_file_path,seg_model_path, save_dir_path,
             f.write(prefix)
             for filename in batch:
                 filename= delete_mrc_ext(strip_leading_dot_slash(filename))
-                f.write(f"bash seg_subtract_one_file.sh {filename};")
+                f.write(f"bash scripts/seg_subtract_one_file.sh {filename};")
             f.write("\n")  # Separate batches with a newline
             nb_of_jobs_iter += 1
             if nb_of_jobs_iter > nb_of_jobs:
