@@ -1,15 +1,13 @@
-from mem_sub.membrane_est.align_image import align_single_patch, align_multiple_patches, rotate_images_kornia, \
-    calculate_mse_loss
-from mem_sub.membrane_est.basis_fn import get_radius_of_inner_circle
-from mem_sub.membrane_est.sub_utils import add_patches_to_image, get_patches_from_image_adv_indexing, creat_idx_batches_for_parl_sum, add_patches_to_image_batched
+from mem_sub.membrane_est.align_image import rotate_images_kornia, calculate_mse_loss
+from mem_sub.membrane_est.basis_fn import get_radius_of_inner_circle, get_basis
+from mem_sub.membrane_est.sub_utils import get_patches_from_image_adv_indexing, creat_idx_batches_for_parl_sum, add_patches_to_image_batched
 from matplotlib import pyplot as plt
 from mem_sub.membrane_est.utils import read_parameters_from_yaml_file, read_img, save_im
 from mem_sub.membrane_est.basis_fn import create_gaussian_disc
 from  mem_sub.membrane_est.membrane_estimation import prepare_micrograph
-import PIL.Image as Image
-
-import numpy as np
 import torch
+from mem_sub.mrc_tools.mrc_utils import load_mrc, downsample_micrograph
+import numpy as np
 
 def get_Bs(dataimg, row_idx, col_idx, r):
     """
@@ -43,7 +41,8 @@ def get_Bs(dataimg, row_idx, col_idx, r):
     if torch.cuda.is_available():
         imgs_subset = imgs_subset.to("cuda")
         gaussWt = gaussWt.to("cuda")
-    theta = align_multiple_patches_no_w(imgs_subset,cntr, r_in,-90.,90.0,1.0)  # Align the image using the center and radius
+    #theta = align_multiple_patches_no_w(imgs_subset.detach().clone(),cntr, r_in,-90.,90.0,1.0)  # Align the image using the center and radius
+    _, theta = get_basis(dataimg, row_idx, col_idx, r)  #
     basis = recon_mult_patches_no_w(imgs_subset, cntr, r_in, gaussWt, theta)  # Reconstruct the patch using the basis functions
     return basis, theta
 
@@ -59,9 +58,9 @@ def align_multiple_patches_no_w(imgs_subset, cntr, r, theta_b, theta_e, dtheta):
     :param dtheta: float, Step size for angle increment in degrees.
     :return:
     """
-    theta_opt = align_multiple_patches_multires_no_w(imgs_subset, cntr, r,theta_b, theta_e, 10)
+    theta_opt = align_multiple_patches_multires_no_w(imgs_subset.detach().clone(), cntr, r,theta_b, theta_e, 10)
     # refine the angle by searching in a smaller range
-    theta_opt = align_multiple_patches_multires_no_w(imgs_subset, cntr, r,theta_opt-10, theta_opt+10, dtheta)
+    theta_opt = align_multiple_patches_multires_no_w(imgs_subset.detach().clone(), cntr, r,theta_opt-10, theta_opt+10, dtheta)
     return theta_opt
 
 def align_multiple_patches_multires_no_w(imgs_subset,cntr, r, theta_b, theta_e, dtheta):
@@ -96,7 +95,9 @@ def align_multiple_patches_multires_no_w(imgs_subset,cntr, r, theta_b, theta_e, 
     for i in range(len(angles)):
         tmp_img = rotate_images_kornia(imgs_subset, angles[i])  # Rotate the images by the angles
         tmp_img = tmp_img[..., cntr - r:cntr + r + 1,cntr - r:cntr + r + 1]  # Crop the images to the neighbourhood size
-        prof = torch.sum(tmp_img, dim=3)  # Calculate the profile for each rotated image
+        w_exp = torch.ones_like(tmp_img[0,0,:]).unsqueeze(0).unsqueeze(0)
+        prof = tmp_img * w_exp  # Apply the Gaussian weights to the rotated images
+        prof = torch.sum(prof, dim=3)  # Calculate the profile for each rotated image
         prof = prof.unsqueeze(3).expand(-1, -1, -1, 2 * r + 1)  # Expand the profile into an image for each angle
         losses[i] = calculate_mse_loss(tmp_img, prof) # Calculate the MSE loss between the rotated images and the profile images
     loss_agr_min_idx = torch.argmin(losses, dim=0).to("cpu")  # Get the index of the minimum loss for each image
@@ -137,7 +138,7 @@ def get_membrane(dataimg, row_idx, col_idx, r, step):
     r_in = get_radius_of_inner_circle(r)  # Get the radius of the inner circle
     basis, theta = get_Bs(dataimg, row_idx, col_idx, r)  # Get the bases and angles for the membrane profile
     batched_row_idxs, batched_col_idxs, bases_idxs = creat_idx_batches_for_parl_sum(row_idx, col_idx, r_in, step)
-    ones = torch.ones_like(dataimg)  # Create a tensor of ones with the same shape as the basis
+    ones = torch.ones_like(dataimg, dtype=torch.float64)  # Create a tensor of ones with the same shape as the basis
     domains = get_patches_from_image_adv_indexing(ones, r_in, row_idx, col_idx)
     disk = create_disc(r_in)  # Create a disc-shaped weighting function for the membrane profile
     empty_img = torch.zeros_like(dataimg)
@@ -149,11 +150,11 @@ def get_membrane(dataimg, row_idx, col_idx, r, step):
     basis = basis * disk.unsqueeze(0)  # Apply the disc-shaped weighting function to the basis
 
 
-    imgout = add_patches_to_image_batched(basis, empty_img, r_in, batched_row_idxs, batched_col_idxs,
+    imgout = add_patches_to_image_batched(basis, empty_img.detach().clone(), r_in, batched_row_idxs, batched_col_idxs,
                                           bases_idxs)
-    domains_sum = add_patches_to_image_batched(domains,empty_img, r_in, batched_row_idxs, batched_col_idxs,
+    domains_sum = add_patches_to_image_batched(domains,empty_img.detach().clone(), r_in, batched_row_idxs, batched_col_idxs,
                                           bases_idxs)
-    imgout/=domains_sum  # Normalize the output image by the sum of the domains to get the average membrane profile
+    imgout/=(domains_sum+1e-6)  # Normalize the output image by the sum of the domains to get the average membrane profile
     return imgout
 
 def create_disc(r):
@@ -169,16 +170,24 @@ def create_disc(r):
     return w
 
 if __name__ == "__main__":
-    fpath_img = r"/home/astar/Projects/vesicles_data/labeled_data/2025_sep+dec_separated_membrane/images/kcnq1(mackinnon)/008137117410956406710_VSM-71-3_345_005_Nov03_10.45.24_X+1Y-1-1_patch_aligned_doseweighted.jpg"
+    fpath_img = r"/home/astar/Projects/vesicles_data/mackinnon_03182023/misc/mackinnon_03182023_mrc/000022314839760130216_VSM-71-3_815_005_Nov04_04.01.02_X+1Y-1-1_patch_aligned_doseweighted.mrc"
 
-    fpath_mask = r"/home/astar/Projects/vesicles_data/labeled_data/2025_sep+dec_separated_membrane/labels/kcnq1(mackinnon)/008137117410956406710_VSM-71-3_345_005_Nov03_10.45.24_X+1Y-1-1_patch_aligned_doseweighted.png"
+    fpath_mask = r"/home/astar/Projects/vesicles_data/mackinnon_03182023/misc/labels/000022314839760130216_VSM-71-3_815_005_Nov04_04.01.02_X+1Y-1-1_patch_aligned_doseweighted.png"
 
-    img = read_img(fpath_img)  # Read the input image
-    mask = read_img(fpath_mask, mask=True)  # Read the segmentation mask
+    img, header, voxel_size = load_mrc(fpath_img)
     parameters = read_parameters_from_yaml_file()  # Read parameters from the YAML file
+    img = img.astype(np.float64)
+    img = downsample_micrograph(img,voxel_size[0], parameters["r"], "center")
+    mask = read_img(fpath_mask, mask=True)  # Read the segmentation mask
+
     img_tensor, mask_blured, row_indices, col_indices = prepare_micrograph(img, mask, parameters, parameters["r"])
     membrane = get_membrane(img_tensor, row_indices, col_indices, 20,4)
+    sub = img_tensor.to("cpu") - membrane.to("cpu")  # Subtract the membrane from the original image to get the image with subtracted membranes
     membrane = membrane.to("cpu").numpy()  # Move the membrane tensor to CPU and convert to NumPy array for visualization
+
     plt.figure()
+    plt.subplot(1,2,1)
     plt.imshow(membrane, cmap='gray')
+    plt.subplot(1,2,2)
+    plt.imshow(sub.to("cpu").numpy(), cmap='gray')
     plt.show()
