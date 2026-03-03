@@ -1,8 +1,8 @@
 description: Parameters of Membrane Subtraction Algorithm
 version: 1.0
-r: 12  # Grid radius, the radius of the neighborhood around the grid point
+r: 20  # Grid radius, the radius of the neighborhood around the grid point
 nb_iter: 3 # Number of iterations for fitting the membranes with basis functions
 d: 4 # Number of dilation steps for the mask enlargement
-w: 2 # Stride for the sampling grid
+w: 4 # Stride for the sampling grid
 max_nb_iter_GD: 30 # Maximum number of iterations of Gradient descent
 rho: 0.025 # Learning rate for Gradient descent
