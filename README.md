@@ -46,7 +46,7 @@ The structure of the output folder will be as follows:
     |---subtractions_mrc/ # Images after membrane subtraction in mrc format
     |---misc/ # Miscellaneous files, including logs and intermediate results
     ├──---{input_folder_name}_ds/  # Downsampled images in jpg format
-    ├──---labels/                     # Segmented membrane masks
+    ├──---labels/                     # Segmented membrane masks (downsampled)
     ├──---input_mrc_folder_name/      # Original mrc files 
     ├─────subtracted_png/ # Images after membrane subtraction in png format
     ├─────membranes/ # Reconstracted membrane images
