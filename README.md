@@ -18,19 +18,20 @@ This repository contains code and resources for performing membrane subtraction 
 ### Usage
 1. Clone the repository:
 ```bash
-git clone 
+git clone https://github.com/annstar-dl/mem_sub_v1
 #go to the repository directory
-cd VesicleProjection
+cd mem_sub_v1
 ```
 2. Installation of dependencies:
 ```bash
 # Create a new environment from the YAML file
 conda env_name create -f environment.yml
 conda activate mem_sub
+pip install -e .
 ```
-3. Membrane subtraction on a folder of mrc files:
+3. Membrane subtraction for a folder of mrc files on a desktop or local machine can be done using the following script:
 ```bash
-   bash script/seg_subtract.sh /path/to/save/results /path/to/mrc/files 
+   bash script/seg_subtract.sh /path/to/mrc/files /path/to/save/results 
 ```
 This files contains two main parts:
 - Segmentation of membrane outlines using pretrained U-Net model.
@@ -39,12 +40,12 @@ This files contains two main parts:
 The first step requires downloading U-Net model weights. These weights can be downloaded from:
 [U-Net Weights Download Link](https://example.com/unet_weights.pth)
 Make sure to place the downloaded weights in the appropriate directory and specify the path to model.onnx file in the `seg_subtract.sh` script in SEGMENTATION_DIR variable.
-Also before the segmentation step, the mrc files are downsapled to have voxel size of 4.5 Angstroms. As a result, you will see in the output folder images_jpg/{input_folder_name}_ds with downsampled images in jpg format.
+Also before the segmentation step, the mrc files are downsapled to have voxel size of 4.5 Angstroms. As a result, you will see in the output folder misc/{input_folder_name}_ds with downsampled images in jpg format.
 The structure of the output folder will be as follows:
 ```/your/save/path/
     |---subtractions_mrc/ # Images after membrane subtraction in mrc format
     |---misc/ # Miscellaneous files, including logs and intermediate results
-    ├──---images_jpg/{input_folder_name}_ds/  # Downsampled images in jpg format
+    ├──---{input_folder_name}_ds/  # Downsampled images in jpg format
     ├──---labels/                     # Segmented membrane masks
     ├──---input_mrc_folder_name/      # Original mrc files
     ├──---reconstructions/  
@@ -58,8 +59,19 @@ each processing a single image. This way we can "scavenge" free GPU resources fr
     To run DSQ we have to prepare file with the list of jobs and their parameters. 
 However, Yale HPC has a limit on how short the job duration can be, 
 so we have to batch several image processing jobs into one. 
-After creating the job file, you can DSQ job using following script:
+You can create the job file, you can run DSQ job using following script:
 ```bash
-   bash create_dsq_jobs.sh /path/to/job/file.txt /path/to/conda/env/mem_sub
+   bash script/create_dsq_jobs.sh /path/to/dataset/folder /path/to/segmentation/model/folder /path/to/save/results/folder job_array_name save_angle save_sub show_output
 ```
-When running on Yale HPC, make sure to submit the job using the appropriate scheduler commands.
+Here is the explanation of the parameters:
+- `/path/to/dataset/folder`: Path to the folder containing mrc files to be processed.
+- `/path/to/segmentation/model/folder`: Path to the folder containing the segmentation model weights (model.onnx file).
+- `/path/to/save/results/folder`: Path to the folder where the results will be saved.
+- `job_array_name`: A name for the job array, which will be used to identify the jobs in the DSQ scheduler, e.g. liposome.
+- `save_angle`: A flag (0 or 1) indicating whether to save the angle information of the segmented membranes.
+- `save_sub`: A flag (0 or 1) indicating whether to save the subtracted images.
+- `show_output`: A flag (0 or 1) indicating whether to print the output of the DSQ jobs to the log files.
+- 
+After running script/create_dsq_jobs.sh it will print out a line:
+- `To submit the job array, run: sbatch liposome_12345678.sh`
+Paste this command into the terminal to submit the job array to the DSQ scheduler.
