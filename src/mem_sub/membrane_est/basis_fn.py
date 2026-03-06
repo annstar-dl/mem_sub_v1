@@ -40,14 +40,14 @@ def create_gaussian_disc(im_size, radius):
     return binaryImage, gaussWt
 
 def get_w_function(r):
-    """Get the weights for the Gaussian kernel.
+    """Get the weights for the weighted function.
     Arg:
     r (int): Radius of the inner circle inside the neighborhood."""
 
     # w function for high order approximation
     u = torch.arange(-r, r+1, dtype=torch.float64) / r
     w = 1.40625 - 4.6875 * u ** 2 + 3.28125 * u ** 4
-    w = w / torch.sum(w)  # Normalize the weights
+    w = w / torch.sum(w)  # Normalize the weights so that they sum to 1
     w = w.repeat(2 * r+1, 1)  # Repeat to create a 2D weight matrix
     return w
 
