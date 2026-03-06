@@ -33,10 +33,10 @@ def get_filter(size : int =15)->np.ndarray:
 #     return np.sqrt(np.mean(out.flatten()**2.0))
 
 def subtraction_metric(img : np.ndarray, sub : np.ndarray, mask, size : int=15)->np.float64:
-#Calculates the efficacy of membrane subtraction
-#img: original micrograph, sub: membrane subtracted image
-#size: nominally set to 15, but can be increased
-# Returns the fractional difference. Bigger-> more membrane subtraction
+    #Calculates the efficacy of membrane subtraction
+    #img: original micrograph, sub: membrane subtracted image
+    #size: nominally set to 15, but can be increased
+    # Returns the fractional difference. Bigger-> more membrane subtraction
     filter_kernel = get_filter(size)
     out_img = ndimage.convolve(img, filter_kernel, mode='reflect')[mask>0]
     img_norm= np.sqrt(np.mean(out_img.flatten()**2.0))
