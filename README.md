@@ -53,6 +53,7 @@ The structure of the output folder will be as follows:
     ├─────reconstructed_membranes/ # Reconstracted membrane images
 ```
 Additionally original mrc files are copied to the output folder for convenience. This could be prevented by commenting out "cp -r $2 ." line in the `seg_subtract.sh` script.
+
 4. HPC Usage. Membrane subtraction on Yale HPC cluster is done using Deadly Simple Queue (DSQ) scheduler.
    The idea is that every image can be processed independently, so we can submit many jobs to the cluster,
 each processing a single image. This way we can "scavenge" free GPU resources from other users.
