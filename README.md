@@ -47,10 +47,9 @@ The structure of the output folder will be as follows:
     |---misc/ # Miscellaneous files, including logs and intermediate results
     ├──---{input_folder_name}_ds/  # Downsampled images in jpg format
     ├──---labels/                     # Segmented membrane masks
-    ├──---input_mrc_folder_name/      # Original mrc files
-    ├──---reconstructions/  
-    ├─────subtractions_png/ # Images after membrane subtraction in png format
-    ├─────reconstructed_membranes/ # Reconstracted membrane images
+    ├──---input_mrc_folder_name/      # Original mrc files 
+    ├─────subtracted_png/ # Images after membrane subtraction in png format
+    ├─────membranes/ # Reconstracted membrane images
 ```
 Additionally original mrc files are copied to the output folder for convenience. This could be prevented by commenting out "cp -r $2 ." line in the `seg_subtract.sh` script.
 
