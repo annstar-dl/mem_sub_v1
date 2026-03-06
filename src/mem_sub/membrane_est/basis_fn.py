@@ -34,15 +34,19 @@ def create_gaussian_disc(im_size, radius):
     # Create Gaussian weights based on the distance from the center
     gaussWt = torch.exp(-r**2 / (2 * sigma ** 2))
     edge_val = gaussWt[int(centerX),-1] # Get the value at the edge of the disc
-    gaussWt = torch.max(gaussWt-edge_val,torch.tensor(0.0))  # Ensure the maximum value is at the edge
+    gaussWt = torch.max(gaussWt-edge_val,torch.tensor(0.0))
     gaussWt = gaussWt * binaryImage  # Apply the binary mask to the Gaussian weights
-    gaussWt = gaussWt / torch.sum(gaussWt)  # Normalize the Gaussian weights
+    #gaussWt = gaussWt / torch.sum(gaussWt)  # Normalize the Gaussian weights
+    gaussWt = gaussWt / torch.max(gaussWt)  # Normalize the Gaussian weights
     return binaryImage, gaussWt
 
 def get_w_function(r):
     """Get the weights for the Gaussian kernel.
     Arg:
-    r (int): Radius of the inner circle inside the neighborhood."""
+    r (int): Radius of the inner circle inside the neighborhood.
+    Returns:
+    torch.Tensor: Weights for the weighting function of shape (2*r+1, 2*r+1).
+        """
 
     # w function for high order approximation
     u = torch.arange(-r, r+1, dtype=torch.float64) / r
@@ -130,7 +134,7 @@ def get_basis(dataimg,row_idx,col_idx,r):
         raise ValueError("Input image must be a 2D tensor, got {} dimensions".format(dataimg.dim()))
     cntr = r
     r_in = get_radius_of_inner_circle(r)
-    w = get_w_function(r_in)  # Get the weights for the Gaussian kernel
+    w = get_w_function(r_in)  # Get the weights for the weighting function
 
     binaryImage, gaussWt = create_gaussian_disc(2*[(2*r_in+1)], r_in)  # Create a binary disc and Gaussian weights
     imgs_subset = get_patches_from_image_adv_indexing(dataimg, r, row_idx, col_idx)  # Get patches from the image using the specified radius
