@@ -6,6 +6,7 @@ def get_background(img: np.ndarray, mask: np.ndarray, sigma:
                    float = 30.0) -> (np.ndarray,np.ndarray):
     """
     Get the background of an image by applying Gaussian smoothing and masking.
+    Ignores pixels inside the mask. 
 
     Args:
         img (np.ndarray): Input image array, type float64.

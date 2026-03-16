@@ -1,7 +1,7 @@
 import os
 import numpy as np
 
-from mem_sub.membrane_est.utils import save_im
+from mem_sub.membrane_est.utils import save_im, add_border_to_mask
 from mem_sub.membrane_est.membrane_estimation import membrane_angle_estimation
 from tqdm import tqdm
 import argparse
@@ -40,10 +40,12 @@ def process_file(args: argparse.Namespace):
         raise ValueError(
             f"Image {args.file_name} and mask {basename}.png must have the same dimensions. "
             f"Image shape: {img.shape}, Mask shape: {mask.shape}")
-
+    if np.any(img.shape > img_ds.shape) and border>0:
+        print("Masking the border of the mask for background estimation,"
+              "since we added fuzzy border during downsampling.")
+        mask = add_border_to_mask(mask, border)
     # run membrane subtraction algorithm
-    membrane_ds, angle_dict = membrane_angle_estimation(img_ds, mask, border if np.any(img.shape > img_ds.shape) else 0,
-                                                        args.save_angle, args.do_subtraction)
+    membrane_ds, angle_dict = membrane_angle_estimation(img_ds, mask, args.save_angle, args.do_subtraction)
 
 
     if args.do_subtraction:

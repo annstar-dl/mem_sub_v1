@@ -1,29 +1,18 @@
-import copy
 import numpy as np
 import torch
 from mem_sub.membrane_est.sampling_grid import get_sampling_grid, select_points_within_boundary
 from mem_sub.membrane_est.basis_fn import get_basis
 from mem_sub.membrane_est.fit_basis_to_data import fit_basis_to_data_batched
-from mem_sub.membrane_est.utils import read_parameters_from_yaml_file
+from mem_sub.membrane_est.utils import read_parameters_from_yaml_file, add_border_to_mask
 from mem_sub.membrane_est.bg_estimation import get_background
 
-def add_border_to_mask(mask, border):
-    """Add the border to the mask to compensate
-    for zero padding during downsampling"""
-    mask_w_border = copy.deepcopy(mask)
-    mask_w_border[:border, :] = 1
-    mask_w_border[-border:, :] = 1
-    mask_w_border[:, :border] = 1
-    mask_w_border[:, -border:] = 1
-    return mask_w_border
 
-def  prepare_micrograph(img, mask, parameters, border = 0):
+def  prepare_micrograph(img, mask, parameters):
     """    Subtract the membrane mask from the patch.
     Args:
         img (torch.Tensor): The micrograph(image with membranes) image tensor of shape (H, W).
         mask (torch.Tensor): The micrograph mask tensor of shape (H, W).
         parameters (dict): The parameters read from the YAML file.
-        border (int): The size of the border to be masked out for background estimation. Default is 0.
     Returns:
         torch.Tensor: The reconstructed membrane image, tensor of shape (H, W).
         torch.Tensor: The image with subtracted membranes, tensor of shape (H, W).
@@ -44,12 +33,7 @@ def  prepare_micrograph(img, mask, parameters, border = 0):
     w = parameters["w"]  # Distance between grid points
     r = parameters["r"]  # Radius of neighboring around grid point
     # create mask with border to estimate the background
-    if border>0:
-        print("Masking the border of the image for background estimation")
-        mask_with_border = add_border_to_mask(mask, border)
-        bg, img = get_background(img, mask_with_border, sigma=30.0)
-    else:
-        bg, img = get_background(img, mask, sigma=30.0)
+    bg, img = get_background(img, mask, sigma=30.0)
     # Convert numpy arrays to torch tensors
     img, mask = torch.tensor(img, dtype=torch.float64), torch.tensor(mask, dtype=torch.float64)
 
@@ -116,7 +100,7 @@ def fit_membrane(img, mask, row_idx, col_idx,parameters):
     imgout = imgout.detach().cpu().numpy()
     return imgout
 
-def membrane_angle_estimation(img, mask, border = 0, return_theta = False, return_membrane = True):
+def membrane_angle_estimation(img, mask, return_theta=False, return_membrane=True):
     """
     Estimate the angles of the membrane profiles at each grid point.
     :param img: Torch.Tensor. Input image tensor of micrograph of shape (H, W).
@@ -130,7 +114,7 @@ def membrane_angle_estimation(img, mask, border = 0, return_theta = False, retur
     #read parameters from the YAML file
     parameters = read_parameters_from_yaml_file()
     # Prepare the micrograph and get the sampling grid
-    img, mask, row_idx, col_idx = prepare_micrograph(img, mask, parameters, border)
+    img, mask, row_idx, col_idx = prepare_micrograph(img, mask, parameters)
     # Find the angles of the membrane profiles at each grid point
     if return_theta:
         angles = find_grid_angles(img, row_idx, col_idx, parameters)

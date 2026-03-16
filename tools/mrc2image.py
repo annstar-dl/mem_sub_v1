@@ -102,7 +102,7 @@ if __name__ == "__main__":
         type=str, default=None,
     help="Name of file to convert (default: None), if None process all files in the folder",
     )
-    parser.add_argument("-bd","--use_border", help="User border during downsampling as we do in membrane estimation", action="store_true")
+    parser.add_argument("-bd","--use_border", help="Use border during downsampling as we do in membrane estimation", action="store_true")
     args = parser.parse_args()
 
     assert os.path.isdir(args.in_dir), f"Input directory does not exist: {args.in_dir}"

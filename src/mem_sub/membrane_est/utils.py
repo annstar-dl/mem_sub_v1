@@ -1,3 +1,4 @@
+import copy
 import os, yaml
 
 import numpy as np
@@ -46,3 +47,14 @@ def save_im(img, fpath):
     img = img.astype(np.uint8)
     img = Image.fromarray(img,"L")
     img.save(fpath)
+
+
+def add_border_to_mask(mask, border):
+    """Add the border to the mask to compensate
+    for zero padding during downsampling"""
+    mask_w_border = copy.deepcopy(mask)
+    mask_w_border[:border, :] = 1
+    mask_w_border[-border:, :] = 1
+    mask_w_border[:, :border] = 1
+    mask_w_border[:, -border:] = 1
+    return mask_w_border
