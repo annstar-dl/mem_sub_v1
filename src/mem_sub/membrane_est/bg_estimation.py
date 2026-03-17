@@ -1,6 +1,6 @@
 import numpy as np
 from scipy.ndimage import gaussian_filter
-
+import cv2
 
 def get_background(img: np.ndarray, mask: np.ndarray, sigma:
                    float = 30.0) -> (np.ndarray,np.ndarray):
@@ -23,10 +23,13 @@ def get_background(img: np.ndarray, mask: np.ndarray, sigma:
         img = img.astype(np.float64)
     bg_mask = 1 - mask
     #Smooth image and mask
-    img_smoothed = gaussian_filter(img*bg_mask, sigma=sigma)  # Apply Gaussian smoothing
-    bg_mask_smoothed = gaussian_filter(bg_mask, sigma=sigma)  # Smooth the inverted mask
+    img_smoothed = cv2.GaussianBlur(img*bg_mask, (0, 0), sigmaX=sigma)
+    bg_mask_smoothed = cv2.GaussianBlur(bg_mask, (0, 0), sigmaX=sigma)
+    #img_smoothed = gaussian_filter(img*bg_mask, sigma=sigma)  # Apply Gaussian smoothing
+    #bg_mask_smoothed = gaussian_filter(bg_mask, sigma=sigma)  # Smooth the inverted mask
 
     # estimate background by dividing smoothed image by smoothed mask
     img_background = img_smoothed / (bg_mask_smoothed + 1e-6)  # Avoid division by zero
-    diff = img - img_background  # Calculate the difference between original image and background
+    #diff = img - img_background  # Calculate the difference between original image and background
+    diff = np.subtract(img, img_background)
     return img_background, diff

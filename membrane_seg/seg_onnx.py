@@ -46,6 +46,7 @@ class Standardize:
         data['img'] /= np.std(data['img'])
 
         return data
+
 class StandardizeMAD:
     """
     Standardizes an image by zero centering and scales pixel intensities using Median Absolute Deviation (MAD)
