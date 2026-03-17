@@ -63,11 +63,11 @@ conda run -n ves_seg python "${MEMBRANE_SUBTRACTION_DIR}/tools/run_mrc_subtracti
  --out_format_sub "mrc" "png" \
  --out_format_mem "mrc" "png" \
  --save_angle \
- -do_sub
+ --save_subtraction
 
 echo "Subtracted masks from original micrographs and saved results in $PWD"
-# Convert mrc files to jpg for segmentation
+# Convert mrc files to jpg
 conda run -n ves_seg python "${MEMBRANE_SUBTRACTION_DIR}/tools/mrc2image.py" "$PWD/misc/membranes" -o "$PWD/misc/membranes_ds" --format "png" -dsa --scale
-# Convert mrc files to jpg for segmentation
+# Convert mrc files to jpg
 conda run -n ves_seg python "${MEMBRANE_SUBTRACTION_DIR}/tools/mrc2image.py" "$PWD/subtracted_mrc" -o "$PWD/misc/subtracted_ds" --format "png" -dsa --scale
 

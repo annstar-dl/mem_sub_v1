@@ -2,7 +2,7 @@ import os
 import numpy as np
 
 from mem_sub.membrane_est.utils import save_im
-from mem_sub.membrane_est.membrane_estimation import membrane_angle_estimation
+from mem_sub.membrane_est.membrane_estimation import membrane_estimation
 from tqdm import tqdm
 import argparse
 from scipy.io import savemat
@@ -42,11 +42,10 @@ def process_file(args: argparse.Namespace):
             f"Image shape: {img.shape}, Mask shape: {mask.shape}")
 
     # run membrane subtraction algorithm
-    membrane_ds, angle_dict = membrane_angle_estimation(img_ds, mask, border if np.any(img.shape > img_ds.shape) else 0,
-                                                        args.save_angle, args.do_subtraction)
+    membrane_ds, angle_dict = membrane_estimation(img_ds, mask, border if np.any(img.shape > img_ds.shape) else 0)
 
 
-    if args.do_subtraction:
+    if args.save_subtraction:
         # upsample the membrane estimate to the original size
         membrane = upsample_micrograph(membrane_ds, img.shape, voxel_size[0], "center")
         # subtract membrane from the original image
@@ -137,7 +136,7 @@ if __name__=="__main__":
     parser.add_argument("--out_format_mem", nargs="*", default=["npy"],  help="List of file format to save estimates of membrane images. Choices are mrc, png, npy formats")
     parser.add_argument("-fn","--file_name",type=str, default=None,help="Name of file to convert (default: None), if None process all files in the folder")
     parser.add_argument("-ang","--save_angle", action="store_true", help="Whether to save angle for every grid point information or not.")
-    parser.add_argument("-do_sub", "--do_subtraction", action="store_true", help="Whether to do membrane subtraction or not.")
+    parser.add_argument("-sub", "--save_subtraction", action="store_true", help="Whether to do membrane subtraction or not.")
     args = parser.parse_args()
     main(args)
 

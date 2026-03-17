@@ -37,7 +37,7 @@ if [ $SAVE_ANGLE -eq 1 ] && [ $SAVE_SUB -eq 1 ]; then
  --out_format_sub "mrc" "png" \
   --out_format_mem "mrc" "png" \
   --save_angle \
-  -do_sub \
+  --save_subtraction \
   -fn "${FILENAME}.mrc"
 else
     if [ $SAVE_ANGLE -eq 1 ]; then
@@ -52,7 +52,7 @@ else
    -dp ${SAVEDIR} -ip "${SAVEDIR}/misc/${MRC_DIR}" \
    --out_format_sub "mrc" "png" \
     --out_format_mem "mrc" "png" \
-    -do_sub \
+    --save_subtraction \
     -fn "${FILENAME}.mrc"
     else
         python "tools/run_mrc_subtraction.py" \

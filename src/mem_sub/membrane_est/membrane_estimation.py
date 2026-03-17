@@ -24,6 +24,7 @@ def  prepare_micrograph(img, mask, parameters, border = 0):
         mask (torch.Tensor): The micrograph mask tensor of shape (H, W).
         parameters (dict): The parameters read from the YAML file.
         border (int): The size of the border to be masked out for background estimation. Default is 0.
+        If used mem_sub mrc downsampling function, set boundary to the same value as boundary used for downsampling.
     Returns:
         torch.Tensor: The reconstructed membrane image, tensor of shape (H, W).
         torch.Tensor: The image with subtracted membranes, tensor of shape (H, W).
@@ -106,7 +107,7 @@ def fit_membrane(img, mask, row_idx, col_idx,parameters):
     # Find the membrane using basis functions and fit it to the data
     # Fit basis to the previous reconstruction to achieve better results
     for _ in range(nb_iter):
-        basis, _ = get_basis(dataimg, row_idx, col_idx, r)
+        basis, angle = get_basis(dataimg, row_idx, col_idx, r)
         imgout = fit_basis_to_data_batched(img,basis, row_idx, col_idx,r, rho, max_iter_gd,w)
         dataimg = imgout
 
@@ -114,34 +115,28 @@ def fit_membrane(img, mask, row_idx, col_idx,parameters):
     imgout = imgout.to(mask.device)
     imgout = imgout * mask
     imgout = imgout.detach().cpu().numpy()
-    return imgout
+    return imgout, angle
 
-def membrane_angle_estimation(img, mask, border = 0, return_theta = False, return_membrane = True):
+def membrane_estimation(img, mask, border):
     """
-    Estimate the angles of the membrane profiles at each grid point.
+    Estimate the membranes in micrograph and angles of the membrane profiles at each grid point.
     :param img: Torch.Tensor. Input image tensor of micrograph of shape (H, W).
     :param mask: Torch.Tensor. Binary segmentation mask tensor of shape (H, W).
     :param border: int. The size of the border to be masked out for background estimation. Default is 0.
-    :param return_theta: bool. Whether to return the angles of the membrane profiles at each grid point. Default is False.
-    :param return_membrane: bool. Whether to return the estimated membrane image. Default is True.
+     If used mem_sub mrc downsampling function, set boundary to the same value as boundary used for downsampling.
     :return:
-    torch.Tensor: The angles of the membrane profiles at each grid point of shape (N,).
+    torch.Tensor: The membrane estimated image of shape (H, W).
+    dict: The dictionary angles of the membrane profiles at each grid point of shape {row_idx: (N,), col_idx: (N,),angles: (N)}.
     """
     #read parameters from the YAML file
     parameters = read_parameters_from_yaml_file()
     # Prepare the micrograph and get the sampling grid
     img, mask, row_idx, col_idx = prepare_micrograph(img, mask, parameters, border)
-    # Find the angles of the membrane profiles at each grid point
-    if return_theta:
-        angles = find_grid_angles(img, row_idx, col_idx, parameters)
-        dict_angles = {'row_idx': row_idx.numpy(), 'col_idx': col_idx.numpy(), 'angles': angles.numpy()}
-    else:
-        dict_angles = None
-    # Fit basis functions to estimate the membrane in the image
-    if return_membrane:
-        membrane = fit_membrane(img, mask, row_idx, col_idx, parameters)
-    else:
-        membrane = None
+    # fit membrane
+    membrane,angles = fit_membrane(img, mask, row_idx, col_idx, parameters)
+    # Pack the angles of the membrane profiles into a dictionary
+    dict_angles = {'row_idx': row_idx.numpy(), 'col_idx': col_idx.numpy(), 'angles': angles.numpy()}
+
     return membrane, dict_angles
 
 
