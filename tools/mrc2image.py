@@ -47,7 +47,7 @@ def convert_file(args: argparse.Namespace) -> None:
 
     if args.scale:
         data = (data - np.min(data)) / (np.max(data) - np.min(data)) * 255
-
+        data = data.astype(np.uint8)
     if args.format == "tif":
         Image.fromarray(data).save(os.path.join(args.out_dir, f"{basename}.tif"))
     elif args.format == "jpeg" or args.format == "jpg":
@@ -58,10 +58,9 @@ def convert_file(args: argparse.Namespace) -> None:
         #     cv2.normalize(data, None, 0, 1, cv2.NORM_MINMAX),
         #     photometric="minisblack",
         # )
-        data = data.astype(np.uint8)
+
         io.imsave(os.path.join(args.out_dir, f"{basename}.{args.format}"), data)
     elif args.format == "png":
-        data = data.astype(np.uint8)
         io.imsave(os.path.join(args.out_dir, f"{basename}.{args.format}"), data)
 
 if __name__ == "__main__":
