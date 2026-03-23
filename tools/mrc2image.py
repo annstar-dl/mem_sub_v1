@@ -1,6 +1,7 @@
 import argparse
 import numpy as np
 import os
+import json
 from PIL import Image
 from glob import glob
 from tqdm import tqdm
@@ -8,6 +9,10 @@ from skimage import io
 from mem_sub.mrc_tools.mrc_utils import load_mrc, FILE_TYPES, downsample_micrograph
 from mem_sub.membrane_est.utils import read_parameters_from_yaml_file
 
+
+def save_json(logs: dict, log_path: str) -> None:
+    with open(log_path, "w") as f:
+        json.dump(logs,f)
 
 def convert_dir(args: argparse.Namespace) -> None:
     """
@@ -36,32 +41,32 @@ def convert_file(args: argparse.Namespace) -> None:
     #  downsample the data if the voxel size is greater than the target voxel size
 
     if args.downsampling_allowed:
+        logs_path = os.path.join(args.logs_dir,os.path.splitext(os.path.basename(args.file_path))[0]+".json")
+        full_log = {"fuzzy_border_size": 0}
         if args.use_border:
             parameters = read_parameters_from_yaml_file()
             border = parameters["r"]
+            print(f"Setting border size to {border}")
+            full_log["fuzzy_border_size"] = border
         else:
             border = 0
-        data = downsample_micrograph(data, voxel_size[0], border, "center")
+        data, logs = downsample_micrograph(data, voxel_size[0], border, "center",return_logs=True)
+        full_log.update(logs)
+        save_json(full_log, logs_path)
     # save as TIFF image
     basename, _ = os.path.splitext(os.path.basename(args.file_path))
 
     if args.scale:
+        if args.use_border:
+            raise ValueError("Scaling contrast is not compatible with using border during downsampling."
+                             "Either do not use --scale flag or do not use --use_border flag.")
         data = (data - np.min(data)) / (np.max(data) - np.min(data)) * 255
         data = data.astype(np.uint8)
     if args.format == "tif":
         Image.fromarray(data).save(os.path.join(args.out_dir, f"{basename}.tif"))
-    elif args.format == "jpeg" or args.format == "jpg":
-        #   save as JPEG image
-        # Normalize the data to the range [0, 255] for JPEG saving
-        # tiff.imwrite(
-        #     os.path.join(args.out_dir, f"{basename}.tif"),
-        #     cv2.normalize(data, None, 0, 1, cv2.NORM_MINMAX),
-        #     photometric="minisblack",
-        # )
+    elif args.format == "jpeg" or args.format == "jpg" or args.format == "png":
+        io.imsave(os.path.join(args.out_dir, f"{basename}.{args.format}"), data)
 
-        io.imsave(os.path.join(args.out_dir, f"{basename}.{args.format}"), data)
-    elif args.format == "png":
-        io.imsave(os.path.join(args.out_dir, f"{basename}.{args.format}"), data)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -101,15 +106,19 @@ if __name__ == "__main__":
         type=str, default=None,
     help="Name of file to convert (default: None), if None process all files in the folder",
     )
-    parser.add_argument("-bd","--use_border", help="User border during downsampling as we do in membrane estimation", action="store_true")
+    parser.add_argument("-bd","--use_border",
+                        help="User border during downsampling as we do in membrane estimation", action="store_true")
     args = parser.parse_args()
 
     assert os.path.isdir(args.in_dir), f"Input directory does not exist: {args.in_dir}"
     data_dir_name = os.path.basename(os.path.normpath(args.in_dir))
     args.out_dir = os.path.join(args.out_dir,data_dir_name +"_"+ args.format+ "_ds" if args.downsampling_allowed else data_dir_name)
     os.makedirs(args.out_dir, exist_ok=True)
+    args.logs_dir = os.path.join(args.out_dir, "logs")
     if args.downsampling_allowed:
         print("Downsampling based on voxel size is allowed.")
+        if not os.path.exists(args.logs_dir):
+            os.makedirs(args.logs_dir)
     if args.format not in ["tif", "jpeg", "jpg", "png"]:
         parser.error(f"Unsupported format: {args.format}. Supported formats are 'tif' and 'jpeg'.")
     if args.file_name is None:
