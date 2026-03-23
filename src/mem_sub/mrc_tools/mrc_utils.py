@@ -86,14 +86,13 @@ def new_shape_mrc_downsampling(old_shape,voxel_size,ds_factor=None):
         #get the integer downsampling factor(rounding down)
         # TODO: change int to round to get the closest downsampling factor to the target voxel size
         ds_factor = int(target_voxel_size / voxel_size)
-        print(f"Calculating downsampling factor based on voxel size. Org voxel size: {voxel_size:.2f} Å. Downsampling factor: {ds_factor}. Target voxel size: {target_voxel_size} Å.")
     if ds_factor < 1:
         ds_factor = 1
     cropped_shape = [croped_value_even_multiple_of_ds_factor(old_shape[0],ds_factor), croped_value_even_multiple_of_ds_factor(old_shape[1], ds_factor)]
 
     return cropped_shape,ds_factor
 
-def downsample_micrograph(data: np.ndarray,voxel_size: float, border = 0,padding_mode = "center") -> np.ndarray:
+def downsample_micrograph(data: np.ndarray, voxel_size: float, border=0, cropping_mode="center", return_logs=False) -> np.ndarray:
     """
     Downsample the MRC data based on the voxel size. To prevent iliasing artifacts, the image is multiplied
     by a fuzzy rectangle mask before downsampling that brings the signal to zero at the borders.
@@ -104,7 +103,7 @@ def downsample_micrograph(data: np.ndarray,voxel_size: float, border = 0,padding
         data (np.ndarray): Input image data.
         voxel_size (tuple): Voxel size in each dimension.
         border (int): Border size for the fuzzy mask. Default is 0.
-        padding_mode (str): Padding mode, either "right_down" or "center". Default is "center".
+        cropping_mode (str): Padding mode, either "right_down" or "center". Default is "center".
 
     Returns:
         np.ndarray: Downsampled image data.
@@ -113,11 +112,17 @@ def downsample_micrograph(data: np.ndarray,voxel_size: float, border = 0,padding
     # Assume voxel_size is isotropic
     # Recalculate the new shape for downsampling considering that after the downsampling the
     # image shape should be multiple of downsampling factor
+    downsampling_log = {"org_voxel_size":voxel_size,"ds_voxel_size":voxel_size,"ds_factor":1,"org_shape":data.shape,
+                        "ds_shape":data.shape,"cropping_mode":cropping_mode, "cropped_shape":data.shape}
     cropped_shape, ds_factor = new_shape_mrc_downsampling(data.shape, voxel_size)
+
     if ds_factor > 1:
+        downsampling_log["ds_factor"] = ds_factor
+        downsampling_log["cropped_shape"] = cropped_shape
+
         if np.any(np.array(cropped_shape) < data.shape):
             print(f"Cropping the image with shape {data.shape} to the new shape {cropped_shape} before downsampling.")
-            data = crop_im(data, cropped_shape, mode=padding_mode)
+            data = crop_im(data, cropped_shape, mode=cropping_mode)
         # Apply fuzzy rectangle mask to the data to reduce edge artifacts
         if border > 0:
             # making signal to look periodic to reduce edge artifacts during downsampling
@@ -128,15 +133,22 @@ def downsample_micrograph(data: np.ndarray,voxel_size: float, border = 0,padding
             fuzzy_rec = fuzzy_rectangle(shape=data.shape, border=border * ds_factor)
             data = data * fuzzy_rec
         ds_shape = (data.shape[0] // ds_factor, data.shape[1] // ds_factor)
+        downsampling_log["ds_shape"] = ds_shape
+        downsampling_log["ds_voxel_size"] = ds_factor * voxel_size
         print(f"Downsampling factor  {ds_factor:.2f} is higher than 1, downsampling the data."
               f"Org data shape {data.shape} new data shape: {ds_shape}")
+        print(f"Org voxel size: {voxel_size:.3f} Å. Downsampled voxel size: {voxel_size*ds_factor} Å.")
+
 
         # Create fuzzy disk mask for downsampling to reduce aliasing artifacts
         # why 0.48? because the fuzzy disk radius should be less than half of the image size
         # to avoid edge artifacts during downsampling
         msk = fuzzy_disk(ds_shape, r=0.48 * np.array(ds_shape))
         data = down_sample(data, ds_shape, fuzzy_mask=msk)
-    return data
+    if return_logs:
+        return data, downsampling_log
+    else:
+        return data
 
 def upsample_micrograph(img_ds, original_shape, voxel_size, padding_mode="center") -> np.ndarray:
     """
@@ -219,6 +231,10 @@ def croped_value_even_multiple_of_ds_factor(value, ds_factor):
     Returns:
         int: Cropped value.
     """
+    if value <=0:
+        raise ValueError("Value must be greater than 0.")
+    if ds_factor <= 0:
+        raise ValueError("Downsampling factor must be greater than 0.")
     return (value // (2*ds_factor)) *(2* ds_factor)
 
 if __name__ == "__main__":
