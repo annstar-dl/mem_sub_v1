@@ -48,28 +48,30 @@ def convert_file(args: argparse.Namespace) -> None:
         else:
             border = args.border_size
         data, logs = downsample_micrograph(data, voxel_size[0], border, "center",return_logs=True)
+    basename, _ = os.path.splitext(os.path.basename(args.file_path))
+    # stretch contrast
+    if args.scale:
         # clip values to the minimum inside the border
         if border > 0:
-            data_min = np.min(data[border:-border,border:-border])
-            data_max = np.max(data[border:-border,border:-border])
+            data_min = np.min(data[border:-border, border:-border])
+            data_max = np.max(data[border:-border, border:-border])
             data = np.clip(data, data_min, data_max)
-        # save downsampling parameters to json
-        logs_path = os.path.join(args.logs_dir, os.path.splitext(os.path.basename(args.file_path))[0] + ".json")
-        logs["fuzzy_border_size"] = border
-        logs["clip_to_values_inside_border"] = True
-        save_json(logs, logs_path)
+            logs["clip_to_values_inside_border_of_ds_im"] = True
 
-    # save as TIFF image
-    basename, _ = os.path.splitext(os.path.basename(args.file_path))
-
-    if args.scale:
         data = (data - np.min(data)) / (np.max(data) - np.min(data)) * 255
         data = data.astype(np.uint8)
+    # save as tif
     if args.format == "tif":
         Image.fromarray(data).save(os.path.join(args.out_dir, f"{basename}.tif"))
+    # save as jpg or png
     elif args.format == "jpeg" or args.format == "jpg" or args.format == "png":
         io.imsave(os.path.join(args.out_dir, f"{basename}.{args.format}"), data)
-
+    # save downsampling parameters to json
+    logs_path = os.path.join(args.logs_dir, os.path.splitext(os.path.basename(args.file_path))[0] + ".json")
+    logs["ds_fuzzy_border_size"] = border
+    if "clip_to_values_inside_border_of_ds_im" not in logs:
+        logs["clip_to_values_inside_border_of_ds_im"] = False
+    save_json(logs, logs_path)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
