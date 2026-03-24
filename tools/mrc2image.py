@@ -41,13 +41,10 @@ def convert_file(args: argparse.Namespace) -> None:
     #  downsample the data if the voxel size is greater than the target voxel size
 
     if args.downsampling_allowed:
-        logs_path = os.path.join(args.logs_dir,os.path.splitext(os.path.basename(args.file_path))[0]+".json")
-        full_log = {"fuzzy_border_size": 0}
         if args.border_size==-1:
             parameters = read_parameters_from_yaml_file()
             border = parameters["r"]
             print(f"Setting border size to {border}")
-            full_log["fuzzy_border_size"] = border
         else:
             border = args.border_size
         data, logs = downsample_micrograph(data, voxel_size[0], border, "center",return_logs=True)
@@ -57,9 +54,10 @@ def convert_file(args: argparse.Namespace) -> None:
             data_max = np.max(data[border:-border,border:-border])
             data = np.clip(data, data_min, data_max)
         # save downsampling parameters to json
-        full_log.update(logs)
+        logs_path = os.path.join(args.logs_dir, os.path.splitext(os.path.basename(args.file_path))[0] + ".json")
+        logs["fuzzy_border_size"] = border
         logs["clip_to_values_inside_border"] = True
-        save_json(full_log, logs_path)
+        save_json(logs, logs_path)
 
     # save as TIFF image
     basename, _ = os.path.splitext(os.path.basename(args.file_path))
@@ -111,7 +109,7 @@ if __name__ == "__main__":
         type=str, default=None,
         help="Name of file to convert (default: None), if None process all files in the folder",
     )
-    parser.add_argument("-bs","--border_size",
+    parser.add_argument("-bs","--border_size", type=int,
                         help="Downsampling fuzzy mask size. A smoothing mask is applied to an image to make signal go to zero"
                              "at the border. The border_size is a size of fuzzy border in downsampled image."
                              "If this value set to -1 the border would be set to parameter r from parameters.yml file")
