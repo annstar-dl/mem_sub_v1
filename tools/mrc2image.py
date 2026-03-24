@@ -43,13 +43,13 @@ def convert_file(args: argparse.Namespace) -> None:
     if args.downsampling_allowed:
         logs_path = os.path.join(args.logs_dir,os.path.splitext(os.path.basename(args.file_path))[0]+".json")
         full_log = {"fuzzy_border_size": 0}
-        if args.use_border:
+        if args.border_size==-1:
             parameters = read_parameters_from_yaml_file()
             border = parameters["r"]
             print(f"Setting border size to {border}")
             full_log["fuzzy_border_size"] = border
         else:
-            border = 0
+            border = args.border_size
         data, logs = downsample_micrograph(data, voxel_size[0], border, "center",return_logs=True)
         # clip values to the minimum inside the border
         if border > 0:
@@ -109,10 +109,12 @@ if __name__ == "__main__":
         "-fn",
         "--file_name",
         type=str, default=None,
-    help="Name of file to convert (default: None), if None process all files in the folder",
+        help="Name of file to convert (default: None), if None process all files in the folder",
     )
-    parser.add_argument("-bd","--use_border",
-                        help="User border during downsampling as we do in membrane estimation", action="store_true")
+    parser.add_argument("-bs","--border_size",
+                        help="Downsampling fuzzy mask size. A smoothing mask is applied to an image to make signal go to zero"
+                             "at the border. The border_size is a size of fuzzy border in downsampled image."
+                             "If this value set to -1 the border would be set to parameter r from parameters.yml file")
     args = parser.parse_args()
 
     assert os.path.isdir(args.in_dir), f"Input directory does not exist: {args.in_dir}"
