@@ -51,15 +51,20 @@ def convert_file(args: argparse.Namespace) -> None:
         else:
             border = 0
         data, logs = downsample_micrograph(data, voxel_size[0], border, "center",return_logs=True)
+        # clip values to the minimum inside the border
+        if border > 0:
+            data_min = np.min(data[border:-border,border:-border])
+            data_max = np.max(data[border:-border,border:-border])
+            data = np.clip(data, data_min, data_max)
+        # save downsampling parameters to json
         full_log.update(logs)
+        logs["clip_to_values_inside_border"] = True
         save_json(full_log, logs_path)
+
     # save as TIFF image
     basename, _ = os.path.splitext(os.path.basename(args.file_path))
 
     if args.scale:
-        if args.use_border:
-            raise ValueError("Scaling contrast is not compatible with using border during downsampling."
-                             "Either do not use --scale flag or do not use --use_border flag.")
         data = (data - np.min(data)) / (np.max(data) - np.min(data)) * 255
         data = data.astype(np.uint8)
     if args.format == "tif":
