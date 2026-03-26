@@ -1,0 +1,285 @@
+<mxfile host="app.diagrams.net" modified="2026-03-26T20:41:12.629Z" agent="Copilot" version="21.0.0">
+  <diagram id="downsample_diagram" name="downsample_micrograph">
+    <mxGraphModel dx="1422" dy="762" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="1654" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- START -->
+        <mxCell id="ds_start" value="START" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;arcSize=50;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="375" y="30" width="120" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- INPUT -->
+        <mxCell id="ds_input" value="INPUT&#xa;data: np.ndarray&#xa;voxel_size: float&#xa;border = 0&#xa;padding_mode = &apos;center&apos;" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="350" y="110" width="250" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Calculate new shape and ds_factor -->
+        <mxCell id="ds_calc1" value="Calculate cropped_shape, ds_factor&#xa;= new_shape_mrc_downsampling&#xa;(data.shape, voxel_size)" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="350" y="230" width="250" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Decision: ds_factor > 1? -->
+        <mxCell id="ds_dec1" value="ds_factor &gt; 1?" style="rhombus;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="375" y="330" width="200" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Return data unchanged (No downsampling) -->
+        <mxCell id="ds_no_ds" value="Return data (unchanged)" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="660" y="330" width="200" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- END (early exit) -->
+        <mxCell id="ds_end_early" value="END" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;arcSize=50;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="710" y="440" width="100" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- Decision: Any dim of cropped_shape < data.shape? -->
+        <mxCell id="ds_dec2" value="Any dim of cropped_shape&#xa;&lt; data.shape?" style="rhombus;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="360" y="440" width="230" height="70" as="geometry" />
+        </mxCell>
+
+        <!-- Crop image -->
+        <mxCell id="ds_crop" value="Crop image&#xa;data = crop_im(data, cropped_shape,&#xa;mode=padding_mode)" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="350" y="570" width="250" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Decision: border > 0? -->
+        <mxCell id="ds_dec3" value="border &gt; 0?" style="rhombus;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="375" y="690" width="200" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Apply fuzzy rectangle mask -->
+        <mxCell id="ds_fuzzy_rect" value="Apply fuzzy rectangle mask&#xa;fuzzy_rec = fuzzy_rectangle(data.shape,&#xa;border = border * ds_factor)&#xa;data = data * fuzzy_rec" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="350" y="810" width="250" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Calculate ds_shape -->
+        <mxCell id="ds_calc2" value="Calculate ds_shape&#xa;= (data.shape[0] // ds_factor,&#xa;   data.shape[1] // ds_factor)" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="350" y="950" width="250" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Create fuzzy disk mask -->
+        <mxCell id="ds_disk" value="Create fuzzy disk mask&#xa;msk = fuzzy_disk(ds_shape,&#xa;r = 0.48 * ds_shape)" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="350" y="1060" width="250" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Downsample using FFT -->
+        <mxCell id="ds_down" value="Downsample using FFT&#xa;data = down_sample(data, ds_shape,&#xa;fuzzy_mask=msk)" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="350" y="1170" width="250" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Return downsampled data -->
+        <mxCell id="ds_return" value="Return downsampled data" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="350" y="1280" width="250" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- END -->
+        <mxCell id="ds_end" value="END" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;arcSize=50;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="415" y="1390" width="120" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- ===== EDGES ===== -->
+
+        <!-- START → INPUT -->
+        <mxCell id="e1" edge="1" source="ds_start" target="ds_input" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- INPUT → Calculate new shape -->
+        <mxCell id="e2" edge="1" source="ds_input" target="ds_calc1" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Calculate new shape → Decision 1 -->
+        <mxCell id="e3" edge="1" source="ds_calc1" target="ds_dec1" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Decision 1 → No → Return unchanged -->
+        <mxCell id="e4" value="No" edge="1" source="ds_dec1" target="ds_no_ds" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Return unchanged → END early -->
+        <mxCell id="e5" edge="1" source="ds_no_ds" target="ds_end_early" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Decision 1 → Yes → Decision 2 -->
+        <mxCell id="e6" value="Yes" edge="1" source="ds_dec1" target="ds_dec2" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Decision 2 → Yes → Crop -->
+        <mxCell id="e7" value="Yes" edge="1" source="ds_dec2" target="ds_crop" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Decision 2 → No → Decision 3 (skip crop) -->
+        <mxCell id="e8" value="No" edge="1" source="ds_dec2" target="ds_dec3" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="660" y="475" />
+              <mxPoint x="660" y="720" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Crop → Decision 3 -->
+        <mxCell id="e9" edge="1" source="ds_crop" target="ds_dec3" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Decision 3 → Yes → Apply fuzzy rectangle mask -->
+        <mxCell id="e10" value="Yes" edge="1" source="ds_dec3" target="ds_fuzzy_rect" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Decision 3 → No → Calculate ds_shape (skip mask) -->
+        <mxCell id="e11" value="No" edge="1" source="ds_dec3" target="ds_calc2" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="660" y="720" />
+              <mxPoint x="660" y="980" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Apply fuzzy rectangle mask → Calculate ds_shape -->
+        <mxCell id="e12" edge="1" source="ds_fuzzy_rect" target="ds_calc2" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Calculate ds_shape → Create fuzzy disk mask -->
+        <mxCell id="e13" edge="1" source="ds_calc2" target="ds_disk" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Create fuzzy disk mask → Downsample -->
+        <mxCell id="e14" edge="1" source="ds_disk" target="ds_down" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Downsample → Return -->
+        <mxCell id="e15" edge="1" source="ds_down" target="ds_return" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Return → END -->
+        <mxCell id="e16" edge="1" source="ds_return" target="ds_end" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+
+  <diagram id="upsample_diagram" name="upsample_micrograph">
+    <mxGraphModel dx="1422" dy="762" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- START -->
+        <mxCell id="us_start" value="START" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;arcSize=50;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="375" y="30" width="120" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- INPUT -->
+        <mxCell id="us_input" value="INPUT&#xa;img_ds: np.ndarray&#xa;original_shape: tuple&#xa;voxel_size: float&#xa;padding_mode = &apos;center&apos;" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="350" y="110" width="250" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Calculate cropped_shape and ds_factor -->
+        <mxCell id="us_calc" value="Calculate cropped_shape, ds_factor&#xa;= new_shape_mrc_downsampling&#xa;(original_shape, voxel_size)" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="350" y="230" width="250" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Create fuzzy disk mask -->
+        <mxCell id="us_disk" value="Create fuzzy disk mask&#xa;msk = fuzzy_disk(img_ds.shape,&#xa;r = 0.48 * img_ds.shape)" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="350" y="340" width="250" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Upsample using FFT -->
+        <mxCell id="us_up" value="Upsample using FFT&#xa;upsampled_img = up_sample(img_ds,&#xa;cropped_shape, msk)" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="350" y="450" width="250" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Decision: Any dim of cropped_shape < original_shape? -->
+        <mxCell id="us_dec1" value="Any dim of cropped_shape&#xa;&lt; original_shape?" style="rhombus;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="360" y="560" width="230" height="70" as="geometry" />
+        </mxCell>
+
+        <!-- Pad image to original_shape -->
+        <mxCell id="us_pad" value="Pad image to original_shape&#xa;upsampled_img = pad_im(upsampled_img,&#xa;original_shape, padding_value=0,&#xa;mode=padding_mode)" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="350" y="690" width="250" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- Return upsampled_img -->
+        <mxCell id="us_return" value="Return upsampled_img" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="350" y="830" width="250" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- END -->
+        <mxCell id="us_end" value="END" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;arcSize=50;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="415" y="940" width="120" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- ===== EDGES ===== -->
+
+        <!-- START → INPUT -->
+        <mxCell id="ue1" edge="1" source="us_start" target="us_input" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- INPUT → Calculate -->
+        <mxCell id="ue2" edge="1" source="us_input" target="us_calc" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Calculate → Create fuzzy disk mask -->
+        <mxCell id="ue3" edge="1" source="us_calc" target="us_disk" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Create fuzzy disk mask → Upsample -->
+        <mxCell id="ue4" edge="1" source="us_disk" target="us_up" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Upsample → Decision -->
+        <mxCell id="ue5" edge="1" source="us_up" target="us_dec1" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Decision → Yes → Pad -->
+        <mxCell id="ue6" value="Yes" edge="1" source="us_dec1" target="us_pad" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Decision → No → Return (skip padding) -->
+        <mxCell id="ue7" value="No" edge="1" source="us_dec1" target="us_return" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="660" y="595" />
+              <mxPoint x="660" y="860" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Pad → Return -->
+        <mxCell id="ue8" edge="1" source="us_pad" target="us_return" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Return → END -->
+        <mxCell id="ue9" edge="1" source="us_return" target="us_end" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
