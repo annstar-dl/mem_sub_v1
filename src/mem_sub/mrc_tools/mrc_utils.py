@@ -74,7 +74,7 @@ def new_shape_mrc_downsampling(old_shape,voxel_size,ds_factor=None):
         new_shape (tuple): New shape of the downsampled image data.
         ds_factor (int): Downsampling factor.
     """
-    target_voxel_size = 4.5 # in Angstroms.
+    target_voxel_size = 4.0 # in Angstroms.
     # This is a voxel size that is approximately correspond to voxel
     # size of membrane detection training data
     if voxel_size <= 0 or target_voxel_size <= 0:
@@ -85,7 +85,7 @@ def new_shape_mrc_downsampling(old_shape,voxel_size,ds_factor=None):
     else:
         #get the integer downsampling factor(rounding down)
         # TODO: change int to round to get the closest downsampling factor to the target voxel size
-        ds_factor = int(target_voxel_size / voxel_size)
+        ds_factor = round(target_voxel_size / voxel_size)
     if ds_factor < 1:
         ds_factor = 1
     cropped_shape = [croped_value_even_multiple_of_ds_factor(old_shape[0],ds_factor), croped_value_even_multiple_of_ds_factor(old_shape[1], ds_factor)]
