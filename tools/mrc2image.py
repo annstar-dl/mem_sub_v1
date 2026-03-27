@@ -52,12 +52,6 @@ def convert_file(args: argparse.Namespace) -> None:
     # stretch contrast
     if args.scale:
         # clip values to the minimum inside the border
-        if border > 0:
-            data_min = np.min(data[border:-border, border:-border])
-            data_max = np.max(data[border:-border, border:-border])
-            data = np.clip(data, data_min, data_max)
-            logs["clip_to_values_inside_border_of_ds_im"] = True
-
         data = (data - np.min(data)) / (np.max(data) - np.min(data)) * 255
         data = data.astype(np.uint8)
     # save as tif
@@ -68,9 +62,6 @@ def convert_file(args: argparse.Namespace) -> None:
         io.imsave(os.path.join(args.out_dir, f"{basename}.{args.format}"), data)
     # save downsampling parameters to json
     logs_path = os.path.join(args.logs_dir, os.path.splitext(os.path.basename(args.file_path))[0] + ".json")
-    logs["ds_fuzzy_border_size"] = border
-    if "clip_to_values_inside_border_of_ds_im" not in logs:
-        logs["clip_to_values_inside_border_of_ds_im"] = False
     save_json(logs, logs_path)
 
 if __name__ == "__main__":
