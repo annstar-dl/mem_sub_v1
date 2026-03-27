@@ -113,7 +113,8 @@ def downsample_micrograph(data: np.ndarray, voxel_size: float, border=0, croppin
     # Recalculate the new shape for downsampling considering that after the downsampling the
     # image shape should be multiple of downsampling factor
     downsampling_log = {"org_voxel_size":voxel_size,"ds_voxel_size":voxel_size,"ds_factor":1,"org_shape":data.shape,
-                        "ds_shape":data.shape,"cropping_mode":cropping_mode, "cropped_shape":data.shape}
+                        "ds_shape":data.shape,"cropping_mode":cropping_mode, "cropped_shape":data.shape,
+                        "mean_of_uncropped_image":data.mean()}
     cropped_shape, ds_factor = new_shape_mrc_downsampling(data.shape, voxel_size)
 
     if ds_factor > 1:
@@ -123,6 +124,11 @@ def downsample_micrograph(data: np.ndarray, voxel_size: float, border=0, croppin
         if np.any(np.array(cropped_shape) < data.shape):
             print(f"Cropping the image with shape {data.shape} to the new shape {cropped_shape} before downsampling.")
             data = crop_im(data, cropped_shape, mode=cropping_mode)
+
+        data_mean = np.mean(data)
+        downsampling_log["mean_of_cropped_image"] = data_mean
+        # subtract mean before downsampling
+        data = data - data_mean
         # Apply fuzzy rectangle mask to the data to reduce edge artifacts
         if border > 0:
             # making signal to look periodic to reduce edge artifacts during downsampling
@@ -139,12 +145,12 @@ def downsample_micrograph(data: np.ndarray, voxel_size: float, border=0, croppin
               f"Org data shape {data.shape} new data shape: {ds_shape}")
         print(f"Org voxel size: {voxel_size:.3f} Å. Downsampled voxel size: {voxel_size*ds_factor} Å.")
 
-
         # Create fuzzy disk mask for downsampling to reduce aliasing artifacts
         # why 0.48? because the fuzzy disk radius should be less than half of the image size
         # to avoid edge artifacts during downsampling
         msk = fuzzy_disk(ds_shape, r=0.48 * np.array(ds_shape))
         data = down_sample(data, ds_shape, fuzzy_mask=msk)
+        data = data + data_mean
     if return_logs:
         return data, downsampling_log
     else:
