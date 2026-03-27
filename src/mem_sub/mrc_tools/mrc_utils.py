@@ -114,7 +114,7 @@ def downsample_micrograph(data: np.ndarray, voxel_size: float, border=0, croppin
     # image shape should be multiple of downsampling factor
     downsampling_log = {"org_voxel_size":voxel_size,"ds_voxel_size":voxel_size,"ds_factor":1,"org_shape":data.shape,
                         "ds_shape":data.shape,"cropping_mode":cropping_mode, "cropped_shape":data.shape,
-                        "mean_of_uncropped_image":data.mean(), "ds_fuzzy_border_size":border}
+                        "mean_of_uncropped_image":float(data.mean()), "ds_fuzzy_border_size":border}
     cropped_shape, ds_factor = new_shape_mrc_downsampling(data.shape, voxel_size)
 
     if ds_factor > 1:
@@ -126,7 +126,7 @@ def downsample_micrograph(data: np.ndarray, voxel_size: float, border=0, croppin
             data = crop_im(data, cropped_shape, mode=cropping_mode)
 
         data_mean = np.mean(data)
-        downsampling_log["mean_of_cropped_image"] = data_mean
+        downsampling_log["mean_of_cropped_image"] = float(data_mean)
         # subtract mean before downsampling
         data = data - data_mean
         # Apply fuzzy rectangle mask to the data to reduce edge artifacts
