@@ -47,7 +47,8 @@ def convert_file(args: argparse.Namespace) -> None:
             print(f"Setting border size to {border}")
         else:
             border = args.border_size
-        data, logs = downsample_micrograph(data, voxel_size[0], border, "center",return_logs=True, subtract_mean=args.sub_mean)
+        data, logs = downsample_micrograph(data, voxel_size[0], border, "center", return_logs=True,
+                                           subtract_mean=args.sub_mean)
     basename, _ = os.path.splitext(os.path.basename(args.file_path))
     # stretch contrast
     if args.scale:

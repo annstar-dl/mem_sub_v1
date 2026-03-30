@@ -92,8 +92,8 @@ def new_shape_mrc_downsampling(old_shape,voxel_size,ds_factor=None):
 
     return cropped_shape,ds_factor
 
-def downsample_micrograph(data: np.ndarray, voxel_size: float, border=0, cropping_mode="center",
-                          return_logs=False, subtract_mean=True) -> np.ndarray:
+def downsample_micrograph(data: np.ndarray, voxel_size: float, border, cropping_mode="center", return_logs=False,
+                          subtract_mean=True) -> np.ndarray:
     """
     Downsample the MRC data based on the voxel size. To prevent iliasing artifacts, the image is multiplied
     by a fuzzy rectangle mask before downsampling that brings the signal to zero at the borders.
