@@ -47,7 +47,7 @@ def convert_file(args: argparse.Namespace) -> None:
             print(f"Setting border size to {border}")
         else:
             border = args.border_size
-        data, logs = downsample_micrograph(data, voxel_size[0], border, "center",return_logs=True)
+        data, logs = downsample_micrograph(data, voxel_size[0], border, "center",return_logs=True, subtract_mean=args.sub_mean)
     basename, _ = os.path.splitext(os.path.basename(args.file_path))
     # stretch contrast
     if args.scale:
@@ -97,15 +97,23 @@ if __name__ == "__main__":
         help="Allow downsampling based on voxel size (default: False)",
     )
     parser.add_argument(
+        "--sub_mean",
+        action="store_true",
+        help="Allow to subtract mean from image during downsampling (default: False). Do not subtract mean if downsampling labels!",
+    )
+    parser.add_argument(
         "-fn",
         "--file_name",
         type=str, default=None,
         help="Name of file to convert (default: None), if None process all files in the folder",
     )
-    parser.add_argument("-bs","--border_size", type=int,
-                        help="Downsampling fuzzy mask size. A smoothing mask is applied to an image to make signal go to zero"
-                             "at the border. The border_size is a size of fuzzy border in downsampled image."
-                             "If this value set to -1 the border would be set to parameter r from parameters.yml file")
+
+    parser.add_argument(
+        "-bs",
+        "--border_size", type=int,
+        help="Downsampling fuzzy mask size. A smoothing mask is applied to an image to make signal go to zero"
+            "at the border. The border_size is a size of fuzzy border in downsampled image."
+            "If this value set to -1 the border would be set to parameter r from parameters.yml file.")
     args = parser.parse_args()
 
     assert os.path.isdir(args.in_dir), f"Input directory does not exist: {args.in_dir}"

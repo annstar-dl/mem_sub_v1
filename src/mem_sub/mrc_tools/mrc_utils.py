@@ -92,7 +92,8 @@ def new_shape_mrc_downsampling(old_shape,voxel_size,ds_factor=None):
 
     return cropped_shape,ds_factor
 
-def downsample_micrograph(data: np.ndarray, voxel_size: float, border=0, cropping_mode="center", return_logs=False) -> np.ndarray:
+def downsample_micrograph(data: np.ndarray, voxel_size: float, border=0, cropping_mode="center",
+                          return_logs=False, subtract_mean=True) -> np.ndarray:
     """
     Downsample the MRC data based on the voxel size. To prevent iliasing artifacts, the image is multiplied
     by a fuzzy rectangle mask before downsampling that brings the signal to zero at the borders.
@@ -104,6 +105,9 @@ def downsample_micrograph(data: np.ndarray, voxel_size: float, border=0, croppin
         voxel_size (tuple): Voxel size in each dimension.
         border (int): Border size for the fuzzy mask. Default is 0.
         cropping_mode (str): Padding mode, either "right_down" or "center". Default is "center".
+        return_logs (bool, optional): Whether to return the logs.
+        subtract_mean (bool, optional): Whether to subtract the mean value from the data.
+        Do not subtract mean if downsampling labels!
 
     Returns:
         np.ndarray: Downsampled image data.
@@ -128,7 +132,8 @@ def downsample_micrograph(data: np.ndarray, voxel_size: float, border=0, croppin
         data_mean = np.mean(data)
         downsampling_log["mean_of_cropped_image"] = float(data_mean)
         # subtract mean before downsampling
-        data = data - data_mean
+        if subtract_mean:
+            data = data - data_mean
         # Apply fuzzy rectangle mask to the data to reduce edge artifacts
         if border > 0:
             # making signal to look periodic to reduce edge artifacts during downsampling
@@ -150,7 +155,8 @@ def downsample_micrograph(data: np.ndarray, voxel_size: float, border=0, croppin
         # to avoid edge artifacts during downsampling
         msk = fuzzy_disk(ds_shape, r=0.48 * np.array(ds_shape))
         data = down_sample(data, ds_shape, fuzzy_mask=msk)
-        data = data + data_mean
+        if subtract_mean:
+            data = data + data_mean
     if return_logs:
         return data, downsampling_log
     else:
