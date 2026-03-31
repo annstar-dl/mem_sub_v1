@@ -30,7 +30,8 @@ echo "Copied MRC files from $1 to $PWD/misc/$MRC_DIR"
 # mkdir -p "labels"
 
 # Convert mrc files to jpg for segmentation
-conda run -n ves_seg python "${MEMBRANE_SUBTRACTION_DIR}/tools/mrc2image.py" "$PWD/misc/${MRC_DIR}" -o "$PWD/misc" --format "jpg" -dsa --scale
+conda run -n ves_seg python "${MEMBRANE_SUBTRACTION_DIR}/tools/mrc2image.py" "$PWD/misc/${MRC_DIR}" -o "$PWD/misc" \
+            --format "jpg" -dsa --scale --sub_mean --border_size 7
 echo "Converted MRC files to JPG"
 
 DS_MICROGRAPHS_PATH="$PWD/misc/${MRC_DIR}_jpg_ds"

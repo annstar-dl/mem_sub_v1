@@ -22,7 +22,7 @@ mkdir -p "${SAVEDIR}/misc/${MRC_DIR}"
 cp "${INPUTDIR}/${FILENAME}.mrc" "${SAVEDIR}/misc/${MRC_DIR}/${FILENAME}.mrc"
 # Convert mrc files to jpg for segmentation
 python "tools/mrc2image.py" "${SAVEDIR}/misc/${MRC_DIR}" \
-                            -o "${SAVEDIR}/misc" --format "jpg" -dsa --scale -fn "${FILENAME}.mrc"
+                            -o "${SAVEDIR}/misc" --format "jpg" -dsa --scale -fn "${FILENAME}.mrc" --sub_mean --border_size 7
 DS_MICROGRAPHS_PATH="${SAVEDIR}/misc/${MRC_DIR}_jpg_ds/${FILENAME}.jpg"
 python "membrane_seg/seg_onnx.py" \
 --model_dir "${SEGMENTATION_DIR}" \
