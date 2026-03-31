@@ -31,6 +31,8 @@ def read_img(fpath, mask=False):
                 raise ValueError(f"Empty mask file, max value is zero in {fpath}")
             img = img / np.max(img)
             img = ( img > 0.5 ).astype(np.float64)
+    if np.any(np.isnan(img)):
+        raise ValueError(f"Damaged img file, Nan in {os.path.basename(fpath)}")
     return img
 
 
