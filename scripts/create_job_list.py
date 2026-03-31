@@ -13,7 +13,7 @@ def list_files_in_directory(input_dir: str) -> List[str]:
     Returns:
         List[str]: A list of `.mrc` file names in the directory.
     """
-    return [ f for f in os.listdir(input_dir)
+    return [ os.path.join(input_dir,f) for f in os.listdir(input_dir)
             if os.path.isfile(os.path.join(input_dir, f)) and f.lower().endswith('.mrc')]
 
 def chunked(iterable: Iterable, size: int) -> Generator[List, None, None]:
@@ -85,11 +85,11 @@ def create_job_list(data_dir_path, job_file_path,seg_model_path, save_dir_path,
             f"export LD_LIBRARY_PATH=$CONDA_PREFIX/lib:$LD_LIBRARY_PATH;"
             f"export LD_LIBRARY_PATH=$CONDA_PREFIX/lib/python3.12/site-packages/nvidia/cublas/lib:$LD_LIBRARY_PATH;"
             f"export LD_LIBRARY_PATH=$CONDA_PREFIX/lib/python3.12/site-packages/nvidia/cudnn/lib:$LD_LIBRARY_PATH;"
-            f"export LD_LIBRARY_PATH=$CONDA_PREFIX/lib/python3.12/site-packages/nvidia/cuda_runtime/lib:$LD_LIBRARY_PATH;"              f"export SEGMENTATION_DIR={seg_model_path}; "
-              f"export SAVEDIR={save_dir_path}; "
-              f"export INPUTDIR={data_dir_path};"
-              f"export SAVE_ANGLE={save_angle_flag}; "
-              f"export SAVE_SUB={save_sub_flag}; ")
+            f"export LD_LIBRARY_PATH=$CONDA_PREFIX/lib/python3.12/site-packages/nvidia/cuda_runtime/lib:$LD_LIBRARY_PATH;"              
+            f"export SEGMENTATION_DIR={seg_model_path}; "
+            f"export SAVEDIR={save_dir_path}; "
+            f"export SAVE_ANGLE={save_angle_flag}; "
+            f"export SAVE_SUB={save_sub_flag}; ")
     if nb_of_jobs is None:
         nb_of_jobs = len(filelist)
     nb_of_jobs_iter = 0
@@ -107,12 +107,12 @@ def create_job_list(data_dir_path, job_file_path,seg_model_path, save_dir_path,
                 print(f"Reached the maximum number of jobs: {nb_of_jobs}")
                 break
 
-def delete_processed_files_from_fnamelist(fnames, save_dir_path,save_angle_flag, save_sub_flag):
+def delete_processed_files_from_fnamelist(fpaths, save_dir_path, save_angle_flag, save_sub_flag):
     """
     Filter out files that have already been processed.
 
     Args:
-        fnames (List[str]): List of file names to check.
+        fpaths (List[str]): List of file paths to check.
         save_dir_path (str): Path to the directory where processed files are saved.
 
     Returns:
@@ -121,8 +121,8 @@ def delete_processed_files_from_fnamelist(fnames, save_dir_path,save_angle_flag,
     labels_dir = os.path.join(save_dir_path,"misc","angles")
     sub_dir = os.path.join(save_dir_path,"subtracted_mrc")
     unprocessed_fnames = []
-    for fname in fnames:
-        basename = os.path.splitext(os.path.basename(fname))[0]
+    for fpath in fpaths:
+        basename = os.path.splitext(os.path.basename(fpath))[0]
         file_was_processed = False
         if save_angle_flag==1 and save_sub_flag==1:
             if exists_ospath(os.path.join(labels_dir, basename + "_angles.mat")) and exists_ospath(os.path.join(sub_dir, basename + ".mrc")):
@@ -135,9 +135,9 @@ def delete_processed_files_from_fnamelist(fnames, save_dir_path,save_angle_flag,
                 file_was_processed = True
 
         if not file_was_processed:
-            unprocessed_fnames.append(fname)
+            unprocessed_fnames.append(fpath)
         else:
-            print(f"File already exist, skipping: {fname}")
+            print(f"File already exist, skipping: {basename}")
     return unprocessed_fnames
 
 

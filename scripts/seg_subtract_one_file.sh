@@ -1,6 +1,18 @@
 #!/bin/bash
-FILENAME=$1
-echo "Processing file: ${FILENAME}"
+IMGPATH=$1
+if [[ -d "$IMGPATH" ]]; then
+    echo "Processing files in directory: ${IMGPATH}"
+    INPUTDIR="$IMGPATH"
+    PROCESS_DIR=1
+elif [[ -f "$IMGPATH" ]]; then
+    echo "Processing file: ${IMGPATH}"
+    INPUTDIR=$(dirname "$IMGPATH")
+    FILENAME=$(basename "$IMGPATH" | cut -f 1 -d '.')
+    PROCESS_DIR=0
+else
+    echo "${IMGPATH} does not exist or is not a regular file/directory"
+fi
+
 echo "nvidia-smi output:"
 nvidia-smi
 # Normalize INPUTDIR and SAVEDIR: remove trailing slash if present
@@ -23,7 +35,12 @@ cp "${INPUTDIR}/${FILENAME}.mrc" "${SAVEDIR}/misc/${MRC_DIR}/${FILENAME}.mrc"
 # Convert mrc files to jpg for segmentation
 python "tools/mrc2image.py" "${SAVEDIR}/misc/${MRC_DIR}" \
                             -o "${SAVEDIR}/misc" --format "jpg" -dsa --scale -fn "${FILENAME}.mrc" --sub_mean --border_size 7
-DS_MICROGRAPHS_PATH="${SAVEDIR}/misc/${MRC_DIR}_jpg_ds/${FILENAME}.jpg"
+if [[$PROCESS_DIR -eq 1 ]]; then
+   DS_MICROGRAPHS_PATH="${SAVEDIR}/misc/${MRC_DIR}_jpg_ds"
+else
+   DS_MICROGRAPHS_PATH="${SAVEDIR}/misc/${MRC_DIR}_jpg_ds/${FILENAME}.jpg"
+fi
+
 python "membrane_seg/seg_onnx.py" \
 --model_dir "${SEGMENTATION_DIR}" \
 --onnx_fname model.onnx \
