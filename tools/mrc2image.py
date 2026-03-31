@@ -27,7 +27,7 @@ def convert_dir(args: argparse.Namespace) -> None:
     #   get list of MRC-like files
     files = []
     for ext in FILE_TYPES:
-        files.extend(glob(os.path.join(args.in_dir, f"*.{ext}")))
+        files.extend(glob(os.path.join(args.mrc_path, f"*.{ext}")))
 
     #   convert MRC-like files to TIFF and JPEG file formats
     for file_path in tqdm(files):
@@ -69,9 +69,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Convert MRC-like files to TIFF and JPEG file formats")
     parser.add_argument(
-        "in_dir",
+        "mrc_path",
         type=str,
-        help="Directory path to input directory containing MRC-like files",
+        help="Directory or file path to input containing MRC micrograph",
     )
     parser.add_argument(
         "-o",
@@ -103,13 +103,6 @@ if __name__ == "__main__":
         help="Allow to subtract mean from image during downsampling (default: False). Do not subtract mean if downsampling labels!",
     )
     parser.add_argument(
-        "-fn",
-        "--file_name",
-        type=str, default=None,
-        help="Name of file to convert (default: None), if None process all files in the folder",
-    )
-
-    parser.add_argument(
         "-bs",
         "--border_size", type=int,
         help="Downsampling fuzzy mask size. A smoothing mask is applied to an image to make signal go to zero"
@@ -117,10 +110,11 @@ if __name__ == "__main__":
             "If this value set to -1 the border would be set to parameter r from parameters.yml file.")
     args = parser.parse_args()
 
-    assert os.path.isdir(args.in_dir), f"Input directory does not exist: {args.in_dir}"
-    data_dir_name = os.path.basename(os.path.normpath(args.in_dir))
-    args.out_dir = os.path.join(args.out_dir,data_dir_name +"_"+ args.format+ "_ds" if args.downsampling_allowed else data_dir_name)
-    os.makedirs(args.out_dir, exist_ok=True)
+
+    args.out_dir = os.path.join(args.out_dir)
+    print(f"Output will be saved to: {args.out_dir}")
+    if not os.path.exists(args.out_dir):
+        os.makedirs(args.out_dir)
     args.logs_dir = os.path.join(args.out_dir, "logs")
     if args.downsampling_allowed:
         print("Downsampling based on voxel size is allowed.")
@@ -128,11 +122,11 @@ if __name__ == "__main__":
             os.makedirs(args.logs_dir)
     if args.format not in ["tif", "jpeg", "jpg", "png"]:
         parser.error(f"Unsupported format: {args.format}. Supported formats are 'tif' and 'jpeg'.")
-    if args.file_name is None:
+
+    if os.path.isdir(args.mrc_path):
         convert_dir(args)
     else:
-        if not args.file_name.lower().endswith(tuple(FILE_TYPES)):
-            raise ValueError(f"File {args.file_name} is not an MRC file.")
-
-        args.file_path = os.path.join(args.in_dir, args.file_name)
+        if not args.mrc_path.lower().endswith(tuple(FILE_TYPES)):
+            raise ValueError(f"File {args.mrc_path} is not an MRC file.")
+        args.file_path = args.mrc_path
         convert_file(args)
