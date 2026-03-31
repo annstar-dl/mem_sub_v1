@@ -17,6 +17,8 @@ def read_mrc(fpath):
     if not os.path.exists(fpath):
         raise FileNotFoundError(f"File {fpath} does not exist.")
     img, header, voxel_size = load_mrc(fpath)
+    if np.any(np.isnan(img)):
+        raise ValueError(f"Damaged mrc file, Nan in {os.path.basename(fpath)}")
     img = img.astype(np.float64)
     return img, header, voxel_size
 
@@ -29,10 +31,11 @@ def process_file(args: argparse.Namespace):
     border = parameters["r"]  # Border size for fuzzy mask
     #read micrograph from mrc file
     img, header, voxel_size = read_mrc(os.path.join(args.imgs_path, args.file_name))
+    if voxel_size[0]>4.0:
+        raise ValueError(f"Voxel size {voxel_size[0]} is larger than 4.0 Angstrom. "
+                         f"Your micrograph is probably downsampled, use micrograph of original size.")
     #read downsampled membrane mask of a micrograph from png file
     mask = read_img(os.path.join(args.masks_path, basename + ".png"), True)
-    if np.any(np.isnan(img)):
-        raise ValueError(f"Empty file, Nan in {args.file_name}")
     # downsample the micrograph if needed
     img_ds = downsample_micrograph(img, voxel_size[0], border, "center")
     # check if the image is the same size as the mask
