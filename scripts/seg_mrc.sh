@@ -1,9 +1,11 @@
 #!/bin/bash
 
-MRCPATH=$1
-SEGMENTATION_DIR=$2
-SAVEDIR=$3
 
+
+MRCPATH=$1
+SAVEDIR=$2
+
+SEGMENTATION_DIR="seg_model/mem_mad_2026_march_warmup_lr0012_200000"
 
 if [[ -d "$MRCPATH" ]]; then
   MRCDIR=$(basename "$MRCPATH")

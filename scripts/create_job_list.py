@@ -53,7 +53,7 @@ def read_filelist(filelist_path):
         file_paths = [line.strip() for line in f if line.strip()]
     return file_paths
 
-def create_job_list(data_dir_path, job_file_path,seg_model_path, save_dir_path,
+def create_job_list(data_dir_path, job_file_path,save_dir_path,
                     nb_of_jobs, batch_size, file_mode, save_angle_flag=0, save_sub_flag=0):
     """
     Create a job list file containing paths of all files in the input directory.
@@ -61,7 +61,6 @@ def create_job_list(data_dir_path, job_file_path,seg_model_path, save_dir_path,
     Args:
         data_dir_path (str): Path to the directory containing MRC files.
         job_file_path (str): Path to the job file to create (will be overwritten).
-        seg_model_path (str): Path to the segmentation model directory or file.
         nb_of_jobs (int): Maximum number of job batches to write (use None for all).
         batch_size (int): Number of files per batch written on each line.
         file_mode (str): Mode to write into a jobfile, "w" or "a".
@@ -86,7 +85,6 @@ def create_job_list(data_dir_path, job_file_path,seg_model_path, save_dir_path,
             f"export LD_LIBRARY_PATH=$CONDA_PREFIX/lib/python3.12/site-packages/nvidia/cublas/lib:$LD_LIBRARY_PATH;"
             f"export LD_LIBRARY_PATH=$CONDA_PREFIX/lib/python3.12/site-packages/nvidia/cudnn/lib:$LD_LIBRARY_PATH;"
             f"export LD_LIBRARY_PATH=$CONDA_PREFIX/lib/python3.12/site-packages/nvidia/cuda_runtime/lib:$LD_LIBRARY_PATH;"              
-            f"export SEGMENTATION_DIR={seg_model_path}; "
             f"export SAVEDIR={save_dir_path}; "
             f"export SAVE_ANGLE={save_angle_flag}; "
             f"export SAVE_SUB={save_sub_flag}; ")
@@ -173,7 +171,6 @@ if __name__ == "__main__":
     args = ArgumentParser(description="Create job list for processing MRC files")
     args.add_argument("-ddp","--data_dir_path", type=str, help="Path to the directory containing MRC files")
     args.add_argument("-jfp", "--job_file_path", type=str, default=None, help="Path to the txt job file to create")
-    args.add_argument("-segmp", "--seg_model_path", type=str, help="Path to the segmentation model")
     args.add_argument("-savedp", "--save_dir_path", type=str, help="Path to the dir where results will be saved")
     args.add_argument("-n", "--nb_of_jobs", type=int, help="Number of jobs to create, if None all files will be processed", default=None)
     args.add_argument("--save_angle_flag", type=int, help="Flag to save angle information (1 to save, 0 otherwise)", default=0)
@@ -187,7 +184,6 @@ if __name__ == "__main__":
             job_file_path = os.path.join(parsed_args.job_file_path, f"job_list_{sub_dir_name}.txt") if parsed_args.job_file_path else f"job_list_{sub_dir_name}.txt"
             create_job_list(data_dir_path=sub_dir,
                             job_file_path=parsed_args.job_file_path,
-                            seg_model_path=parsed_args.seg_model_path,
                             save_dir_path=os.path.join(parsed_args.save_dir_path, sub_dir_name),
                             nb_of_jobs=args.nb_of_jobs,
                             batch_size=batch_size,

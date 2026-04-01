@@ -1,4 +1,5 @@
 #!/bin/bash
+
 IMGPATH=$1
 # create a new directory to store the results
 # Normalize SAVEDIR: remove trailing slash if present
@@ -52,7 +53,7 @@ if [[ $SAVE_ANGLE -eq 1 ]] && [[ $SAVE_SUB -eq 1 ]]; then
     python "tools/run_mrc_subtraction.py" \
  -dp ${SAVEDIR} -ip "${IMGPATH}" \
  --out_format_sub "mrc" "png" \
-  --out_format_mem "mrc" "png" \
+  --out_format_mem "mrc" "png" "npy"\
   --save_angle \
   --save_subtraction
 else
