@@ -42,8 +42,18 @@ def rotate_images_kornia(images, angles):
     if images.device != angles.device:
         angles = angles.to(images.device)
 
-    center = torch.tensor([[images.shape[-2] // 2, images.shape[-1] // 2]], dtype=torch.double, device=images.device)
-    rotated_images = kornia.geometry.rotate(images,angles,center,mode="bilinear")
+    center = torch.tensor([[images.shape[-1] // 2, images.shape[-2] // 2]], dtype=torch.double, device=images.device)
+    #convert to float32
+    #images = images.to(dtype=torch.float32)
+    #angles = angles.to(dtype=torch.float32)
+    #center = center.to(dtype=torch.float32)
+    try:
+        rotated_images = kornia.geometry.transform.rotate(images,angles,center,mode="bilinear")
+    except RuntimeError:
+        rotated_images1 = kornia.geometry.transform.rotate(images[:len(images)//2],angles[:len(images)//2],center,mode="bilinear")
+        rotated_images2 = kornia.geometry.transform.rotate(images[len(images)//2:],angles[len(images)//2:],center,mode="bilinear")
+        rotated_images = torch.cat([rotated_images1,rotated_images2],dim=0)
+
     return rotated_images
 
 
