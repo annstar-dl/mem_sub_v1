@@ -83,7 +83,7 @@ def create_job_list(data_dir_path, job_file_path,save_dir_path,
         # f"export LD_LIBRARY_PATH=$CONDA_PREFIX/lib:$LD_LIBRARY_PATH;"
         # f"export LD_LIBRARY_PATH=$CONDA_PREFIX/lib/python3.12/site-packages/nvidia/cublas/lib:$LD_LIBRARY_PATH;"
         # f"export LD_LIBRARY_PATH=$CONDA_PREFIX/lib/python3.12/site-packages/nvidia/cudnn/lib:$LD_LIBRARY_PATH;"
-        """module reset; module load miniconda; conda activate ves_seg; 
+        f"""module reset; module load miniconda; conda activate ves_seg; 
 export LD_LIBRARY_PATH=$CONDA_PREFIX/lib/python3.12/site-packages/nvidia/cuda_runtime/lib:$LD_LIBRARY_PATH  
 export LD_LIBRARY_PATH=$CONDA_PREFIX/lib:$LD_LIBRARY_PATH
 for d in $CONDA_PREFIX/lib/python3.12/site-packages/nvidia/*/lib; do 
@@ -102,7 +102,7 @@ export SAVE_SUB={save_sub_flag} """)
             f.write(prefix)
             for filename in batch:
                 filename= strip_leading_dot_slash(filename)
-                f.write(f"bash /nfs/roberts/scratch/pi_hdt2/as4873/mem_sub_v1/scripts/seg_subtract_v1.sh {filename};")
+                f.write(f"bash scripts/seg_subtract_v1.sh {filename};")
             f.write("\n")  # Separate batches with a newline
             nb_of_jobs_iter += 1
             if nb_of_jobs_iter > nb_of_jobs:
