@@ -111,7 +111,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
 
-    args.out_dir = os.path.join(args.out_dir)
     print(f"Output will be saved to: {args.out_dir}")
     if not os.path.exists(args.out_dir):
         os.makedirs(args.out_dir)
