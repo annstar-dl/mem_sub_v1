@@ -6,11 +6,11 @@ if [ "$#" -ne 6 ]; then
     exit 1
 fi
 DATASET_PATH=$1
-SAVE_DIR_PATH=$3
-JOB_ARRAY_NAME=$4
-SAVE_ANGLE=$5
-SAVE_SUB=$6
-SHOW_OUTPUT=$7
+SAVE_DIR_PATH=$2
+JOB_ARRAY_NAME=$3
+SAVE_ANGLE=$4
+SAVE_SUB=$5
+SHOW_OUTPUT=$6
 TIMESTEMP=$(date +"%Y%m%d_%H%M%S")
 module load miniconda
 module load dSQ
