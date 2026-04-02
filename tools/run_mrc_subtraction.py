@@ -1,6 +1,6 @@
 import os
 import numpy as np
-
+import time
 from mem_sub.membrane_est.utils import save_im
 from mem_sub.membrane_est.membrane_estimation import membrane_estimation
 from tqdm import tqdm
@@ -31,7 +31,7 @@ def process_file(file_name,args: argparse.Namespace):
     border = parameters["r"]  # Border size for fuzzy mask
     #read micrograph from mrc file
     img, header, voxel_size = read_mrc(os.path.join(args.imgs_path, file_name))
-    if voxel_size[0]>4.0:
+    if voxel_size[0]>4.5:
         raise ValueError(f"Voxel size {voxel_size[0]} is larger than 4.0 Angstrom. "
                          f"Your micrograph is probably downsampled, use micrograph of original size.")
     #read downsampled membrane mask of a micrograph from png file
@@ -46,8 +46,9 @@ def process_file(file_name,args: argparse.Namespace):
             f"Image shape: {img.shape}, Mask shape: {mask.shape}")
 
     # run membrane subtraction algorithm
+    st_time = time.time()
     membrane_ds, angle_dict = membrane_estimation(img_ds, mask, border if np.any(img.shape > img_ds.shape) else 0)
-
+    print(f"Membrane estimation for {file_name} took {time.time() - st_time:.2f} seconds.")
 
     if args.save_subtraction:
         # upsample the membrane estimate to the original size
