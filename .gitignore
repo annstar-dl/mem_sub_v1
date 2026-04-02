@@ -1,5 +1,6 @@
 .idea/
 __pycache__/
 seg_model/*
+!seg_model/.gitkeep
 mem_sub.egg-info/
 
