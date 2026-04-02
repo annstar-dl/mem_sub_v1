@@ -159,7 +159,7 @@ def process(args):
         filename = os.path.splitext(filename)[0] + '.png'
         save_output_as_image(output, os.path.join(args.output_dir_label, filename))
         #save_output_as_label(output,os.path.join(args.output_dir_label, filename))
-        print(f"Processing time of {fpath}: {time.time() - start_time}")
+        print(f"Segmentation time of {fpath}: {time.time() - start_time}")
 
 
 

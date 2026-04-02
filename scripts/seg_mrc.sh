@@ -27,6 +27,7 @@ elif [[ -f "$MRCPATH" ]]; then
   DS_MICROGRAPHS_PATH="${SAVEDIR_MRC}/${FILENAME}.jpg"
 fi
 
+echo "SAVEDIR_MRC is ${SAVEDIR_MRC}"
 # Convert mrc files to jpg for segmentation
 python "tools/mrc2image.py" "${MRCPATH}" \
                             -o "${SAVEDIR_MRC}" --format "jpg" -dsa --scale --sub_mean --border_size 7
