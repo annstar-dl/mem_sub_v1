@@ -46,7 +46,7 @@ else
 fi
 
 
-bash scripts/seg_mrc.sh "${IMGPATH}" "${SEGMENTATION_DIR}" "${SAVEDIR}/misc"
+bash scripts/seg_mrc.sh "${IMGPATH}" "${SAVEDIR}/misc"
 echo "Segmentation completed. Saved results in ${SAVEDIR}/misc"
 # Subtract the predicted masks from the original micrographs
 if [[ $SAVE_ANGLE -eq 1 ]] && [[ $SAVE_SUB -eq 1 ]]; then
