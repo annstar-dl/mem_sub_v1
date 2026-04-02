@@ -75,7 +75,7 @@ def create_job_list(data_dir_path, job_file_path,save_dir_path,
         print(f"No unprocessed MRC files found in {data_dir_path}. Exiting.")
         return
     else:
-        print(f"Found {len(filelist)} unprocessed MRC files in {data_dir_path}.")
+        print(f"Found {len(filelist)} unprocessed MRC files in {data_dir_path}")
     torch_lib_path = os.path.join(os.path.dirname(torch.__file__), 'lib')
     prefix = (#"module force purge; "
             "module load miniconda; conda activate ves_seg; "

@@ -20,7 +20,7 @@ python scripts/create_job_list.py -ddp ${DATASET_PATH} -jfp "./joblist.txt" \
     --save_sub_flag=${SAVE_SUB} \
 # the joblist.txt will be created in the current directory
 # Now create the dsq job submission script
-if [ "$SHOW_OUTPUT" -eq 1 ]; then
+if [[ "$SHOW_OUTPUT" -eq 1 ]]; then
     dsq --job-file joblist.txt --mem=5G --cpus-per-task=4 --gres=gpu:1 -t 20:00 --partition=gpu_rtx6000 --mail-type ALL  --batch-file="${JOB_ARRAY_NAME}_${TIMESTEMP}_dsq_job.sh"
 else
     dsq --job-file joblist.txt --mem=5G --cpus-per-task=4 --gres=gpu:1 -t 20:00 --partition=gpu_rtx6000 --mail-type ALL  --batch-file="${JOB_ARRAY_NAME}_${TIMESTEMP}_dsq_job.sh" --output=/dev/null
