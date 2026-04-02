@@ -1,5 +1,5 @@
 .idea/
 __pycache__/
-seg_model/
+seg_model/*
 mem_sub.egg-info/
 
