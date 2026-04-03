@@ -1,6 +1,7 @@
 # Membrane Subtraction
 This repository contains code and resources for performing membrane subtraction in Cryo-EM imaging data. Membrane subtraction is a technique used to enhance the visibility of protein structures by removing membrane outlines.
 This project is developed by Tagare lab, at the Radiology and Biomedical Imaging department at Yale University.
+For any questions or issues, please contact the Anna Starynska (anna.starynska@yale.edu) or Hemant Tagare (hemant.tagare@yale.edu).
 ## Contents
 - [Features](#features)
 - [Installation](#installation)
