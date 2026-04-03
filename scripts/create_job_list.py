@@ -77,21 +77,18 @@ def create_job_list(data_dir_path, job_file_path,save_dir_path,
     else:
         print(f"Found {len(filelist)} unprocessed MRC files in {data_dir_path}")
     torch_lib_path = os.path.join(os.path.dirname(torch.__file__), 'lib')
-    prefix = (#"module force purge; "
+    prefix = ("module reset; module load miniconda; conda activate ves_seg;"
         # f"export LD_LIBRARY_PATH={torch_lib_path}:$CONDA_PREFIX/lib:$LD_LIBRARY_PATH; "
         # f"export LD_LIBRARY_PATH=$CONDA_PREFIX/lib:$LD_LIBRARY_PATH:{torch_lib_path};"
         # f"export LD_LIBRARY_PATH=$CONDA_PREFIX/lib:$LD_LIBRARY_PATH;"
         # f"export LD_LIBRARY_PATH=$CONDA_PREFIX/lib/python3.12/site-packages/nvidia/cublas/lib:$LD_LIBRARY_PATH;"
         # f"export LD_LIBRARY_PATH=$CONDA_PREFIX/lib/python3.12/site-packages/nvidia/cudnn/lib:$LD_LIBRARY_PATH;"
-        f"""module reset; module load miniconda; conda activate ves_seg; 
-export LD_LIBRARY_PATH=$CONDA_PREFIX/lib/python3.12/site-packages/nvidia/cuda_runtime/lib:$LD_LIBRARY_PATH  
-export LD_LIBRARY_PATH=$CONDA_PREFIX/lib:$LD_LIBRARY_PATH
-for d in $CONDA_PREFIX/lib/python3.12/site-packages/nvidia/*/lib; do 
-[ -d "$d" ] && export LD_LIBRARY_PATH="$d:$LD_LIBRARY_PATH" 
-done
-export SAVEDIR={save_dir_path}
-export SAVE_ANGLE={save_angle_flag}
-export SAVE_SUB={save_sub_flag} """)
+        #f"export LD_LIBRARY_PATH=$CONDA_PREFIX/lib/python3.12/site-packages/nvidia/cuda_runtime/lib:$LD_LIBRARY_PATH;" 
+        f"export LD_LIBRARY_PATH=$CONDA_PREFIX/lib:$LD_LIBRARY_PATH;"
+        f"for d in $CONDA_PREFIX/lib/python3.12/site-packages/nvidia/*/lib; do [ -d \"$d\" ] && export LD_LIBRARY_PATH=\"$d:$LD_LIBRARY_PATH\";done"
+        f"export SAVEDIR={save_dir_path};"
+        f"export SAVE_ANGLE={save_angle_flag};"
+        f"export SAVE_SUB={save_sub_flag};")
     if nb_of_jobs is None:
         nb_of_jobs = len(filelist)
     nb_of_jobs_iter = 0
@@ -102,7 +99,8 @@ export SAVE_SUB={save_sub_flag} """)
             f.write(prefix)
             for filename in batch:
                 filename= strip_leading_dot_slash(filename)
-                f.write(f"bash scripts/seg_subtract_v1.sh {filename};")
+                f.write(f"bash scripts/seg_subtract_v1.sh {filename}")
+            f.write(prefix)
             f.write("\n")  # Separate batches with a newline
             nb_of_jobs_iter += 1
             if nb_of_jobs_iter > nb_of_jobs:
