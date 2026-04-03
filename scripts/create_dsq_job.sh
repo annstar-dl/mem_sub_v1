@@ -15,13 +15,18 @@ TIMESTEMP=$(date +"%Y%m%d_%H%M%S")
 module load miniconda
 module load dSQ
 conda activate ves_seg
+# the joblist.txt will be created in the current directory
 python scripts/create_job_list.py -ddp ${DATASET_PATH} -jfp "./joblist.txt" \
     -savedp ${SAVE_DIR_PATH} --save_angle_flag=${SAVE_ANGLE} \
     --save_sub_flag=${SAVE_SUB} \
-# the joblist.txt will be created in the current directory
-# Now create the dsq job submission script
-if [[ "$SHOW_OUTPUT" -eq 1 ]]; then
-    dsq --job-file joblist.txt --mem=5G --cpus-per-task=4 --gpus=1 -t 20:00 --partition=scavenge_gpu --mail-type ALL  --batch-file="${JOB_ARRAY_NAME}_${TIMESTEMP}_dsq_job.sh"
-else
-    dsq --job-file joblist.txt --mem=5G --cpus-per-task=4 --gpus=1 -t 20:00 --partition=scavenge_gpu --mail-type ALL  --batch-file="${JOB_ARRAY_NAME}_${TIMESTEMP}_dsq_job.sh" --output=/dev/null
+# check if jobfile is not empty
+if [ -s joblist.txt ]; then
+  #Now create the dsq job submission script
+  if [[ "$SHOW_OUTPUT" -eq 1 ]]; then
+      dsq --job-file joblist.txt --mem=5G --cpus-per-task=4 --gpus=1 -t 20:00 --partition=scavenge_gpu --mail-type ALL  --batch-file="${JOB_ARRAY_NAME}_${TIMESTEMP}_dsq_job.sh"
+  else
+      dsq --job-file joblist.txt --mem=5G --cpus-per-task=4 --gpus=1 -t 20:00 --partition=scavenge_gpu --mail-type ALL  --batch-file="${JOB_ARRAY_NAME}_${TIMESTEMP}_dsq_job.sh" --output=/dev/null
+  fi
+  else
+      echo "Error: joblist.txt is empty. No jobs to submit."
 fi
