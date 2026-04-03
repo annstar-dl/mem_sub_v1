@@ -13,7 +13,6 @@ done
 
 
 export SAVEDIR=$SAVEDIR
-echo "SAVEDIR: $SAVEDIR"
 export SAVE_ANGLE=$SAVE_ANGLE
 export SAVE_SUB=$SAVE_SUB
 bash scripts/seg_subtract_v1.sh "${IMGPATH}"

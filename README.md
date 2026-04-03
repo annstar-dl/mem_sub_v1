@@ -22,17 +22,53 @@ git clone https://github.com/annstar-dl/mem_sub_v1
 #go to the repository directory
 cd mem_sub_v1
 ```
-2. Installation of dependencies:
+2. Installation of dependencies and environment setup:
+2.1. Create a new conda environment and install the required packages using the provided `environment.yml` file:
+For desktop or local machine usage:
 ```bash
 # Create a new environment from the YAML file
 conda env_name create -f environment.yml
 conda activate mem_sub
 pip install -e .
 ```
-3. Membrane subtraction for a folder of mrc files on a desktop or local machine can be done using the following script:
+For HPC usage, please load the miniconda module first and then create the environment:
 ```bash
-   bash script/seg_subtract.sh /path/to/mrc/files /path/to/save/results 
+# Load the miniconda module
+module load miniconda
+# Create a new environment from the YAML file
+conda env_name create -f environment.yml
+conda activate mem_sub
+pip install -e .
 ```
+2.2. Download the pretrained U-Net model weights, and setting file from the provided link and place them in the appropriate directory. 
+From the provided link, download 
+3. Run the subtraction script:
+    3.1. Membrane subtraction for a folder of mrc file on a desktop or local machine can be done using the following script:
+    ```bash
+       bash script/seg_subtract_destop.sh /path/to/mrc/files /path/to/save/results
+```
+    3.2. For HPC usage, please refer to the HPC Usage section below.
+4. HPC Usage. Membrane subtraction on Yale HPC cluster is done using Deadly Simple Queue (DSQ) scheduler.
+   The idea is that every image can be processed independently, so we can submit many jobs to the cluster,
+each processing a single image. To run DSQ we have to prepare file with the list of jobs and their parameters. 
+However, Yale HPC has a limit on how short the job duration can be, 
+so we have to batch several image processing jobs into one. 
+You can create the job file, you can run DSQ job using following script:
+```bash
+   bash script/create_dsq_jobs.sh /path/to/dataset/folder /path/to/save/results/folder job_array_name save_angle save_sub show_output
+```
+Here is the explanation of the parameters:
+- `/path/to/dataset/folder`: Path to the folder containing mrc files to be processed.
+- `/path/to/save/results/folder`: Path to the folder where the results will be saved.
+- `job_array_name`: A name for the job array, which will be used to identify the jobs in the DSQ scheduler, e.g. liposome.
+- `save_angle`: A flag (0 or 1) indicating whether to save the angle information of the segmented membranes.
+- `save_sub`: A flag (0 or 1) indicating whether to save the subtracted images.
+- `show_output`: A flag (0 or 1) indicating whether to print the output of the DSQ jobs to the log files.
+- 
+After running script/create_dsq_jobs.sh it will print out a line:
+- `To submit the job array, run: sbatch liposome_12345678.sh`
+Paste this command into the terminal to submit the job array to the DSQ scheduler.
+5. Results and Output Structure. After running the subtraction script, you will find the results in the specified output folder.
 This files contains two main parts:
 - Segmentation of membrane outlines using pretrained U-Net model.
 - Subtraction of the segmented membrane outlines from the original images.
@@ -53,25 +89,3 @@ The structure of the output folder will be as follows:
 ```
 Additionally original mrc files are copied to the output folder for convenience. This could be prevented by commenting out "cp -r $2 ." line in the `seg_subtract.sh` script.
 
-4. HPC Usage. Membrane subtraction on Yale HPC cluster is done using Deadly Simple Queue (DSQ) scheduler.
-   The idea is that every image can be processed independently, so we can submit many jobs to the cluster,
-each processing a single image. This way we can "scavenge" free GPU resources from other users.
-    To run DSQ we have to prepare file with the list of jobs and their parameters. 
-However, Yale HPC has a limit on how short the job duration can be, 
-so we have to batch several image processing jobs into one. 
-You can create the job file, you can run DSQ job using following script:
-```bash
-   bash script/create_dsq_jobs.sh /path/to/dataset/folder /path/to/segmentation/model/folder /path/to/save/results/folder job_array_name save_angle save_sub show_output
-```
-Here is the explanation of the parameters:
-- `/path/to/dataset/folder`: Path to the folder containing mrc files to be processed.
-- `/path/to/segmentation/model/folder`: Path to the folder containing the segmentation model weights (model.onnx file).
-- `/path/to/save/results/folder`: Path to the folder where the results will be saved.
-- `job_array_name`: A name for the job array, which will be used to identify the jobs in the DSQ scheduler, e.g. liposome.
-- `save_angle`: A flag (0 or 1) indicating whether to save the angle information of the segmented membranes.
-- `save_sub`: A flag (0 or 1) indicating whether to save the subtracted images.
-- `show_output`: A flag (0 or 1) indicating whether to print the output of the DSQ jobs to the log files.
-- 
-After running script/create_dsq_jobs.sh it will print out a line:
-- `To submit the job array, run: sbatch liposome_12345678.sh`
-Paste this command into the terminal to submit the job array to the DSQ scheduler.
