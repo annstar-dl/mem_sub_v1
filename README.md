@@ -52,6 +52,7 @@ cd mem_sub_v1
     |------deploy.yaml
     ```
 3. Run the subtraction script:
+
      !!!Make sure to place the downloaded weights in the appropriate directory and specify the path to model directory in the `script/seg_mrc.sh` script in SEGMENTATION_DIR variable.
    1. Membrane subtraction for a folder of mrc file on a desktop or local machine can be done using the following script:
     ```bash
@@ -94,7 +95,7 @@ The structure of the output folder will be as follows:
     ├──---labels/                     # Segmented membrane masks (downsampled)
     ├──---input_mrc_folder_name/      # Original mrc files 
     ├─────subtracted_png_ds/ # Downsampled after membrane subtraction in png format
-    ├─────membranes/ # Reconstracted membrane images
-```
+    ├─────membranes/ # Images of membrane estimates in png format
+    |─────membranes_ds/ # Downsampled images of membrane estimates in png format`
 Additionally original mrc files are copied to the output folder for convenience. This could be prevented by commenting out "cp -r $2 ." line in the `seg_subtract.sh` script.
 
