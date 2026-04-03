@@ -37,14 +37,6 @@ echo "nvidia-smi output:"
 nvidia-smi
 
 mkdir -p "${SAVEDIR}/misc/${MRC_DIR}"
-# go into the new directory
-# copy input files directory to an output directory
-if [[ $PROCESS_DIR -eq 1 ]]; then
-    cp -r "${INPUTDIR}" "${SAVEDIR}/misc/${MRC_DIR}"
-else
-    cp "${INPUTDIR}/${FILENAME}.mrc" "${SAVEDIR}/misc/${MRC_DIR}/${FILENAME}.mrc"
-fi
-
 
 bash scripts/seg_mrc.sh "${IMGPATH}" "${SAVEDIR}/misc"
 echo "Segmentation completed. Saved results in ${SAVEDIR}/misc"
@@ -79,4 +71,8 @@ else
     fi
 fi
 
-
+if [[ $PROCESS_DIR -eq 1 ]]; then
+    echo "Segmentation and subtraction completed for directory: ${INPUTDIR}. Saved results in ${SAVEDIR}/misc/${MRC_DIR}"
+else
+    echo "Segmentation and subtraction completed for file: ${IMGPATH}. Saved results in ${SAVEDIR}/misc/${MRC_DIR}/${FILENAME}"
+fi

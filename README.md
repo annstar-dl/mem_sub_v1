@@ -93,7 +93,6 @@ The structure of the output folder will be as follows:
     |---misc/ # Miscellaneous files, including logs and intermediate results
     ├──---{input_folder_name}_ds/  # Downsampled micrographs in jpg format
     ├──---labels/                     # Segmented membrane masks (downsampled)
-    ├──---input_mrc_folder_name/      # Original mrc files 
     ├─────subtracted_png_ds/ # Downsampled after membrane subtraction in png format
     ├─────membranes/ # Images of membrane estimates in png format
     |─────membranes_ds/ # Downsampled images of membrane estimates in png format`
