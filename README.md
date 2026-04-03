@@ -50,7 +50,9 @@ cd mem_sub_v1
     |---mem_mad_2026_march_warmup_lr0012_200000/
     |------model.onnx
     |------deploy.yaml
+    ```
 3. Run the subtraction script:
+     !!!Make sure to place the downloaded weights in the appropriate directory and specify the path to model directory in the `script/seg_mrc.sh` script in SEGMENTATION_DIR variable.
    1. Membrane subtraction for a folder of mrc file on a desktop or local machine can be done using the following script:
     ```bash
        bash script/seg_subtract_destop.sh /path/to/mrc/files /path/to/save/results
@@ -82,18 +84,16 @@ This files contains two main parts:
 - Segmentation of membrane outlines using pretrained U-Net model.
 - Subtraction of the segmented membrane outlines from the original images.
 
-The first step requires downloading U-Net model weights. These weights can be downloaded from:
-[U-Net Weights Download Link](https://example.com/unet_weights.pth)
-Make sure to place the downloaded weights in the appropriate directory and specify the path to model.onnx file in the `seg_subtract.sh` script in SEGMENTATION_DIR variable.
+
 Also before the segmentation step, the mrc files are downsapled to have voxel size of 4.5 Angstroms. As a result, you will see in the output folder misc/{input_folder_name}_ds with downsampled images in jpg format.
 The structure of the output folder will be as follows:
 ```/your/save/path/
     |---subtractions_mrc/ # Images after membrane subtraction in mrc format
     |---misc/ # Miscellaneous files, including logs and intermediate results
-    ├──---{input_folder_name}_ds/  # Downsampled images in jpg format
+    ├──---{input_folder_name}_ds/  # Downsampled micrographs in jpg format
     ├──---labels/                     # Segmented membrane masks (downsampled)
     ├──---input_mrc_folder_name/      # Original mrc files 
-    ├─────subtracted_png/ # Images after membrane subtraction in png format
+    ├─────subtracted_png_ds/ # Downsampled after membrane subtraction in png format
     ├─────membranes/ # Reconstracted membrane images
 ```
 Additionally original mrc files are copied to the output folder for convenience. This could be prevented by commenting out "cp -r $2 ." line in the `seg_subtract.sh` script.
