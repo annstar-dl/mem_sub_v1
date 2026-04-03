@@ -73,10 +73,10 @@ def create_job_list(data_dir_path, job_file_path,save_dir_path,
 
     if len(filelist) == 0:
         print(f"No unprocessed MRC files found in {data_dir_path}. Exiting.")
+        open("job_file_path", "w").close()
         return
     else:
         print(f"Found {len(filelist)} unprocessed MRC files in {data_dir_path}")
-    torch_lib_path = os.path.join(os.path.dirname(torch.__file__), 'lib')
     prefix = ("module reset; module load miniconda; conda activate ves_seg;"
         # f"export LD_LIBRARY_PATH={torch_lib_path}:$CONDA_PREFIX/lib:$LD_LIBRARY_PATH; "
         # f"export LD_LIBRARY_PATH=$CONDA_PREFIX/lib:$LD_LIBRARY_PATH:{torch_lib_path};"
