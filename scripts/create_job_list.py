@@ -99,7 +99,7 @@ def create_job_list(data_dir_path, job_file_path,save_dir_path,
             f.write(prefix)
             for filename in batch:
                 filename= strip_leading_dot_slash(filename)
-                f.write(f"bash scripts/seg_subtract_v1.sh {filename}")
+                f.write(f"bash scripts/seg_subtract_v1.sh {filename};")
             f.write("\n")  # Separate batches with a newline
             nb_of_jobs_iter += 1
             if nb_of_jobs_iter > nb_of_jobs:
