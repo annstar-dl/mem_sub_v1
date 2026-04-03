@@ -19,6 +19,7 @@ dependencies:
       - nvidia-cuda-runtime-cu12
       - nvidia-cublas-cu12
       - nvidia-cudnn-cu12
+      - nvidia-cufft-cu12
       - bm3d==4.0.3
       - bm4d==4.2.5
       - h5py==3.14.0
