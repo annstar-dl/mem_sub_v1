@@ -1,5 +1,6 @@
 # Membrane Subtraction
 This repository contains code and resources for performing membrane subtraction in Cryo-EM imaging data. Membrane subtraction is a technique used to enhance the visibility of protein structures by removing membrane outlines.
+This project is developed by Tagare lab, at the Radiology and Biomedical Imaging department at Yale University.
 ## Contents
 - [Features](#features)
 - [Installation](#installation)
@@ -23,31 +24,39 @@ git clone https://github.com/annstar-dl/mem_sub_v1
 cd mem_sub_v1
 ```
 2. Installation of dependencies and environment setup:
-2.1. Create a new conda environment and install the required packages using the provided `environment.yml` file:
-For desktop or local machine usage:
-```bash
-# Create a new environment from the YAML file
-conda env_name create -f environment.yml
-conda activate mem_sub
-pip install -e .
-```
-For HPC usage, please load the miniconda module first and then create the environment:
-```bash
-# Load the miniconda module
-module load miniconda
-# Create a new environment from the YAML file
-conda env_name create -f environment.yml
-conda activate mem_sub
-pip install -e .
-```
-2.2. Download the pretrained U-Net model weights, and setting file from the provided link and place them in the appropriate directory. 
-From the provided link, download 
+    1. Create a new conda environment and install the required packages using the provided `environment.yml` file:
+        
+        - For desktop or local machine usage:
+            ```bash
+            # Create a new environment from the YAML file
+            conda env_name create -f environment.yml
+            conda activate mem_sub
+            pip install -e .
+            ```
+       - For HPC usage, please load the miniconda module first and then create the environment:
+            ```bash
+            # Load the miniconda module
+            module load miniconda
+            # Create a new environment from the YAML file
+            conda env_name create -f environment.yml
+            conda activate mem_sub
+            pip install -e .
+            ```
+    2. Download the pretrained U-Net model weights, and file with preprocessing parameters from the provided link and place them in the appropriate directory. 
+    From the provided link, download folder with .onnx and .yml files and place this directory in the membrane_seg/seg_model/ directory.
+   For example, if you downloaded the folder with name "mem_mad_2026_march_warmup_lr0012_200000". The membrane_seg/seg_model/ directory should look like this:
+   ```
+   membrane_seg/seg_model/
+    |---mem_mad_2026_march_warmup_lr0012_200000/
+    |------model.onnx
+    |------deploy.yaml
 3. Run the subtraction script:
-    3.1. Membrane subtraction for a folder of mrc file on a desktop or local machine can be done using the following script:
+   1. Membrane subtraction for a folder of mrc file on a desktop or local machine can be done using the following script:
     ```bash
        bash script/seg_subtract_destop.sh /path/to/mrc/files /path/to/save/results
-```
-    3.2. For HPC usage, please refer to the HPC Usage section below.
+    ```
+
+    2. For HPC usage, please refer to the HPC Usage section below.
 4. HPC Usage. Membrane subtraction on Yale HPC cluster is done using Deadly Simple Queue (DSQ) scheduler.
    The idea is that every image can be processed independently, so we can submit many jobs to the cluster,
 each processing a single image. To run DSQ we have to prepare file with the list of jobs and their parameters. 
