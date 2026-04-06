@@ -17,7 +17,7 @@ For any questions or issues, please contact the Anna Starynska (anna.starynska@y
 - Conda package manager
 - GPU with CUDA support (optional but recommended for performance)
 - Packages listed in `environment.yml`
-### Usage
+### Installation
 1. Clone the repository. Set the branch name to latest release version (you can find the list of release tags on the right-hand side.) 
 You can clone the repository using the following command (replace v1.0.0 with your actual release tag):
 ```bash
@@ -31,7 +31,7 @@ You can clone the repository using the following command (replace v1.0.0 with yo
             #go to the repository directory
             cd mem_sub_v1
             # Create a new environment from the YAML file
-            conda env_name create -f environment.yml
+            conda env create -f environment.yml
             conda activate mem_sub
             pip install -e .
             ```
@@ -40,7 +40,7 @@ You can clone the repository using the following command (replace v1.0.0 with yo
             # Load the miniconda module
             module load miniconda
             # Create a new environment from the YAML file
-            conda env_name create -f environment.yml
+            conda env create -f environment.yml
             conda activate mem_sub
             pip install -e .
             ```
@@ -53,7 +53,8 @@ You can clone the repository using the following command (replace v1.0.0 with yo
     |------model.onnx
     |------deploy.yaml
     ```
-3. Run the subtraction script:
+### Usage
+1. Run the subtraction script:
 
      !!!Make sure to place the downloaded weights in the appropriate directory and specify the path to model directory in the `script/seg_mrc.sh` script in SEGMENTATION_DIR variable.
    1. Membrane subtraction for a folder of mrc file on a desktop or local machine can be done using the following script:
@@ -62,7 +63,7 @@ You can clone the repository using the following command (replace v1.0.0 with yo
     ```
 
     2. For HPC usage, please refer to the HPC Usage section below.
-4. HPC Usage. Membrane subtraction on Yale HPC cluster is done using Deadly Simple Queue (DSQ) scheduler.
+2. HPC Usage. Membrane subtraction on Yale HPC cluster is done using Deadly Simple Queue (DSQ) scheduler.
    The idea is that every image can be processed independently, so we can submit many jobs to the cluster,
 each processing a single image. To run DSQ we have to prepare file with the list of jobs and their parameters. 
 However, Yale HPC has a limit on how short the job duration can be, 
@@ -85,7 +86,7 @@ Here is the explanation of the parameters:
 After running script/create_dsq_jobs.sh it will print out a line:
 - `To submit the job array, run: sbatch liposome_12345678.sh`
 Paste this command into the terminal to submit the job array to the DSQ scheduler.
-5. Results and Output Structure. After running the subtraction script, you will find the results in the specified output folder.
+3. Results and Output Structure. After running the subtraction script, you will find the results in the specified output folder.
 This files contains two main parts:
 - Segmentation of membrane outlines using pretrained U-Net model.
 - Subtraction of the segmented membrane outlines from the original images.
@@ -102,4 +103,13 @@ The structure of the output folder will be as follows:
     ├─────membranes/ # Images of membrane estimates in png format
     |─────membranes_ds/ # Downsampled images of membrane estimates in png format`
 ```
+### First run
+For the first run, we recommend testing our code on a small subset of data to ensure that everything is set up correctly. 
+You do not need to create a separate set, simply run the DSQ job creating script for a single job, which will process only 10 images.
+Also allow the script to print the output of the DSQ jobs to the log files, so you can see if there are any errors or issues with the processing.
+```bash
+    bash script/create_dsq_jobs.sh /path/to/dataset/folder /path/to/save/results/folder job_array_name save_angle save_sub 1 1
+```
+After the first run, check the output folder to see if the results are as expected.
+If not send us the .tsv file with the log output of the DSQ jobs, which you can find in the root of project directory.
 
