@@ -37,14 +37,15 @@ You can clone the repository using the following command (replace v1.0.0 with yo
     ```
    
    2. For HPC usage, please load the miniconda module first and then create the environment:
-   !!! REMINDER: SWITCH FROM THE LOGIN NODE WHILE INSTALLING THE ENVIRONMENT TO A COMPUTE NODE, OTHERWISE THE INSTALLATION MAY FAIL DUE TO RESOURCE LIMITATIONS.
+
+   REMINDER: Switch from the login node while installing the environment to compute node, otherwise installation may fail due to limited resources. 
    ```bash
       #this command will allocate a compute node for you, make sure to specify the resources you need, e.g. number of GPUs, memory, etc. For example:
       salloc
       ```
      After you are on the compute node, run the following commands to create the environment:
 
-      ```bash
+    ```bash
       # Load the miniconda module
       module load miniconda
       # Create a new environment from the YAML file
