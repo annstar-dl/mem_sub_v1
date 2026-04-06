@@ -1,6 +1,6 @@
 import os
-import torch
-from typing import Iterable, List, Generator, Optional
+import math
+from typing import Iterable, List, Generator
 from argparse import ArgumentParser
 
 def list_files_in_directory(input_dir: str) -> List[str]:
@@ -90,7 +90,8 @@ def create_job_list(data_dir_path, job_file_path,save_dir_path,
         f"export SAVE_ANGLE={save_angle_flag};"
         f"export SAVE_SUB={save_sub_flag};")
     if nb_of_jobs == -1:
-        nb_of_jobs = len(filelist)
+        nb_of_jobs = math.ceil(len(filelist)/batch_size)
+
     nb_of_jobs_iter = 0
 
     with open(job_file_path, file_mode) as f:
@@ -102,8 +103,8 @@ def create_job_list(data_dir_path, job_file_path,save_dir_path,
                 f.write(f"bash scripts/seg_subtract_v1.sh {filename};")
             f.write("\n")  # Separate batches with a newline
             nb_of_jobs_iter += 1
-            if nb_of_jobs_iter > nb_of_jobs:
-                print(f"Reached the maximum number of jobs: {nb_of_jobs}")
+            if nb_of_jobs_iter == nb_of_jobs:
+                print(f"Reached the maximum number of jobs: {nb_of_jobs_iter}")
                 break
 
 def delete_processed_files_from_fnamelist(fpaths, save_dir_path, save_angle_flag, save_sub_flag):
