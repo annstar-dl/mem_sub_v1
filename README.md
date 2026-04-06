@@ -111,5 +111,5 @@ Also allow the script to print the output of the DSQ jobs to the log files, so y
     bash script/create_dsq_jobs.sh /path/to/dataset/folder /path/to/save/results/folder job_array_name save_angle save_sub 1 1
 ```
 After the first run, check the output folder to see if the results are as expected.
-If not send us the .tsv file with the log output of the DSQ jobs, which you can find in the root of project directory.
+If not send us the .out file with the log output of the DSQ jobs, which you can find in the root of project directory.
 
