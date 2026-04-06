@@ -50,6 +50,7 @@ def rotate_images_kornia(images, angles):
     try:
         rotated_images = kornia.geometry.transform.rotate(images,angles,center,mode="bilinear")
     except RuntimeError:
+        # split rotation operation in case of non-contiguous input error
         rotated_images1 = kornia.geometry.transform.rotate(images[:len(images)//2],angles[:len(images)//2],center,mode="bilinear")
         rotated_images2 = kornia.geometry.transform.rotate(images[len(images)//2:],angles[len(images)//2:],center,mode="bilinear")
         rotated_images = torch.cat([rotated_images1,rotated_images2],dim=0)
