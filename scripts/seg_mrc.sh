@@ -9,6 +9,7 @@ MRCPATH=$1
 SAVEDIR=$2
 segmentation_dir="${3:-"membrane_seg/seg_model/mem_mad_2026_march_warmup_lr_0005_500000"}"
 SEGMENTATION_DIR=${segmentation_dir%/}
+echo  "Using segmentation model from: ${SEGMENTATION_DIR}"
 
 if [[ -d "$MRCPATH" ]]; then
   MRCDIR=$(basename "$MRCPATH")
