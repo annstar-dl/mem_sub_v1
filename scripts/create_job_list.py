@@ -89,7 +89,7 @@ def create_job_list(data_dir_path, job_file_path,save_dir_path,
         f"export SAVEDIR={save_dir_path};"
         f"export SAVE_ANGLE={save_angle_flag};"
         f"export SAVE_SUB={save_sub_flag};")
-    if nb_of_jobs is None:
+    if nb_of_jobs == -1:
         nb_of_jobs = len(filelist)
     nb_of_jobs_iter = 0
 
@@ -173,7 +173,7 @@ if __name__ == "__main__":
     args.add_argument("-ddp","--data_dir_path", type=str, help="Path to the directory containing MRC files")
     args.add_argument("-jfp", "--job_file_path", type=str, default=None, help="Path to the txt job file to create")
     args.add_argument("-savedp", "--save_dir_path", type=str, help="Path to the dir where results will be saved")
-    args.add_argument("-n", "--nb_of_jobs", type=int, help="Number of jobs to create, if None all files will be processed", default=None)
+    args.add_argument("-n", "--nb_of_jobs", type=int, help="Number of jobs to create, if -1 all files will be processed", default=-1)
     args.add_argument("--save_angle_flag", type=int, help="Flag to save angle information (1 to save, 0 otherwise)", default=0)
     args.add_argument("--save_sub_flag", type=int, help="Flag to save subtracted images (1 to save, 0 otherwise)", default=0)
     parsed_args = args.parse_args()

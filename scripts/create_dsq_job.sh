@@ -2,7 +2,7 @@
 #create a job_list for dsq submission
 #Note: slurm jobs start in the directory from which your job was submitted.
 if [ "$#" -ne 6 ]; then
-    echo "Usage: $0 DATASET_PATH SAVE_DIR_PATH JOB_ARRAY_NAME SAVE_ANGLE SAVE_SUB SHOW_OUTPUT"
+    echo "Usage: $0 DATASET_PATH SAVE_DIR_PATH JOB_ARRAY_NAME SAVE_ANGLE SAVE_SUB [show_output] [nb_of_jobs]"
     exit 1
 fi
 DATASET_PATH=$1
@@ -10,7 +10,9 @@ SAVE_DIR_PATH=$2
 JOB_ARRAY_NAME=$3
 SAVE_ANGLE=$4
 SAVE_SUB=$5
-SHOW_OUTPUT=$6
+nb_of_jobs="${6:- -1}"
+show_output="${7: -0}"
+
 TIMESTEMP=$(date +"%Y%m%d_%H%M%S")
 module load miniconda
 module load dSQ
@@ -19,6 +21,7 @@ conda activate ves_seg
 python scripts/create_job_list.py -ddp ${DATASET_PATH} -jfp "./joblist.txt" \
     -savedp ${SAVE_DIR_PATH} --save_angle_flag=${SAVE_ANGLE} \
     --save_sub_flag=${SAVE_SUB} \
+    --nb_of_jobs=${nb_of_jobs}
 # check if jobfile is not empty
 if [ -s joblist.txt ]; then
   #Now create the dsq job submission script
