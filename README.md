@@ -7,6 +7,8 @@ For any questions or issues, please contact the Anna Starynska (anna.starynska@y
 - [Installation](#installation)
 - [Requirements](#requirements)
 - [Usage](#usage)
+- [First run](#first_run)
+- [Change Hyperparameters](#change-hyperparameters)
 ### Features
 - Automated membrane outline detection
 - High-performance subtraction algorithms
@@ -130,3 +132,5 @@ Also allow the script to print the output of the DSQ jobs to the log files, so y
 After the first run, check the output folder to see if the results are as expected.
 If not send us the .out file with the log output of the DSQ jobs, which you can find in the root of project directory.
 
+### Change Hyperparameters
+You can change the hyperparameters of the segmentation and subtraction process by modifying the `parameters.yml` file, which is located in the project directory. This file contains various parameters that control the behavior of the subtraction algorithms, such as grid step, bases radius and etc.
