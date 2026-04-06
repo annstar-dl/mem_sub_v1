@@ -18,17 +18,18 @@ For any questions or issues, please contact the Anna Starynska (anna.starynska@y
 - GPU with CUDA support (optional but recommended for performance)
 - Packages listed in `environment.yml`
 ### Usage
-1. Clone the repository:
+1. Clone the repository. Set the branch name to latest release version (you can find the list of release tags on the right-hand side.) 
+You can clone the repository using the following command (replace v1.0.0 with your actual release tag):
 ```bash
-git clone https://github.com/annstar-dl/mem_sub_v1
-#go to the repository directory
-cd mem_sub_v1
+  git clone --branch v1.0.0 --depth 1 https://github.com/annstar-dl/mem_sub_v1
 ```
 2. Installation of dependencies and environment setup:
     1. Create a new conda environment and install the required packages using the provided `environment.yml` file:
         
         - For desktop or local machine usage:
             ```bash
+            #go to the repository directory
+            cd mem_sub_v1
             # Create a new environment from the YAML file
             conda env_name create -f environment.yml
             conda activate mem_sub
