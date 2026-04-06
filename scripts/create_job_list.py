@@ -54,7 +54,7 @@ def read_filelist(filelist_path):
     return file_paths
 
 def create_job_list(data_dir_path, job_file_path,save_dir_path,
-                    nb_of_jobs, batch_size, file_mode,save_angle_flag=0, save_sub_flag=0):
+                    nb_of_jobs, batch_size, seg_dir_path, file_mode,save_angle_flag=0, save_sub_flag=0):
     """
     Create a job list file containing paths of all files in the input directory.
 
@@ -63,6 +63,7 @@ def create_job_list(data_dir_path, job_file_path,save_dir_path,
         job_file_path (str): Path to the job file to create (will be overwritten).
         nb_of_jobs (int): Maximum number of job batches to write (use None for all).
         batch_size (int): Number of files per batch written on each line.
+        seg_dir_path (str): Path to the directory with membrane segmentation model. IF empty then set to default in file seg_mrc.sh
         file_mode (str): Mode to write into a jobfile, "w" or "a".
         save_angle_flag (int): Flag to indicate whether to save the angles.
         save_sub_flag (int): Flag to indicate whether to save the subtracted MRCs.
@@ -94,6 +95,8 @@ def create_job_list(data_dir_path, job_file_path,save_dir_path,
         f"export SAVE_ANGLE={save_angle_flag};"
         f"export SAVE_SUB={save_sub_flag};"
         )
+    if seg_dir_path != "":
+        prefix = prefix + f"export SEGMENTATION_DIR={seg_dir_path};"
 
     if nb_of_jobs == -1:
         nb_of_jobs = math.ceil(len(filelist)/batch_size)
@@ -181,6 +184,7 @@ if __name__ == "__main__":
     args.add_argument("-savedp", "--save_dir_path", type=str, help="Path to the dir where results will be saved")
     args.add_argument("-jfp", "--job_file_path", type=str, default=None, help="Path to the txt job file to create")
     args.add_argument("-n", "--nb_of_jobs", type=int, help="Number of jobs to create, if -1 all files will be processed", default=-1)
+    args.add_argument("--seg_dir_path", type=str, help="Path to the directory with membrane segmentation model. IF empty then set to default in file seg_mrc.sh")
     args.add_argument("--save_angle_flag", type=int, help="Flag to save angle information (1 to save, 0 otherwise)", default=0)
     args.add_argument("--save_sub_flag", type=int, help="Flag to save subtracted images (1 to save, 0 otherwise)", default=0)
     parsed_args = args.parse_args()
@@ -195,6 +199,7 @@ if __name__ == "__main__":
                             save_dir_path=os.path.join(parsed_args.save_dir_path, sub_dir_name),
                             nb_of_jobs=args.nb_of_jobs,
                             batch_size=batch_size,
+                            seg_dir_path=parsed_args.seg_dir_path,
                             file_mode="a",
                             save_angle_flag=parsed_args.save_angle_flag,
                             save_sub_flag=parsed_args.save_sub_flag)
