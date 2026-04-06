@@ -36,7 +36,13 @@ fi
 echo "nvidia-smi output:"
 nvidia-smi
 
-bash scripts/seg_mrc.sh "${IMGPATH}" "${SAVEDIR}/misc"
+if [ -n "${SEGMENTATION_DIR}" ]; then
+    SEGMENTATION_DIR="${SEGMENTATION_DIR%/}"
+    bash scripts/seg_mrc.sh "${IMGPATH}" "${SAVEDIR}/misc" "${SEGMENTATION_DIR}"
+else
+    bash scripts/seg_mrc.sh "${IMGPATH}" "${SAVEDIR}/misc"
+fi
+
 echo "Segmentation completed. Saved results in ${SAVEDIR}/misc"
 # Subtract the predicted masks from the original micrographs
 if [[ $SAVE_ANGLE -eq 1 ]] && [[ $SAVE_SUB -eq 1 ]]; then

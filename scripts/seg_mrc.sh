@@ -1,11 +1,14 @@
 #!/bin/bash
 
-
+if [ "$#" -lt 2 ]; then
+    echo "Usage: $0 MRC_PATH SAVE_DIR [SEGMENTATION_DIR]"
+    exit 1
+fi
 
 MRCPATH=$1
 SAVEDIR=$2
-
-SEGMENTATION_DIR="membrane_seg/seg_model/mem_mad_2026_march_warmup_lr0012_200000"
+segmentation_dir="${3:-"membrane_seg/seg_model/mem_mad_2026_march_warmup_lr_0005_500000"}"
+SEGMENTATION_DIR=${SEGMENTATION_DIR%/}
 
 if [[ -d "$MRCPATH" ]]; then
   MRCDIR=$(basename "$MRCPATH")
