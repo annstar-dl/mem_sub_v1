@@ -76,8 +76,11 @@ Here is the explanation of the parameters:
 - `job_array_name`: A name for the job array, which will be used to identify the jobs in the DSQ scheduler, e.g. liposome.
 - `save_angle`: A flag (0 or 1) indicating whether to save the angle information of the segmented membranes.
 - `save_sub`: A flag (0 or 1) indicating whether to save the subtracted images.
-- `show_output`: A flag (0 or 1) indicating whether to print the output of the DSQ jobs to the log files.
-- 
+- `nb_of_jobs`: (optinal argument) How many jobs to run. If you want to process all the micrographs set do not set it at all. 
+                For the test run set it to 1.
+- `show_output`: (optinal argument) A flag (0 or 1) indicating whether to print the output of the DSQ jobs to the log files.
+                Default is 0, which means that the output will not be printed to the log files. 
+
 After running script/create_dsq_jobs.sh it will print out a line:
 - `To submit the job array, run: sbatch liposome_12345678.sh`
 Paste this command into the terminal to submit the job array to the DSQ scheduler.
