@@ -10,8 +10,9 @@ SAVE_DIR_PATH=$2
 JOB_ARRAY_NAME=$3
 SAVE_ANGLE=$4
 SAVE_SUB=$5
-nb_of_jobs="${6:--1}"
-show_output="${7:-0}"
+show_output="${6:-0}"
+nb_of_jobs="${7:--1}"
+
 
 TIMESTEMP=$(date +"%Y%m%d_%H%M%S")
 module load miniconda
