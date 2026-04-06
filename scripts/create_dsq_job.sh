@@ -1,7 +1,7 @@
 #!/bin/bash
 #create a job_list for dsq submission
 #Note: slurm jobs start in the directory from which your job was submitted.
-if [ "$#" -ne 6 ]; then
+if [ "$#" -ne 7 ]; then
     echo "Usage: $0 DATASET_PATH SAVE_DIR_PATH JOB_ARRAY_NAME SAVE_ANGLE SAVE_SUB [show_output] [nb_of_jobs]"
     exit 1
 fi
