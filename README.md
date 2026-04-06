@@ -94,6 +94,7 @@ Here is the explanation of the parameters:
 - `nb_of_jobs`: (optinal argument) How many jobs to run. If you want to process all the micrographs set do not set it at all. 
                 For the test run set it to 1.
 - `seg_dir`: (optinal argument) Path to the directory with segmentation model. If not set, it will be taken from the SEGMENTATION_DIR variable in the `script/seg_mrc.sh` script.
+
 After running script/create_dsq_jobs.sh it will print out a line:
 - `To submit the job array, run: sbatch liposome_12345678.sh`
 Paste this command into the terminal to submit the job array to the DSQ scheduler.
