@@ -36,8 +36,6 @@ fi
 echo "nvidia-smi output:"
 nvidia-smi
 
-mkdir -p "${SAVEDIR}/misc/${MRC_DIR}"
-
 bash scripts/seg_mrc.sh "${IMGPATH}" "${SAVEDIR}/misc"
 echo "Segmentation completed. Saved results in ${SAVEDIR}/misc"
 # Subtract the predicted masks from the original micrographs

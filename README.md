@@ -100,5 +100,5 @@ The structure of the output folder will be as follows:
     ├─────subtracted_png_ds/ # Downsampled after membrane subtraction in png format
     ├─────membranes/ # Images of membrane estimates in png format
     |─────membranes_ds/ # Downsampled images of membrane estimates in png format`
-Additionally original mrc files are copied to the output folder for convenience. This could be prevented by commenting out "cp -r $2 ." line in the `seg_subtract.sh` script.
+```
 
