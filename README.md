@@ -7,7 +7,7 @@ For any questions or issues, please contact the Anna Starynska (anna.starynska@y
 - [Installation](#installation)
 - [Requirements](#requirements)
 - [Usage](#usage)
-- [First run](#first_run)
+- [First run](#first-run)
 - [Change Hyperparameters](#change-hyperparameters)
 ### Features
 - Automated membrane outline detection
