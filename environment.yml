@@ -1,6 +1,7 @@
 name: ves_seg
 channels:
   - defaults
+  - conda-forge
 dependencies:
   - imageio
   - mrcfile=1.5.4
