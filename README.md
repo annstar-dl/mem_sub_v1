@@ -9,6 +9,7 @@ For any questions or issues, please contact the Anna Starynska (anna.starynska@y
 - [Usage](#usage)
 - [First run](#first-run)
 - [Change Hyperparameters](#change-hyperparameters)
+- [License](#license)
 ### Features
 - Automated membrane outline detection
 - High-performance subtraction algorithms
@@ -135,3 +136,6 @@ If not send us the .out file with the log output of the DSQ jobs, which you can 
 
 ### Change Hyperparameters
 You can change the hyperparameters of the segmentation and subtraction process by modifying the `parameters.yml` file, which is located in the project directory. This file contains various parameters that control the behavior of the subtraction algorithms, such as grid step, bases radius and etc.
+
+### License
+This project is licensed under the BSD 3 License. See the LICENSE file for more details.
