@@ -4,6 +4,12 @@ IMGPATH=$1
 SAVEDIR=$2
 SAVE_ANGLE=1
 SAVE_SUB=1
+segdir="${3:-""}"
+if [ -n "${segdir}" ]; then
+    SEGMENTATION_DIR="${segdir%/}"
+    export SEGMENTATION_DIR
+    echo  "Using segmentation model from: ${SEGMENTATION_DIR}"
+fi
 
 
 export LD_LIBRARY_PATH="$CONDA_PREFIX/lib:$LD_LIBRARY_PATH"
