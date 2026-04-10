@@ -49,6 +49,9 @@ def convert_file(args: argparse.Namespace) -> None:
             border = args.border_size
         data, logs = downsample_micrograph(data, voxel_size[0], border, "center", return_logs=True,
                                            subtract_mean=args.sub_mean)
+        # save downsampling parameters to json
+        logs_path = os.path.join(args.logs_dir, os.path.splitext(os.path.basename(args.file_path))[0] + ".json")
+        save_json(logs, logs_path)
     basename, _ = os.path.splitext(os.path.basename(args.file_path))
     # stretch contrast
     if args.scale:
@@ -61,9 +64,8 @@ def convert_file(args: argparse.Namespace) -> None:
     # save as jpg or png
     elif args.format == "jpeg" or args.format == "jpg" or args.format == "png":
         io.imsave(os.path.join(args.out_dir, f"{basename}.{args.format}"), data)
-    # save downsampling parameters to json
-    logs_path = os.path.join(args.logs_dir, os.path.splitext(os.path.basename(args.file_path))[0] + ".json")
-    save_json(logs, logs_path)
+
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
