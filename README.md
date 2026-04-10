@@ -55,8 +55,8 @@ You can clone the repository using the following command (replace v1.0.0 with yo
       conda activate ves_seg
       pip install -e .
       ```
-3. Download the pretrained U-Net model weights, and file with preprocessing parameters from the provided link and place them in the appropriate directory. 
-    From the provided link, download folder with .onnx and .yml files and place this directory in the membrane_seg/seg_model/ directory.
+3. Download the pretrained U-Net model weights, and file with preprocessing parameters from the provided link (link is provided by request) and place them in the appropriate directory. 
+From the provided link, download folder with .onnx and .yml files and place this directory in the membrane_seg/seg_model/ directory.
    For example, if you downloaded the folder with name "mem_mad_2026_march_warmup_lr0012_200000". The membrane_seg/seg_model/ directory should look like this:
    ```
    membrane_seg/seg_model/
