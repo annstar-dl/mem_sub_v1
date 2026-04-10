@@ -133,6 +133,7 @@ def downsample_micrograph(data: np.ndarray, voxel_size: float, border, cropping_
         downsampling_log["mean_of_cropped_image"] = float(data_mean)
         # subtract mean before downsampling
         if subtract_mean:
+            print("Mean is subtracted during downsampling")
             data = data - data_mean
         # Apply fuzzy rectangle mask to the data to reduce edge artifacts
         if border > 0:
