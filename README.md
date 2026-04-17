@@ -102,7 +102,7 @@ Paste this command into the terminal to submit the job array to the DSQ schedule
 
 Here is an example of how to run the script with all parameters:
 ```bash
-   bash script/create_dsq_jobs.sh /path/to/dataset/folder /path/to/save/results/folder kv_protein 0 1 0
+   bash script/create_dsq_jobs.sh /path/to/dataset/folder /path/to/save/results/folder kv_protein 0 1 0 0
 ```
 This command will create a job array named "kv_protein", which will process the mrc files in the specified dataset folder, save the subtracted images, but not save the angle information of the segmented membranes. The output of the DSQ jobs will not be printed to the log files.
 
