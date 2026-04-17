@@ -129,7 +129,7 @@ For the first run, we recommend testing our code on a small subset of data to en
 You do not need to create a separate set, simply run the DSQ job creating script for a single job, which will process only 10 images.
 Also allow the script to print the output of the DSQ jobs to the log files, so you can see if there are any errors or issues with the processing.
 ```bash
-    bash script/create_dsq_jobs.sh /path/to/dataset/folder /path/to/save/results/folder job_array_name save_angle save_sub 1 1 1 1
+    bash script/create_dsq_jobs.sh /path/to/dataset/folder /path/to/save/results/folder job_array_name 1 1 1 1
 ```
 After the first run, check the output folder to see if the results are as expected.
 If not send us the .out file with the log output of the DSQ jobs, which you can find in the root of project directory.

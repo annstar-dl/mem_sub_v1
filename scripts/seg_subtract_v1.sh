@@ -75,8 +75,5 @@ else
     fi
 fi
 
-if [[ $PROCESS_DIR -eq 1 ]]; then
-    echo "Segmentation and subtraction completed for directory: ${INPUTDIR}. Saved results in ${SAVEDIR}/misc/${MRC_DIR}"
-else
-    echo "Segmentation and subtraction completed for file: ${IMGPATH}. Saved results in ${SAVEDIR}/misc/${MRC_DIR}/${FILENAME}"
-fi
+
+echo "Segmentation and subtraction completed for directory: ${INPUTDIR}. Saved results in ${SAVEDIR}"
