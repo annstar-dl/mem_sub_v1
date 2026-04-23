@@ -1,0 +1,3 @@
+v1.0-submission_nature_methods: Verified on the data 2026_march_separated_membrane generated in non-editable environment, that it is the same data as the one used in the original submission for training the model mem_mad_2026_march_warmup_lr_0005_500000.
+The difference between the images downsampled for mem_mad_2026_march_warmup_lr_0005_500000 by code after commit 3029219dafe534dd1ee51fbcc6003152f4256648 and downsampled after commit https://github.com/annstar-dl/mem_sub_v1/commit/b81b3110cd09420e8edb11bf079d2d9a0ede101a on Apr 23 11:40 is 0, which means that they are identical.
+This difference is calculated by the following code: membrane_subtraction_experiments_v0/resample_dataset/check_if_data_is_the_same.py commit 764fdb5a on 4/23/26 at 10:34AM
