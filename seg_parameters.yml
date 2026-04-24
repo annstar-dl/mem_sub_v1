@@ -1,0 +1,2 @@
+description: Parameters of Membrane Subtraction
+model_dir: "membrane_seg/seg_model/mem_mad_2026_march_warmup_lr_0005_500000"

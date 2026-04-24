@@ -1,15 +1,20 @@
 #!/bin/bash
 
-if [ "$#" -lt 2 ]; then
-    echo "Usage: $0 MRC_PATH SAVE_DIR [segmentation_dir]"
+if [ "$#" -lt 3 ]; then
+    echo "Usage: $0 MRC_PATH SAVE_DIR SAVE_HASH_FLAG"
     exit 1
 fi
 
 MRCPATH=$1
 SAVEDIR=$2
-segmentation_dir="${3:-"membrane_seg/seg_model/mem_mad_2026_march_warmup_lr_0005_500000"}"
+SAVE_HASH_FLAG=$3
+segmentation_dir=$(python -c "import yaml; cfg=yaml.safe_load(open('seg_parameters.yml')); print(cfg['model_dir'])")
 SEGMENTATION_DIR=${segmentation_dir%/}
 echo  "Using segmentation model from: ${SEGMENTATION_DIR}"
+
+if [[ $SAVE_HASH_FLAG -eq 1 ]]; then
+    python scripts/record_hash.py -dp "${SAVEDIR}" --save_seg_dir
+fi
 
 if [[ -d "$MRCPATH" ]]; then
   MRCDIR=$(basename "$MRCPATH")

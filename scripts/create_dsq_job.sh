@@ -2,7 +2,7 @@
 #create a job_list for dsq submission
 #Note: slurm jobs start in the directory from which your job was submitted.
 if [ "$#" -lt 5 ]; then
-    echo "Usage: $0 DATASET_PATH SAVE_DIR_PATH JOB_ARRAY_NAME SAVE_ANGLE SAVE_SUB [show_output] [nb_of_jobs] [seg_dir]"
+    echo "Usage: $0 DATASET_PATH SAVE_DIR_PATH JOB_ARRAY_NAME SAVE_ANGLE SAVE_SUB [show_output] [nb_of_jobs]"
     exit 1
 fi
 DATASET_PATH=$1
@@ -12,19 +12,33 @@ SAVE_ANGLE=$4
 SAVE_SUB=$5
 show_output="${6:-0}"
 nb_of_jobs="${7:--1}"
-seg_dir="${8:-""}"
+
+if [[ ! -f "${SAVEDIR_DIR_PATH}/parameters.yml" ]]; then
+  cp parameters.yml "${SAVEDIR_DIR_PATH}/parameters.yml"
+else
+  echo "parameters.yaml already exists in ${SAVEDIR_DIR_PATH}. Not copying to avoid overwriting."
+  exit 1
+fi
+
 
 
 TIMESTEMP=$(date +"%Y%m%d_%H%M%S")
 module load miniconda
 module load dSQ
 conda activate ves_seg
+
+if [[ ! -f "${SAVEDIR_DIR_PATH}/seg_config.yml" ]]; then
+  python scripts/record_hash.py -dp "${SAVEDIR_DIR_PATH}" --save_seg_dir
+else
+  echo "seg_config.yml already exists in ${SAVEDIR_DIR_PATH}. Not creating to avoid overwriting."
+  exit 1
+fi
 # the joblist.txt will be created in the current directory
 python scripts/create_job_list.py -ddp ${DATASET_PATH} -jfp "./joblist.txt" \
     -savedp ${SAVE_DIR_PATH} --save_angle_flag=${SAVE_ANGLE} \
     --save_sub_flag=${SAVE_SUB} \
     --nb_of_jobs=${nb_of_jobs} \
-    --seg_dir_path="${seg_dir}"
+
 # check if jobfile is not empty
 if [ -s joblist.txt ]; then
   #Now create the dsq job submission script

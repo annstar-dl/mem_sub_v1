@@ -1,6 +1,7 @@
 #!/bin/bash
 
 IMGPATH=$1
+SAVE_HASH_FLAG=$2
 # create a new directory to store the results
 # Normalize SAVEDIR: remove trailing slash if present
 # This ensures basename and later path concatenations work whether the user
@@ -36,12 +37,8 @@ fi
 echo "nvidia-smi output:"
 nvidia-smi
 
-if [ -n "${SEGMENTATION_DIR}" ]; then
-    SEGMENTATION_DIR="${SEGMENTATION_DIR%/}"
-    bash scripts/seg_mrc.sh "${IMGPATH}" "${SAVEDIR}/misc" "${SEGMENTATION_DIR}"
-else
-    bash scripts/seg_mrc.sh "${IMGPATH}" "${SAVEDIR}/misc"
-fi
+bash scripts/seg_mrc.sh "${IMGPATH}" "${SAVEDIR}/misc" $SAVE_HASH_FLAG
+
 
 echo "Segmentation completed. Saved results in ${SAVEDIR}/misc"
 # Subtract the predicted masks from the original micrographs
@@ -74,6 +71,5 @@ else
     --out_format_mem "mrc" "png"
     fi
 fi
-
 
 echo "Segmentation and subtraction completed for directory: ${INPUTDIR}. Saved results in ${SAVEDIR}"
