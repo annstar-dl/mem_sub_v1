@@ -9,7 +9,7 @@ description = "Scientific framework for membrane subtraction and membrane estima
 readme = "README.md"
 requires-python = ">=3.9"
 license = { text = "MIT" }
-authors = [ { name = "Anna Starynska" } ]
+authors = [ { name = "Anna Starynska, Hemant Tagare" } ]
 
 # Runtime dependencies - edit to match your environment if needed
 dependencies = []
