@@ -5,6 +5,14 @@ SAVEDIR=$2
 SAVE_ANGLE=1
 SAVE_SUB=1
 segdir="${3:-""}"
+
+if [[ -f "${SAVEDIR}" ]]; then
+  echo "The directory ${SAVEDIR} already exists. Please choose a different directory or remove the existing one."
+  exit 1
+fi
+mkdir -p "$SAVEDIR"
+cp "parameters.yml" "${SAVEDIR}/parameters.yml"
+
 if [ -n "${segdir}" ]; then
     SEGMENTATION_DIR="${segdir%/}"
     export SEGMENTATION_DIR

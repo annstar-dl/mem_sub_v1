@@ -13,7 +13,13 @@ SAVE_SUB=$5
 show_output="${6:-0}"
 nb_of_jobs="${7:--1}"
 seg_dir="${8:-""}"
-
+#copy the yml parameter file in the same directory as results add a timestamp to avoid overwriting previous results
+if [[ -f "${SAVE_DIR_PATH}" ]]; then
+  echo "The directory ${SAVE_DIR_PATH} already exists. Please choose a different directory or remove the existing one."
+  exit 1
+fi
+mkdir -p "${SAVE_DIR_PATH}"
+cp "parameters.yml" "${SAVE_DIR_PATH}/parameters.yml"
 
 TIMESTEMP=$(date +"%Y%m%d_%H%M%S")
 module load miniconda

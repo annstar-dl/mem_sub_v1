@@ -11,6 +11,18 @@ segmentation_dir="${3:-"membrane_seg/seg_model/mem_mad_2026_march_warmup_lr_0005
 SEGMENTATION_DIR=${segmentation_dir%/}
 echo  "Using segmentation model from: ${SEGMENTATION_DIR}"
 
+# if child folder is not misc, create the folder and copy the parameters.yml file
+# else this script is being called by seg_subtract_v1.sh and the parameters.yml file is already in the misc folder, so we don't need to copy it again
+child_folder="$(basename -- "$SAVEDIR")"
+if [[ "$child_folder" != "misc" ]]; then
+    if [[ -d "${SAVEDIR}" ]]; then
+      echo "The directory ${SAVEDIR} already exists. Please choose a different directory or remove the existing one."
+      exit 1
+    fi
+    mkdir -p "$SAVEDIR"
+    cp "parameters.yml" "${SAVEDIR}/parameters.yml"
+fi
+
 if [[ -d "$MRCPATH" ]]; then
   MRCDIR=$(basename "$MRCPATH")
   DS_MICROGRAPHS_PATH="${SAVEDIR}/${MRCDIR}_jpg_ds"
