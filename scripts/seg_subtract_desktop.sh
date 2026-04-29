@@ -13,6 +13,10 @@ fi
 mkdir -p "$SAVEDIR"
 cp "parameters.yml" "${SAVEDIR}/parameters.yml"
 
+if [[ ! -f "${SAVEDIR}/exp_config.yml" ]]; then
+ python "tools/record_hash.py" -sp "${SAVEDIR}"
+fi
+
 if [ -n "${segdir}" ]; then
     SEGMENTATION_DIR="${segdir%/}"
     export SEGMENTATION_DIR

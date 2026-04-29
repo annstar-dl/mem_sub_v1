@@ -21,12 +21,17 @@ if [[ "$child_folder" != "misc" ]]; then
     fi
     mkdir -p "$SAVEDIR"
     cp "parameters.yml" "${SAVEDIR}/parameters.yml"
+    #save commit hash of the current code in a yml file in the savedir if it doesn't already exist, this is useful for later reference and to avoid confusion about which code was used for segmentation
+    if [[ ! -f "${SAVEDIR}/exp_config.yml" ]]; then
+     python "tools/record_hash.py" -sp "${SAVEDIR}"
+    fi
 fi
 
 #save the segmentation model path in a text file in the savedir if it doesn't already exist, this is useful for later reference and to avoid confusion about which model was used for segmentation
 if [[ ! -f "${SAVEDIR}/seg_model.txt" ]]; then
   echo "segmentation model: ${SEGMENTATION_DIR}" > "${SAVEDIR}/seg_model.txt"
 fi
+
 
 if [[ -d "$MRCPATH" ]]; then
   MRCDIR=$(basename "$MRCPATH")

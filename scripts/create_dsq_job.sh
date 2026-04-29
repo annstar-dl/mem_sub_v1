@@ -21,10 +21,15 @@ fi
 mkdir -p "${SAVE_DIR_PATH}"
 cp "parameters.yml" "${SAVE_DIR_PATH}/parameters.yml"
 
+
 TIMESTEMP=$(date +"%Y%m%d_%H%M%S")
 module load miniconda
 module load dSQ
 conda activate ves_seg
+
+if [[ ! -f "${SAVE_DIR_PATH}/exp_config.yml" ]]; then
+ python "tools/record_hash.py" -sp "${SAVE_DIR_PATH}"
+fi
 # the joblist.txt will be created in the current directory
 python scripts/create_job_list.py -ddp ${DATASET_PATH} -jfp "./joblist.txt" \
     -savedp ${SAVE_DIR_PATH} --save_angle_flag=${SAVE_ANGLE} \
