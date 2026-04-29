@@ -3,4 +3,5 @@ __pycache__/
 membrane_seg/seg_model/*
 !membrane_seg/seg_model/.gitkeep
 mem_sub.egg-info/
+dsq_files/
 
