@@ -47,7 +47,7 @@ if [[ $SAVE_ANGLE -eq 1 ]] && [[ $SAVE_SUB -eq 1 ]]; then
  --out_format_sub "mrc" "png" \
   --out_format_mem "mrc" "png" "npy"\
   --save_angle \
-  --save_subtraction
+  --save_subtraction \
   --par_fpath "${PAR_FPATH}"
 else
     if [[ $SAVE_ANGLE -eq 1 ]]; then
@@ -55,7 +55,7 @@ else
    -dp ${SAVEDIR} -ip "${IMGPATH}" \
    --out_format_sub "mrc" "png" \
     --out_format_mem "mrc" "png" \
-    --save_angle
+    --save_angle \
     --par_fpath "${PAR_FPATH}"
 
     elif [[ $SAVE_SUB -eq 1 ]]; then
@@ -63,14 +63,14 @@ else
    -dp ${SAVEDIR} -ip "${IMGPATH}" \
    --out_format_sub "mrc" "png" \
     --out_format_mem "mrc" "png" \
-    --save_subtraction
+    --save_subtraction \
     --par_fpath "${PAR_FPATH}"
 
     else
         python "tools/run_mrc_subtraction.py" \
    -dp ${SAVEDIR} -ip "${IMGPATH}" \
    --out_format_sub "mrc" "png" \
-    --out_format_mem "mrc" "png"
+    --out_format_mem "mrc" "png" \
     --par_fpath "${PAR_FPATH}"
     fi
 fi
