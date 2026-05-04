@@ -20,7 +20,7 @@ if [[ -f "${SAVEDIR}/parameters.yml" ]]; then
   else
     echo "parameters.yml already exists in ${SAVEDIR} and is the same as the current parameters.yml. No need to copy."
   fi
-else
+  else
   cp "parameters.yml" "${SAVEDIR}/parameters.yml"
 fi
 

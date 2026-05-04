@@ -16,11 +16,18 @@ echo  "Using segmentation model from: ${SEGMENTATION_DIR}"
 child_folder="$(basename -- "$SAVEDIR")"
 if [[ "$child_folder" != "misc" ]]; then
     mkdir -p "$SAVEDIR"
-    if ! cmp -s "parameters.yml" "${SAVEDIR}/parameters.yml"; then
-      echo "Error: ${SAVEDIR}/parameters.yml already exists and is different from the current parameters.yml. Please fix this before running the script."
-    exit 1
+    if [[ -f "${SAVEDIR}/parameters.yml" ]]; then
+      #chekc if "${SAVE_DIR_PATH}/parameters.yml" is the same as "parameters.yml" in the current directory, if not copy the new one
+      #if not copy the exit the code and request to fix the parameters.yml file
+      #in the future change this to use old "${SAVE_DIR_PATH}/parameters.yml" as parameters.yml file, when the path to that file becomes an argument
+      if ! cmp -s "parameters.yml" "${SAVEDIR}/parameters.yml"; then
+        echo "Error: ${SAVEDIR}/parameters.yml already exists and is different from the current parameters.yml. Please fix this before running the script."
+      exit 1
+      else
+        echo "parameters.yml already exists in ${SAVEDIR} and is the same as the current parameters.yml. No need to copy."
+      fi
     else
-      echo "parameters.yml already exists in ${SAVEDIR} and is the same as the current parameters.yml. No need to copy."
+      cp "parameters.yml" "${SAVEDIR}/parameters.yml"
     fi
     #save commit hash of the current code in a yml file in the savedir if it doesn't already exist, this is useful for later reference and to avoid confusion
     python "scripts/record_hash.py" -sp "${SAVEDIR}"
