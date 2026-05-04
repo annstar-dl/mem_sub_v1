@@ -14,14 +14,8 @@ def get_repository_path() -> str:
     return subprocess.check_output(['git', 'rev-parse', '--show-toplevel']).decode('ascii').strip()
 
 def save_yaml_file(save_path: str, data: dict) -> None:
-
-    if not os.path.isfile(save_path):
-        with open(save_path, 'w') as f:
-            yaml.dump(data, f)
-    else:
-        raise Exception(f"File '{os.path.basename(save_path)}' already exists!. Delete the experiment folder or change the save path to avoid overwriting.")
-
-
+    with open(save_path, 'w') as f:
+        yaml.dump(data, f)
 
 def get_conda_env_info() -> dict:
     conda_env = os.environ.get("CONDA_DEFAULT_ENV", "unknown")
@@ -65,6 +59,11 @@ def save_metadata(save_path, script_args=None) -> None:
     check_git_status()
     caller_frame = inspect.stack()[1]
     d = create_metadata(caller_frame=caller_frame, script_args=script_args)
+    if os.path.exists(save_path):
+        metadata_different = compare_metadata(save_path, script_args=script_args)
+        if metadata_different:
+            raise Exception(
+                f"Metadata file {save_path} and current project are not the same! Restore the project state or use new folder.")
     save_yaml_file(save_path, d)
 
 def load_yaml_file(fpath) -> dict:
@@ -93,14 +92,8 @@ if __name__ == "__main__":
     args = argparse.ArgumentParser()
     args.add_argument("-sp",'--save_path', help="Path to saved results", required=True)
     args.add_argument("-fname", '--fname', help="Yml file name", default="exp_config")
-    args.add_argument("-c","--compare_metadata", help="compare_metadata", action="store_true")
     args = args.parse_args()
     save_path = os.path.join(args.save_path,args.fname+".yml")
-    if args.compare_metadata:
-       files_differenet = compare_metadata(save_path, vars(args))
-       if files_differenet:
-           raise Exception(f"Metadata file {save_path} and current project are not the same! Restore the project state or use new folder.")
-
     save_metadata(save_path)
 
 

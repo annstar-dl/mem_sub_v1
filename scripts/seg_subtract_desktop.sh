@@ -27,8 +27,6 @@ fi
 
 if [[ ! -f "${SAVEDIR}/exp_config.yml" ]]; then
   python "scripts/record_hash.py" -sp "${SAVEDIR}"
-else
-  python "scripts/record_hash.py" -sp "${SAVEDIR}" --compare_metadata
 fi
 
 if [ -n "${segdir}" ]; then

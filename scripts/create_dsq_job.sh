@@ -40,8 +40,6 @@ conda activate ves_seg
 
 if [[ ! -f "${SAVE_DIR_PATH}/exp_config.yml" ]]; then
   python "scripts/record_hash.py" -sp "${SAVE_DIR_PATH}"
-else
-  python "scripts/record_hash.py" -sp "${SAVE_DIR_PATH}" --compare_metadata
 fi
 
 mkdir -p "dsq_files"
