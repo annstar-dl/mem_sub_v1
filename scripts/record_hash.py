@@ -59,9 +59,7 @@ def save_metadata(save_path, script_args=None) -> None:
     check_git_status()
     caller_frame = inspect.stack()[1]
     d = create_metadata(caller_frame=caller_frame, script_args=script_args)
-    print(f"Metadata file is: '{save_path}'")
     if os.path.exists(save_path):
-        print(f"Metadata file {save_path} already exists!")
         metadata_different = compare_metadata(save_path, script_args=script_args)
         if metadata_different:
             raise Exception(
