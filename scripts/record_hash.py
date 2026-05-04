@@ -95,13 +95,12 @@ if __name__ == "__main__":
     args.add_argument("-fname", '--fname', help="Yml file name", default="exp_config")
     args.add_argument("-c","--compare_metadata", help="compare_metadata", action="store_true")
     args = args.parse_args()
-    d = create_metadata()
     save_path = os.path.join(args.save_path,args.fname+".yml")
     if args.compare_metadata:
-       files_differenet = compare_metadata(save_path, d)
+       files_differenet = compare_metadata(save_path, vars(args))
        if files_differenet:
            raise Exception(f"Metadata file {save_path} and current project are not the same! Restore the project state or use new folder.")
 
-    save_metadata(save_path, d)
+    save_metadata(save_path)
 
 
