@@ -16,7 +16,12 @@ echo  "Using segmentation model from: ${SEGMENTATION_DIR}"
 child_folder="$(basename -- "$SAVEDIR")"
 if [[ "$child_folder" != "misc" ]]; then
     mkdir -p "$SAVEDIR"
-    cp "parameters.yml" "${SAVEDIR}/parameters.yml"
+    if ! cmp -s "parameters.yml" "${SAVEDIR}/parameters.yml"; then
+      echo "Error: ${SAVEDIR}/parameters.yml already exists and is different from the current parameters.yml. Please fix this before running the script."
+    exit 1
+    else
+      echo "parameters.yml already exists in ${SAVEDIR} and is the same as the current parameters.yml. No need to copy."
+    fi
     #save commit hash of the current code in a yml file in the savedir if it doesn't already exist, this is useful for later reference and to avoid confusion
     python "scripts/record_hash.py" -sp "${SAVEDIR}"
 fi
@@ -24,6 +29,13 @@ fi
 #save the segmentation model path in a text file in the savedir if it doesn't already exist, this is useful for later reference and to avoid confusion about which model was used for segmentation
 if [[ ! -f "${SAVEDIR}/seg_model.txt" ]]; then
   echo "segmentation model: ${SEGMENTATION_DIR}" > "${SAVEDIR}/seg_model.txt"
+  else
+  if ! cmp -s <(echo "segmentation model: ${SEGMENTATION_DIR}") "${SAVEDIR}/seg_model.txt"; then
+      echo "Error: ${SAVEDIR}/seg_model.txt already exists and is different from the current segmentation model. Please fix this before running the script."
+    exit 1
+    else
+      echo "seg_model.txt already exists in ${SAVEDIR} and is the same as the current segmentation model. No need to copy."
+    fi
 fi
 
 
