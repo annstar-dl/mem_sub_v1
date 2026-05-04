@@ -94,9 +94,8 @@ def create_job_list(data_dir_path, job_file_path,save_dir_path,
         f"export SAVEDIR={save_dir_path};"
         f"export SAVE_ANGLE={save_angle_flag};"
         f"export SAVE_SUB={save_sub_flag};"
+        f"export SEGMENTATION_DIR={seg_dir_path};"
         )
-    if seg_dir_path != "":
-        prefix = prefix + f"export SEGMENTATION_DIR={seg_dir_path};"
 
     if nb_of_jobs == -1:
         nb_of_jobs = math.ceil(len(filelist)/batch_size)

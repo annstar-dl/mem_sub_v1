@@ -27,11 +27,7 @@ fi
 #record the current commit hash in a yml file in the savedir if it doesn't already exist, this is useful for later reference and to avoid confusion
 python "scripts/record_hash.py" -sp "${SAVEDIR}"
 
-if [ -n "${segdir}" ]; then
-    SEGMENTATION_DIR="${segdir%/}"
-    export SEGMENTATION_DIR
-    echo  "Using segmentation model from: ${SEGMENTATION_DIR}"
-fi
+
 
 
 export LD_LIBRARY_PATH="$CONDA_PREFIX/lib:$LD_LIBRARY_PATH"
@@ -43,4 +39,5 @@ done
 export SAVEDIR=$SAVEDIR
 export SAVE_ANGLE=$SAVE_ANGLE
 export SAVE_SUB=$SAVE_SUB
+export SEGMENTATION_DIR=$segdir
 bash scripts/seg_subtract_v1.sh "${IMGPATH}"

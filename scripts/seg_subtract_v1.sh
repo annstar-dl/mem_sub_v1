@@ -37,7 +37,7 @@ fi
 echo "nvidia-smi output:"
 nvidia-smi
 
-if [ -n "${SEGMENTATION_DIR}" ]; then
+if [[ -n "${SEGMENTATION_DIR}" ]]; then
     SEGMENTATION_DIR="${SEGMENTATION_DIR%/}"
     bash scripts/seg_mrc.sh "${IMGPATH}" "${SAVEDIR}/misc" "${SEGMENTATION_DIR}"
 else
