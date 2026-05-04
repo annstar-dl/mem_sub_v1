@@ -37,7 +37,7 @@ fi
 #save the segmentation model path in a text file in the savedir if it doesn't already exist, this is useful for later reference and to avoid confusion about which model was used for segmentation
 if [[ ! -f "${SAVEDIR}/seg_model.txt" ]]; then
   echo "segmentation model: ${SEGMENTATION_DIR}" > "${SAVEDIR}/seg_model.txt"
-  else
+else
     expected_content="segmentation model: ${SEGMENTATION_DIR}"
     existing_content=$(cat "${SAVEDIR}/seg_model.txt")
   if [[ "$expected_content" != "$existing_content" ]]; then
