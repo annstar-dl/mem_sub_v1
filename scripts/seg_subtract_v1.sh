@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 
 IMGPATH=$1
 # create a new directory to store the results

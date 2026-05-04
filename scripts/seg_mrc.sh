@@ -1,5 +1,6 @@
 #!/bin/bash
 set -euo pipefail
+
 if [ "$#" -lt 2 ]; then
     echo "Usage: $0 MRC_PATH SAVE_DIR [segmentation_dir]"
     exit 1
@@ -37,12 +38,14 @@ fi
 if [[ ! -f "${SAVEDIR}/seg_model.txt" ]]; then
   echo "segmentation model: ${SEGMENTATION_DIR}" > "${SAVEDIR}/seg_model.txt"
   else
-  if ! cmp -s <(echo "segmentation model: ${SEGMENTATION_DIR}") "${SAVEDIR}/seg_model.txt"; then
-      echo "Error: ${SAVEDIR}/seg_model.txt already exists and is different from the current segmentation model. Please fix this before running the script."
+    expected_content="segmentation model: ${SEGMENTATION_DIR}"
+    existing_content=$(cat "${SAVEDIR}/seg_model.txt")
+  if [[ "$expected_content" != "$existing_content" ]]; then
+    echo "Error: ${SAVEDIR}/seg_model.txt already exists and is different from the current segmentation model. Please fix this before running the script."
     exit 1
-    else
-      echo "seg_model.txt already exists in ${SAVEDIR} and is the same as the current segmentation model. No need to copy."
-    fi
+  else
+    echo "seg_model.txt already exists in ${SAVEDIR} and is the same as the current segmentation model. No need to copy."
+  fi
 fi
 
 
