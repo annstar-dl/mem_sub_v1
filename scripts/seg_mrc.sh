@@ -13,8 +13,9 @@ par_fpath="${4:-"parameters.yml"}"
 
 if [[ -n "${SEGMENTATION_DIR}" ]]; then
   SEGMENTATION_DIR="membrane_seg/seg_model/mem_mad_2026_march_warmup_lr_0005_500000"
+fi
 
-SEGMENTATION_DIR=${segmentation_dir%/}
+SEGMENTATION_DIR=${SEGMENTATION_DIR%/}
 echo  "Using segmentation model from: ${SEGMENTATION_DIR}"
 mkdir -p "$SAVEDIR"
 # if child folder is not misc, create the folder and copy the parameters.yml file
@@ -22,18 +23,18 @@ mkdir -p "$SAVEDIR"
 child_folder="$(basename -- "$SAVEDIR")"
 if [[ "$child_folder" != "misc" ]]; then
 
-    if [[ -f "${SAVEDIR}/${par_fpath.yml}" ]]; then
+    if [[ -f "${SAVEDIR}/${par_fpath}" ]]; then
       #chekc if "${SAVE_DIR_PATH}/parameters.yml" is the same as "parameters.yml" in the current directory, if not copy the new one
       #if not copy the exit the code and request to fix the parameters.yml file
       #in the future change this to use old "${SAVE_DIR_PATH}/parameters.yml" as parameters.yml file, when the path to that file becomes an argument
-      if ! cmp -s ${par_fpath.yml} "${SAVEDIR}/${par_fpath.yml}"; then
-        echo "Error: ${SAVEDIR}/${par_fpath.yml} already exists and is different from the current ${par_fpath.yml}. Please fix this before running the script."
+      if ! cmp -s ${par_fpath} "${SAVEDIR}/${par_fpath}"; then
+        echo "Error: ${SAVEDIR}/${par_fpath} already exists and is different from the current ${par_fpath}. Please fix this before running the script."
       exit 1
       else
-        echo "${par_fpath.yml} already exists in ${SAVEDIR} and is the same as the current ${par_fpath.yml}. No need to copy."
+        echo "${par_fpath} already exists in ${SAVEDIR} and is the same as the current ${par_fpath}. No need to copy."
       fi
     else
-      cp ${par_fpath.yml} "${SAVEDIR}/${par_fpath.yml}"
+      cp ${par_fpath} "${SAVEDIR}/${par_fpath}"
     fi
     #save commit hash of the current code in a yml file in the savedir if it doesn't already exist, this is useful for later reference and to avoid confusion
     python "scripts/record_hash.py" -sp "${SAVEDIR}"
