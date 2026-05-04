@@ -15,10 +15,6 @@ echo  "Using segmentation model from: ${SEGMENTATION_DIR}"
 # else this script is being called by seg_subtract_v1.sh and the parameters.yml file is already in the misc folder, so we don't need to copy it again
 child_folder="$(basename -- "$SAVEDIR")"
 if [[ "$child_folder" != "misc" ]]; then
-    if [[ -d "${SAVEDIR}" ]]; then
-      echo "The directory ${SAVEDIR} already exists. Please choose a different directory or remove the existing one."
-      exit 1
-    fi
     mkdir -p "$SAVEDIR"
     cp "parameters.yml" "${SAVEDIR}/parameters.yml"
     #save commit hash of the current code in a yml file in the savedir if it doesn't already exist, this is useful for later reference and to avoid confusion
