@@ -83,8 +83,6 @@ def compare_metadata(old_yml_path, script_args=None) -> None:
         if d_new[k] != v:
             print(f"Metadata field '{k}' is different! Old value: {v}, new value: {d_new[k]}")
             files_different = True
-    if not files_different:
-        print("Metadata files are the same (except for timestamp).")
     return files_different
 
 
