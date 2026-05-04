@@ -38,9 +38,8 @@ module load miniconda
 module load dSQ
 conda activate ves_seg
 
-if [[ ! -f "${SAVE_DIR_PATH}/exp_config.yml" ]]; then
-  python "scripts/record_hash.py" -sp "${SAVE_DIR_PATH}"
-fi
+#record the current commit hash in a yml file in the savedir if it doesn't already exist, this is useful for later reference and to avoid confusion
+python "scripts/record_hash.py" -sp "${SAVE_DIR_PATH}"
 
 mkdir -p "dsq_files"
 

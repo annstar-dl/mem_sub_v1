@@ -24,10 +24,8 @@ else
   cp "parameters.yml" "${SAVEDIR}/parameters.yml"
 fi
 
-
-if [[ ! -f "${SAVEDIR}/exp_config.yml" ]]; then
-  python "scripts/record_hash.py" -sp "${SAVEDIR}"
-fi
+#record the current commit hash in a yml file in the savedir if it doesn't already exist, this is useful for later reference and to avoid confusion
+python "scripts/record_hash.py" -sp "${SAVEDIR}"
 
 if [ -n "${segdir}" ]; then
     SEGMENTATION_DIR="${segdir%/}"
