@@ -137,23 +137,6 @@ def add_patches_to_image(patches, img, r, row_idxs, col_idxs):
     return img
 
 
-def read_parameter_from_yaml_file(parameter):
-    """
-    Read a YAML configuration file and return its contents.
-
-    Args:
-        :param parameter:
-
-    Returns:
-        value: Contents of the YAML file parameter 
-    """
-    filename = '../../../parameters.yml'  # Replace with your YAML file path
-    maindir = os.path.dirname(os.path.abspath(__file__))  # Get the directory of the current file
-    filepath = os.path.join(maindir, filename)  # Construct the full path to the YAML file
-    with open(filepath, 'r') as file:
-        config = yaml.safe_load(file)
-    return config[parameter]
-
 
 if __name__ == "__main__":
     pass

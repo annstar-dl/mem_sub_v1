@@ -11,7 +11,7 @@ def read_parameters_from_yaml_file(par_fpath):
         dict: Contents of the YAML file.
     """
     if not os.path.exists(par_fpath):
-        raise FileNotFoundError(f"File {par_fpath} does not exist.")
+        raise FileNotFoundError(f"Subtraction parameter file {par_fpath} does not exist.")
     with open(par_fpath, 'r') as file:
         config = yaml.safe_load(file)
     return config
