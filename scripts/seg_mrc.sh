@@ -10,12 +10,12 @@ SAVEDIR=$2
 segmentation_dir="${3:-"membrane_seg/seg_model/mem_mad_2026_march_warmup_lr_0005_500000"}"
 SEGMENTATION_DIR=${segmentation_dir%/}
 echo  "Using segmentation model from: ${SEGMENTATION_DIR}"
-
+mkdir -p "$SAVEDIR"
 # if child folder is not misc, create the folder and copy the parameters.yml file
 # else this script is being called by seg_subtract_v1.sh and the parameters.yml file is already in the misc folder, so we don't need to copy it again
 child_folder="$(basename -- "$SAVEDIR")"
 if [[ "$child_folder" != "misc" ]]; then
-    mkdir -p "$SAVEDIR"
+
     if [[ -f "${SAVEDIR}/parameters.yml" ]]; then
       #chekc if "${SAVE_DIR_PATH}/parameters.yml" is the same as "parameters.yml" in the current directory, if not copy the new one
       #if not copy the exit the code and request to fix the parameters.yml file
