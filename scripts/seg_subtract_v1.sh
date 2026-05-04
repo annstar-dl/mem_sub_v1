@@ -37,12 +37,7 @@ fi
 echo "nvidia-smi output:"
 nvidia-smi
 
-if [[ -n "${SEGMENTATION_DIR}" ]]; then
-    SEGMENTATION_DIR="${SEGMENTATION_DIR%/}"
-    bash scripts/seg_mrc.sh "${IMGPATH}" "${SAVEDIR}/misc" "${SEGMENTATION_DIR}"
-else
-    bash scripts/seg_mrc.sh "${IMGPATH}" "${SAVEDIR}/misc"
-fi
+bash scripts/seg_mrc.sh "${IMGPATH}" "${SAVEDIR}/misc" "${SEGMENTATION_DIR}" "${PAR_FPATH}"
 
 echo "Segmentation completed. Saved results in ${SAVEDIR}/misc"
 # Subtract the predicted masks from the original micrographs
@@ -53,6 +48,7 @@ if [[ $SAVE_ANGLE -eq 1 ]] && [[ $SAVE_SUB -eq 1 ]]; then
   --out_format_mem "mrc" "png" "npy"\
   --save_angle \
   --save_subtraction
+  --par_fpath "${PAR_FPATH}"
 else
     if [[ $SAVE_ANGLE -eq 1 ]]; then
             python "tools/run_mrc_subtraction.py" \
@@ -60,6 +56,7 @@ else
    --out_format_sub "mrc" "png" \
     --out_format_mem "mrc" "png" \
     --save_angle
+    --par_fpath "${PAR_FPATH}"
 
     elif [[ $SAVE_SUB -eq 1 ]]; then
         python "tools/run_mrc_subtraction.py" \
@@ -67,12 +64,14 @@ else
    --out_format_sub "mrc" "png" \
     --out_format_mem "mrc" "png" \
     --save_subtraction
+    --par_fpath "${PAR_FPATH}"
 
     else
         python "tools/run_mrc_subtraction.py" \
    -dp ${SAVEDIR} -ip "${IMGPATH}" \
    --out_format_sub "mrc" "png" \
     --out_format_mem "mrc" "png"
+    --par_fpath "${PAR_FPATH}"
     fi
 fi
 

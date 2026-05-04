@@ -8,7 +8,12 @@ fi
 
 MRCPATH=$1
 SAVEDIR=$2
-segmentation_dir="${3:-"membrane_seg/seg_model/mem_mad_2026_march_warmup_lr_0005_500000"}"
+SEGMENTATION_DIR=$3
+par_fpath="${4:-"parameters.yml"}"
+
+if [[ -n "${SEGMENTATION_DIR}" ]]; then
+  SEGMENTATION_DIR="membrane_seg/seg_model/mem_mad_2026_march_warmup_lr_0005_500000"
+
 SEGMENTATION_DIR=${segmentation_dir%/}
 echo  "Using segmentation model from: ${SEGMENTATION_DIR}"
 mkdir -p "$SAVEDIR"
@@ -17,18 +22,18 @@ mkdir -p "$SAVEDIR"
 child_folder="$(basename -- "$SAVEDIR")"
 if [[ "$child_folder" != "misc" ]]; then
 
-    if [[ -f "${SAVEDIR}/parameters.yml" ]]; then
+    if [[ -f "${SAVEDIR}/${par_fpath.yml}" ]]; then
       #chekc if "${SAVE_DIR_PATH}/parameters.yml" is the same as "parameters.yml" in the current directory, if not copy the new one
       #if not copy the exit the code and request to fix the parameters.yml file
       #in the future change this to use old "${SAVE_DIR_PATH}/parameters.yml" as parameters.yml file, when the path to that file becomes an argument
-      if ! cmp -s "parameters.yml" "${SAVEDIR}/parameters.yml"; then
-        echo "Error: ${SAVEDIR}/parameters.yml already exists and is different from the current parameters.yml. Please fix this before running the script."
+      if ! cmp -s ${par_fpath.yml} "${SAVEDIR}/${par_fpath.yml}"; then
+        echo "Error: ${SAVEDIR}/${par_fpath.yml} already exists and is different from the current ${par_fpath.yml}. Please fix this before running the script."
       exit 1
       else
-        echo "parameters.yml already exists in ${SAVEDIR} and is the same as the current parameters.yml. No need to copy."
+        echo "${par_fpath.yml} already exists in ${SAVEDIR} and is the same as the current ${par_fpath.yml}. No need to copy."
       fi
     else
-      cp "parameters.yml" "${SAVEDIR}/parameters.yml"
+      cp ${par_fpath.yml} "${SAVEDIR}/${par_fpath.yml}"
     fi
     #save commit hash of the current code in a yml file in the savedir if it doesn't already exist, this is useful for later reference and to avoid confusion
     python "scripts/record_hash.py" -sp "${SAVEDIR}"
@@ -72,7 +77,10 @@ fi
 echo "SAVEDIR_MRC is ${SAVEDIR_MRC}"
 # Convert mrc files to jpg for segmentation
 python "tools/mrc2image.py" "${MRCPATH}" \
-                            -o "${SAVEDIR_MRC}" --format "jpg" -dsa --scale --sub_mean --border_size 7
+                            -o "${SAVEDIR_MRC}" \
+                            --format "jpg" \
+                            -dsa --scale --sub_mean \
+                            --border_size 7 --par_fpath ${par_fpath}
 
 
 python "membrane_seg/seg_onnx.py" \

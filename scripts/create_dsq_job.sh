@@ -14,22 +14,21 @@ SAVE_SUB=$5
 show_output="${6:-0}"
 nb_of_jobs="${7:--1}"
 seg_dir="${8:-""}"
+par_fname="${9:-"parameters.yml"}"
 #timestep to add to the job array name to avoid overwriting previous results, this is useful for later reference and to avoid confusion about which code was used for segmentation
 TIMESTEMP=$(date +"%Y%m%d_%H%M%S")
 #copy the yml parameter file in the same directory as results add a timestamp to avoid overwriting previous results
 mkdir -p "${SAVE_DIR_PATH}"
-if [[ -f "${SAVE_DIR_PATH}/parameters.yml" ]]; then
-  #chekc if "${SAVE_DIR_PATH}/parameters.yml" is the same as "parameters.yml" in the current directory, if not copy the new one
-  #if not copy the exit the code and request to fix the parameters.yml file
-  #in the future change this to use old "${SAVE_DIR_PATH}/parameters.yml" as parameters.yml file, when the path to that file becomes an argument
-  if ! cmp -s "parameters.yml" "${SAVE_DIR_PATH}/parameters.yml"; then
-    echo "Error: ${SAVE_DIR_PATH}/parameters.yml already exists and is different from the current parameters.yml. Please fix this before running the script."
+if [[ -f "${SAVE_DIR_PATH}/${par_fname}" ]]; then
+
+  if ! cmp -s "${par_fname}" "${SAVE_DIR_PATH}/${par_fname}"; then
+    echo "Error: ${SAVE_DIR_PATH}/${par_fname} already exists and is different from the current ${par_fname}. Please fix this before running the script."
     exit 1
   else
-    echo "parameters.yml already exists in ${SAVE_DIR_PATH} and is the same as the current parameters.yml. No need to copy."
+    echo "${par_fname} already exists in ${SAVE_DIR_PATH} and is the same as the current ${par_fname}. No need to copy."
   fi
 else
-  cp "parameters.yml" "${SAVE_DIR_PATH}/parameters.yml"
+  cp "${par_fname}" "${SAVE_DIR_PATH}/${par_fname}"
 fi
 
 
@@ -48,7 +47,8 @@ python scripts/create_job_list.py -ddp ${DATASET_PATH} -jfp "dsq_files/joblist_$
     -savedp ${SAVE_DIR_PATH} --save_angle_flag=${SAVE_ANGLE} \
     --save_sub_flag=${SAVE_SUB} \
     --nb_of_jobs=${nb_of_jobs} \
-    --seg_dir_path="${seg_dir}"
+    --seg_dir_path="${seg_dir}" \
+    --parameters_fname="${par_fname}"
 
 # check if jobfile is not empty
 if [ -s joblist.txt ]; then

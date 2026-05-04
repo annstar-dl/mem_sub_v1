@@ -3,17 +3,16 @@ import numpy as np
 from PIL import Image
 
 
-def read_parameters_from_yaml_file():
+def read_parameters_from_yaml_file(par_fpath):
     """
     Read a YAML configuration file and return its contents as a dictionary.
 
     Returns:
         dict: Contents of the YAML file.
     """
-    filename = '../../../parameters.yml'  # Replace with your YAML file path
-    maindir = os.path.dirname(os.path.abspath(__file__))  # Get the directory of the current file
-    filepath = os.path.join(maindir, filename)  # Construct the full path to the YAML file
-    with open(filepath, 'r') as file:
+    if not os.path.exists(par_fpath):
+        raise FileNotFoundError(f"File {par_fpath} does not exist.")
+    with open(par_fpath, 'r') as file:
         config = yaml.safe_load(file)
     return config
 

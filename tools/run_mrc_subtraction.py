@@ -27,7 +27,7 @@ def process_file(file_name,args: argparse.Namespace):
     """Process a single MRC file to subtract membranes and save the results."""
     basename = os.path.splitext(file_name)[0] #file name without extension
     # read radius size from parameters file
-    parameters = read_parameters_from_yaml_file()
+    parameters = read_parameters_from_yaml_file(args.par_fpath)
     border = parameters["r"]  # Border size for fuzzy mask
     #read micrograph from mrc file
     img, header, voxel_size = read_mrc(os.path.join(args.imgs_path, file_name))
@@ -47,7 +47,7 @@ def process_file(file_name,args: argparse.Namespace):
 
     # run membrane subtraction algorithm
     st_time = time.time()
-    membrane_ds, angle_dict = membrane_estimation(img_ds, mask, border if np.any(img.shape > img_ds.shape) else 0)
+    membrane_ds, angle_dict = membrane_estimation(img_ds, mask, border if np.any(img.shape > img_ds.shape) else 0, args.par_fpath)
     print(f"Membrane estimation for {file_name} took {time.time() - st_time:.2f} seconds.")
 
     if args.save_subtraction:
@@ -159,6 +159,8 @@ if __name__=="__main__":
     parser.add_argument("--out_format_mem", nargs="*", default=["npy"],  help="List of file format to save estimates of membrane images. Choices are mrc, png, npy formats")
     parser.add_argument("-ang","--save_angle", action="store_true", help="Whether to save angle for every grid point information or not.")
     parser.add_argument("-sub", "--save_subtraction", action="store_true", help="Whether to do membrane subtraction or not.")
+    parser.add_argument("--par_fpath", type=str, help="Path to subtraction yml parameter file",
+                        default="parameters.yml")
     args = parser.parse_args()
     main(args)
 

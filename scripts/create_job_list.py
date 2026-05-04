@@ -53,8 +53,8 @@ def read_filelist(filelist_path):
         file_paths = [line.strip() for line in f if line.strip()]
     return file_paths
 
-def create_job_list(data_dir_path, job_file_path,save_dir_path,
-                    nb_of_jobs, batch_size, seg_dir_path, file_mode,save_angle_flag=0, save_sub_flag=0):
+def create_job_list(data_dir_path, job_file_path, save_dir_path, nb_of_jobs, batch_size, seg_dir_path, par_fpath,
+                    file_mode, save_angle_flag=0, save_sub_flag=0):
     """
     Create a job list file containing paths of all files in the input directory.
 
@@ -64,6 +64,7 @@ def create_job_list(data_dir_path, job_file_path,save_dir_path,
         nb_of_jobs (int): Maximum number of job batches to write (use None for all).
         batch_size (int): Number of files per batch written on each line.
         seg_dir_path (str): Path to the directory with membrane segmentation model. IF empty then set to default in file seg_mrc.sh
+        par_fpath (str): Path to parameter file.
         file_mode (str): Mode to write into a jobfile, "w" or "a".
         save_angle_flag (int): Flag to indicate whether to save the angles.
         save_sub_flag (int): Flag to indicate whether to save the subtracted MRCs.
@@ -95,6 +96,7 @@ def create_job_list(data_dir_path, job_file_path,save_dir_path,
         f"export SAVE_ANGLE={save_angle_flag};"
         f"export SAVE_SUB={save_sub_flag};"
         f"export SEGMENTATION_DIR={seg_dir_path};"
+        f"export PAR_FNAME={par_fpath};"
         )
 
     if nb_of_jobs == -1:
@@ -186,6 +188,8 @@ if __name__ == "__main__":
     args.add_argument("--seg_dir_path", type=str, help="Path to the directory with membrane segmentation model. IF empty then set to default in file seg_mrc.sh")
     args.add_argument("--save_angle_flag", type=int, help="Flag to save angle information (1 to save, 0 otherwise)", default=0)
     args.add_argument("--save_sub_flag", type=int, help="Flag to save subtracted images (1 to save, 0 otherwise)", default=0)
+    args.add_argument("--par_fpath", type=str, help="Path to subtraction yml parameter file",
+                      default="parameters.yml")
     parsed_args = args.parse_args()
     sub_dirs = list_nonempty_mrc_subdirs(parsed_args.data_dir_path)
     batch_size = 10
@@ -193,14 +197,10 @@ if __name__ == "__main__":
         for sub_dir in sub_dirs:
             sub_dir_name = os.path.basename(os.path.normpath(sub_dir))
             job_file_path = os.path.join(parsed_args.job_file_path, f"job_list_{sub_dir_name}.txt") if parsed_args.job_file_path else f"job_list_{sub_dir_name}.txt"
-            create_job_list(data_dir_path=sub_dir,
-                            job_file_path=parsed_args.job_file_path,
+            create_job_list(data_dir_path=sub_dir, job_file_path=parsed_args.job_file_path,
                             save_dir_path=os.path.join(parsed_args.save_dir_path, sub_dir_name),
-                            nb_of_jobs=args.nb_of_jobs,
-                            batch_size=batch_size,
-                            seg_dir_path=parsed_args.seg_dir_path,
-                            file_mode="a",
-                            save_angle_flag=parsed_args.save_angle_flag,
+                            nb_of_jobs=args.nb_of_jobs, batch_size=batch_size, seg_dir_path=parsed_args.seg_dir_path,
+                            par_fpath=args.par_fpath, file_mode="a", save_angle_flag=parsed_args.save_angle_flag,
                             save_sub_flag=parsed_args.save_sub_flag)
     else:
-        create_job_list(**vars(parsed_args),batch_size=batch_size, file_mode="w")
+        create_job_list(batch_size=batch_size, file_mode="w", **vars(parsed_args))

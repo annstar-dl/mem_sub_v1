@@ -42,7 +42,7 @@ def convert_file(args: argparse.Namespace) -> None:
 
     if args.downsampling_allowed:
         if args.border_size==-1:
-            parameters = read_parameters_from_yaml_file()
+            parameters = read_parameters_from_yaml_file(args.par_fpath)
             border = parameters["r"]
             print(f"Setting border size to {border}")
         else:
@@ -110,6 +110,8 @@ if __name__ == "__main__":
         help="Downsampling fuzzy mask size. A smoothing mask is applied to an image to make signal go to zero"
             "at the border. The border_size is a size of fuzzy border in downsampled image."
             "If this value set to -1 the border would be set to parameter r from parameters.yml file.")
+    parser.add_argument("--par_fpath", type=str, help="Path to subtraction yml parameter file",
+                      default="parameters.yml")
     args = parser.parse_args()
 
 

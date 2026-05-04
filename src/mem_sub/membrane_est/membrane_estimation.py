@@ -117,19 +117,20 @@ def fit_membrane(img, mask, row_idx, col_idx,parameters):
     imgout = imgout.detach().cpu().numpy()
     return imgout, angle
 
-def membrane_estimation(img, mask, border):
+def membrane_estimation(img, mask, border, par_fpath):
     """
     Estimate the membranes in micrograph and angles of the membrane profiles at each grid point.
     :param img: Torch.Tensor. Input image tensor of micrograph of shape (H, W).
     :param mask: Torch.Tensor. Binary segmentation mask tensor of shape (H, W).
     :param border: int. The size of the border to be masked out for background estimation. Default is 0.
+    :param par_fpath: str. Path to the YAML subtraction parameter file.
      If used mem_sub mrc downsampling function, set boundary to the same value as boundary used for downsampling.
     :return:
     torch.Tensor: The membrane estimated image of shape (H, W).
     dict: The dictionary angles of the membrane profiles at each grid point of shape {row_idx: (N,), col_idx: (N,),angles: (N)}.
     """
     #read parameters from the YAML file
-    parameters = read_parameters_from_yaml_file()
+    parameters = read_parameters_from_yaml_file(par_fpath)
     # Prepare the micrograph and get the sampling grid
     img, mask, row_idx, col_idx = prepare_micrograph(img, mask, parameters, border)
     # fit membrane
