@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 #create a job_list for dsq submission
 #Note: slurm jobs start in the directory from which your job was submitted.
 if [ "$#" -lt 5 ]; then

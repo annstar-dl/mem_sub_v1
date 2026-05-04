@@ -1,5 +1,5 @@
 #!/bin/bash
-
+set -euo pipefail
 if [ "$#" -lt 2 ]; then
     echo "Usage: $0 MRC_PATH SAVE_DIR [segmentation_dir]"
     exit 1

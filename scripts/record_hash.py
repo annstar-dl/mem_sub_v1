@@ -5,7 +5,6 @@ import os
 import subprocess
 import sys
 import inspect
-from verify_subpackege_version import verify_package_version
 
 
 def get_git_revision_hash() -> str:
@@ -53,8 +52,7 @@ def check_git_status():
     print(f"DEBUG: Status output is: '{status}'")  # The quotes will show if there's a hidden newline
 
     if status:
-        print("Error: Uncommitted changes detected! Commit your changes first or delete them!")
-        sys.exit(1)  # Exit with error code
+        raise Exception("Error: Uncommitted changes detected! Commit your changes first or delete them!")
 
 def save_metadata(save_path, script_args=None) -> None:
     """
@@ -71,7 +69,7 @@ def save_metadata(save_path, script_args=None) -> None:
 
 def load_yaml_file(fpath) -> dict:
     with open(fpath, 'r') as f:
-        return yaml.load(f)
+        return yaml.safe_load(f)
 
 def compare_metadata(old_yml_path, script_args=None) -> None:
     caller_frame = inspect.stack()[1]
@@ -103,7 +101,7 @@ if __name__ == "__main__":
        files_differenet = compare_metadata(save_path, d)
        if files_differenet:
            raise Exception(f"Metadata file {save_path} and current project are not the same! Restore the project state or use new folder.")
-    else:
-        save_yaml_file(args.save_path, d)
+
+    save_metadata(save_path, d)
 
 
