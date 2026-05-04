@@ -41,5 +41,5 @@ export SAVEDIR=$SAVEDIR
 export SAVE_ANGLE=$SAVE_ANGLE
 export SAVE_SUB=$SAVE_SUB
 export SEGMENTATION_DIR=$segdir
-export PAR_FNAME=$par_fpath
+export PAR_FPATH=$par_fpath
 bash scripts/seg_subtract_v1.sh "${IMGPATH}"
