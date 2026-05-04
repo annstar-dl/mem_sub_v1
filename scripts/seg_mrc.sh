@@ -23,7 +23,9 @@ if [[ "$child_folder" != "misc" ]]; then
     cp "parameters.yml" "${SAVEDIR}/parameters.yml"
     #save commit hash of the current code in a yml file in the savedir if it doesn't already exist, this is useful for later reference and to avoid confusion about which code was used for segmentation
     if [[ ! -f "${SAVEDIR}/exp_config.yml" ]]; then
-     python "tools/record_hash.py" -sp "${SAVEDIR}"
+      python "scripts/record_hash.py" -sp "${SAVEDIR}"
+    else
+      python "scripts/record_hash.py" -sp "${SAVEDIR}" --compare_metadata
     fi
 fi
 

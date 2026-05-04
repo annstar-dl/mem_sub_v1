@@ -6,7 +6,7 @@ SAVE_ANGLE=1
 SAVE_SUB=1
 segdir="${3:-""}"
 
-if [[ -f "${SAVEDIR}" ]]; then
+if [[ -d "${SAVEDIR}" ]]; then
   echo "The directory ${SAVEDIR} already exists. Please choose a different directory or remove the existing one."
   exit 1
 fi
@@ -14,7 +14,9 @@ mkdir -p "$SAVEDIR"
 cp "parameters.yml" "${SAVEDIR}/parameters.yml"
 
 if [[ ! -f "${SAVEDIR}/exp_config.yml" ]]; then
- python "tools/record_hash.py" -sp "${SAVEDIR}"
+  python "scripts/record_hash.py" -sp "${SAVEDIR}"
+else
+  python "scripts/record_hash.py" -sp "${SAVEDIR}" --compare_metadata
 fi
 
 if [ -n "${segdir}" ]; then

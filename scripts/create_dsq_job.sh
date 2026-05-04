@@ -38,9 +38,9 @@ module load dSQ
 conda activate ves_seg
 
 if [[ ! -f "${SAVE_DIR_PATH}/exp_config.yml" ]]; then
-  python "tools/record_hash.py" -sp "${SAVE_DIR_PATH}"
+  python "scripts/record_hash.py" -sp "${SAVE_DIR_PATH}"
 else
-  python "tools/record_hash.py" -sp "${SAVE_DIR_PATH}" --compare_metadata
+  python "scripts/record_hash.py" -sp "${SAVE_DIR_PATH}" --compare_metadata
 fi
 
 mkdir -p "dsq_files"
