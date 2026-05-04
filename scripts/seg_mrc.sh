@@ -11,7 +11,7 @@ SAVEDIR=$2
 SEGMENTATION_DIR=$3
 par_fpath="${4:-"parameters.yml"}"
 
-if [[ -n "${SEGMENTATION_DIR}" ]]; then
+if [[ -z "${SEGMENTATION_DIR}" ]]; then
   SEGMENTATION_DIR="membrane_seg/seg_model/mem_mad_2026_march_warmup_lr_0005_500000"
 fi
 
