@@ -29,3 +29,5 @@ dev = [
 where = ["src"]
 
 [tool.setuptools_scm]
+write_to = "src/mem_sub/_version.py"
+fallback_version = "0+unknown"

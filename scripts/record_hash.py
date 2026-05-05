@@ -5,7 +5,9 @@ import os
 import subprocess
 import sys
 import inspect
-
+from mem_sub import __version__
+from pathlib import Path
+from setuptools_scm import get_version
 
 def get_git_revision_hash() -> str:
     return subprocess.check_output(['git', 'rev-parse', 'HEAD']).decode('ascii').strip()
@@ -17,13 +19,43 @@ def save_yaml_file(save_path: str, data: dict) -> None:
     with open(save_path, 'w') as f:
         yaml.dump(data, f)
 
+
+def check_version_sync_boolean():
+    """
+    Returns True if the version is verified or if a check is not possible (Standard install).
+    Returns False ONLY if a Git mismatch is found (Editable install out of sync).
+    """
+    # 1. Locate the .git folder relative to this file
+    # Path: src/mem_sub/__init__.py -> src/mem_sub -> src -> Project Root
+    package_root = Path(__file__).parent.parent.parent
+    git_dir = package_root / ".git"
+
+    # 2. If no .git folder, we assume a stable, standard installation.
+    if not git_dir.exists():
+        return True
+
+    # 3. If .git exists, try to compare live vs. installed
+    try:
+
+        live_version = get_version(root=package_root)
+
+        # If they match, we are synced.
+        return live_version == __version__
+    except Exception:
+        # If setuptools_scm isn't found, we can't verify,
+        # so we return True to avoid false alarms.
+        return True
+
+
 def get_conda_env_info() -> dict:
     conda_env = os.environ.get("CONDA_DEFAULT_ENV", "unknown")
     conda_prefix = os.environ.get("CONDA_PREFIX", "unknown")
-
+    is_synced = check_version_sync_boolean()
     return {
         "conda_env_name": conda_env,
         "conda_prefix": conda_prefix,
+        "mem_sub": {"version" : __version__,
+                    "status": "Verified" if is_synced else "WARNING: Stale Installation"},
     }
 
 def create_metadata(caller_frame=None, script_args=None) -> None:
@@ -37,7 +69,6 @@ def create_metadata(caller_frame=None, script_args=None) -> None:
     if script_args is not None:
         d['script_args'] = script_args
     return d
-
 
 def check_git_status():
     # 'git status --porcelain' returns an empty string if nothing is changed
