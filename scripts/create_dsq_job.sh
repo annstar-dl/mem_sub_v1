@@ -61,7 +61,7 @@ if [ -s "dsq_files/joblist_${JOB_ARRAY_NAME}.txt" ]; then
     echo "Submitting jobs with output shown in the terminal."
       dsq --job-file "dsq_files/joblist_${JOB_ARRAY_NAME}.txt" --mem=5G --cpus-per-task=4 --gpus=1 -t 20:00 --partition=scavenge_gpu --mail-type ALL  --batch-file="dsq_files/${JOB_ARRAY_NAME}_${TIMESTEMP}_dsq_job.sh" --status-dir dsq_files --output "dsq_files/slurm-%A_%a.out"
   else
-      dsq --job-file "dsq_files/joblist_${JOB_ARRAY_NAME}.txt" --mem=5G --cpus-per-task=4 --gpus=1 -t 20:00 --partition=scavenge_gpu --mail-type ALL  --batch-file="dsq_files/${JOB_ARRAY_NAME}_${TIMESTEMP}_dsq_job.sh" --status-dir dsq_files
+      dsq --job-file "dsq_files/joblist_${JOB_ARRAY_NAME}.txt" --mem=5G --cpus-per-task=4 --gpus=1 -t 20:00 --partition=scavenge_gpu --mail-type ALL  --batch-file="dsq_files/${JOB_ARRAY_NAME}_${TIMESTEMP}_dsq_job.sh" --status-dir dsq_files --output /dev/null --error /dev/null
   fi
   else
       echo "Error: joblist_${JOB_ARRAY_NAME}.txt is empty. No jobs to submit."
