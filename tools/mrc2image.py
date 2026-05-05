@@ -116,12 +116,11 @@ if __name__ == "__main__":
     parser.add_argument("--record_hash", action="store_true",
                       help="Whether to record the commit hash and parameters in the save_dir")
     args = parser.parse_args()
-    if args.record_hash:
-        save_metadata(os.path.join(args.out_dir,"exp_config.yml"), script_args=args.__dict__)
-
     print(f"Output will be saved to: {args.out_dir}")
     if not os.path.exists(args.out_dir):
         os.makedirs(args.out_dir)
+    if args.record_hash:
+        save_metadata(os.path.join(args.out_dir,"exp_config.yml"), script_args=args.__dict__)
     args.logs_dir = os.path.join(args.out_dir, "logs")
     if args.downsampling_allowed:
         print("Downsampling based on voxel size is allowed.")
