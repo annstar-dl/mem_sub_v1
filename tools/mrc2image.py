@@ -117,7 +117,7 @@ if __name__ == "__main__":
                       help="Whether to record the commit hash and parameters in the save_dir")
     args = parser.parse_args()
     if args.record_hash:
-        save_metadata(os.path.join(args.save_dir,"exp_config.yml"), script_args=args.__dict__)
+        save_metadata(os.path.join(args.out_dir,"exp_config.yml"), script_args=args.__dict__)
 
     print(f"Output will be saved to: {args.out_dir}")
     if not os.path.exists(args.out_dir):
