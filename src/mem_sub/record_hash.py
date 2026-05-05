@@ -112,7 +112,7 @@ def save_metadata(save_path, script_args=None) -> None:
             raise Exception(
                 f"Metadata file {save_path} and current project are not the same! Restore the project state or use new folder.")
         else:
-            print(f"Metadata file already exists, but metadata files are the same (except for timestamp).")
+            print(f"Metadata file already exists, but metadata files are the same (except for timestamp and initiating module).")
     save_yaml_file(save_path, d)
 
 def load_yaml_file(fpath) -> dict:
@@ -123,7 +123,7 @@ def compare_metadata(old_yml_path, new_metadata) -> None:
     d_old = load_yaml_file(old_yml_path)
     files_different = False
     for k, v in d_old.items():
-        if k == "timestamp":
+        if k == "timestamp" or k == "initiating module":
             continue
         if new_metadata.get(k) != v:
             print(f"Metadata field '{k}' is different! Old value: {v}, new value: {new_metadata.get(k)}")
