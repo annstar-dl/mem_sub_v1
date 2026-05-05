@@ -3,7 +3,10 @@ import argparse
 import yaml
 import os
 import subprocess
-import sys
+from pathlib import Path
+from importlib.metadata import distribution, PackageNotFoundError
+import json
+import mem_sub
 import inspect
 from mem_sub import __version__
 
@@ -17,13 +20,58 @@ def save_yaml_file(save_path: str, data: dict) -> None:
     with open(save_path, 'w') as f:
         yaml.dump(data, f)
 
+
+def get_package_integrity():
+    try:
+        dist = distribution("mem_sub")
+
+        # 1. Detect if it's an editable installation
+        is_editable = False
+        direct_url_content = dist.read_text("direct_url.json")
+        if direct_url_content:
+            url_data = json.loads(direct_url_content)
+            is_editable = url_data.get("dir_info", {}).get("editable", False)
+
+        # Get physical location of the running code
+        active_path = Path(mem_sub.__file__).resolve().parent
+
+        # 2. Implementation of your logic
+        if is_editable:
+            # DEVELOPMENT MODE: Report the link (path) to the package
+            return {
+                "install_type": "editable",
+                "source_link": str(active_path),
+                "version": mem_sub.__version__,
+                "status": "Path-Linked (Development)"
+            }
+        else:
+            # PRODUCTION MODE: Check that environment metadata matches the code
+            pip_version = dist.version
+            internal_version = mem_sub.__version__
+
+            if pip_version != internal_version:
+                return {
+                    "install_type": "standard",
+                    "status": "MISMATCH",
+                    "error": f"Pip reports {pip_version} but code is {internal_version}"
+                }
+
+            return {
+                "install_type": "standard",
+                "version": pip_version,
+                "status": "Verified Standard Install"
+            }
+
+    except PackageNotFoundError:
+        return {"status": "NOT_INSTALLED", "error": "Package 'mem_sub' not found in active environment"}
+
 def get_conda_env_info() -> dict:
     conda_env = os.environ.get("CONDA_DEFAULT_ENV", "unknown")
     conda_prefix = os.environ.get("CONDA_PREFIX", "unknown")
     return {
         "conda_env_name": conda_env,
         "conda_prefix": conda_prefix,
-        "mem_sub": {"version" : __version__},
+        "mem_sub": get_package_integrity(),
     }
 
 def create_metadata(caller_frame=None, script_args=None) -> None:
