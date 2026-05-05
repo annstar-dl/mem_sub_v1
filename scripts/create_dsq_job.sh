@@ -38,7 +38,7 @@ module load dSQ
 conda activate ves_seg
 
 #record the current commit hash in a yml file in the savedir if it doesn't already exist, this is useful for later reference and to avoid confusion
-python "scripts/record_hash.py" -sp "${SAVE_DIR_PATH}"
+python -m mem_sub.record_hash -sp "${SAVE_DIR_PATH}"
 
 mkdir -p "dsq_files"
 

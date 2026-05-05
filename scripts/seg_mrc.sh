@@ -37,7 +37,7 @@ if [[ "$child_folder" != "misc" ]]; then
       cp ${par_fpath} "${SAVEDIR}/${par_fpath}"
     fi
     #save commit hash of the current code in a yml file in the savedir if it doesn't already exist, this is useful for later reference and to avoid confusion
-    python "scripts/record_hash.py" -sp "${SAVEDIR}"
+    python -m mem_sub.record_hash -sp "${SAVEDIR}"
 fi
 
 #save the segmentation model path in a text file in the savedir if it doesn't already exist, this is useful for later reference and to avoid confusion about which model was used for segmentation

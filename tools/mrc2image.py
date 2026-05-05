@@ -8,7 +8,7 @@ from tqdm import tqdm
 from skimage import io
 from mem_sub.mrc_tools.mrc_utils import load_mrc, FILE_TYPES, downsample_micrograph
 from mem_sub.membrane_est.utils import read_parameters_from_yaml_file
-from scripts.record_hash import save_metadata
+from mem_sub.record_hash import save_metadata
 
 
 def save_json(logs: dict, log_path: str) -> None:

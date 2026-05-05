@@ -26,7 +26,7 @@ if [[ -f "${SAVEDIR}/${par_fpath}" ]]; then
 fi
 
 #record the current commit hash in a yml file in the savedir if it doesn't already exist, this is useful for later reference and to avoid confusion
-python "scripts/record_hash.py" -sp "${SAVEDIR}"
+python -m mem_sub.record_hash -sp "${SAVEDIR}"
 
 
 

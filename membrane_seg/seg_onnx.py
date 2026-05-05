@@ -1,13 +1,12 @@
 import os.path
 import onnxruntime
 import numpy as np
-from scipy.ndimage import gaussian_filter
 import argparse
 from PIL import Image
 import os
 import time
 import cv2
-from scripts.record_hash import save_metadata
+from mem_sub.record_hash import save_metadata
 
 # Check if a GPU is available
 if 'CUDAExecutionProvider' in onnxruntime.get_available_providers():
