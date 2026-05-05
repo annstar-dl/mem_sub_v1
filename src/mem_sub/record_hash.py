@@ -107,7 +107,7 @@ def save_metadata(save_path, script_args=None) -> None:
     caller_frame = inspect.stack()[1]
     d = create_metadata(caller_frame=caller_frame, script_args=script_args)
     if os.path.exists(save_path):
-        metadata_different = compare_metadata(save_path, script_args=script_args)
+        metadata_different = compare_metadata(save_path, new_metadata=d)
         if metadata_different:
             raise Exception(
                 f"Metadata file {save_path} and current project are not the same! Restore the project state or use new folder.")
@@ -119,16 +119,14 @@ def load_yaml_file(fpath) -> dict:
     with open(fpath, 'r') as f:
         return yaml.safe_load(f)
 
-def compare_metadata(old_yml_path, script_args=None) -> None:
-    caller_frame = inspect.stack()[1]
-    d_new = create_metadata(caller_frame=caller_frame, script_args=script_args)
+def compare_metadata(old_yml_path, new_metadata) -> None:
     d_old = load_yaml_file(old_yml_path)
     files_different = False
     for k, v in d_old.items():
         if k == "timestamp":
             continue
-        if d_new[k] != v:
-            print(f"Metadata field '{k}' is different! Old value: {v}, new value: {d_new[k]}")
+        if new_metadata.get(k) != v:
+            print(f"Metadata field '{k}' is different! Old value: {v}, new value: {new_metadata.get(k)}")
             files_different = True
     return files_different
 
