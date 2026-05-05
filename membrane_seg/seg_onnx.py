@@ -7,6 +7,8 @@ from PIL import Image
 import os
 import time
 import cv2
+from scripts.record_hash import save_metadata
+
 # Check if a GPU is available
 if 'CUDAExecutionProvider' in onnxruntime.get_available_providers():
     print("Using CUDAExecutionProvider")
@@ -170,7 +172,10 @@ if __name__ == "__main__":
     args.add_argument('--onnx_fname', type=str, required=True, help='Path to the ONNX model file')
     args.add_argument('--data_path', type=str, required=True, help='Path to the directory containing images or image file')
     args.add_argument("--save_dir", type=str, default=None, help="Directory to save the output images")
+    args.add_argument("--record_hash", action="store_true", help="Whether to record the commit hash and parameters in the save_dir")
     args = args.parse_args()
+    if args.record_hash:
+        save_metadata(os.path.join(args.save_dir,"exp_config.yml"), script_args=args.__dict__)
     args.onnx_model_path = os.path.join(args.model_dir, args.onnx_fname)
     args.output_dir_label = os.path.join(args.save_dir, 'labels')
     os.makedirs(args.output_dir_label, exist_ok=True)

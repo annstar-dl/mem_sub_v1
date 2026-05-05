@@ -8,6 +8,7 @@ from tqdm import tqdm
 from skimage import io
 from mem_sub.mrc_tools.mrc_utils import load_mrc, FILE_TYPES, downsample_micrograph
 from mem_sub.membrane_est.utils import read_parameters_from_yaml_file
+from scripts.record_hash import save_metadata
 
 
 def save_json(logs: dict, log_path: str) -> None:
@@ -112,8 +113,11 @@ if __name__ == "__main__":
             "If this value set to -1 the border would be set to parameter r from parameters.yml file.")
     parser.add_argument("--par_fpath", type=str, help="Path to subtraction yml parameter file",
                       default="parameters.yml")
+    parser.add_argument("--record_hash", action="store_true",
+                      help="Whether to record the commit hash and parameters in the save_dir")
     args = parser.parse_args()
-
+    if args.record_hash:
+        save_metadata(os.path.join(args.save_dir,"exp_config.yml"), script_args=args.__dict__)
 
     print(f"Output will be saved to: {args.out_dir}")
     if not os.path.exists(args.out_dir):
