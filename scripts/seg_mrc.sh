@@ -25,18 +25,16 @@ mkdir -p "$SAVEDIR"
 child_folder="$(basename -- "$SAVEDIR")"
 if [[ "$child_folder" != "misc" ]]; then
 
-    if [[ -f "${SAVEDIR}/${par_fname}" ]]; then
-      #chekc if "${SAVE_DIR_PATH}/parameters.yml" is the same as "parameters.yml" in the current directory, if not copy the new one
-      #if not copy the exit the code and request to fix the parameters.yml file
-      #in the future change this to use old "${SAVE_DIR_PATH}/parameters.yml" as parameters.yml file, when the path to that file becomes an argument
-      if ! cmp -s ${par_fpath} "${SAVEDIR}/${par_fname}"; then
-        echo "Error: ${SAVEDIR}/${par_fpath} already exists and is different from the current ${par_fpath}. Please fix this before running the script."
-      exit 1
+    if [[ -f "${SAVEDIR}/parameters.yml" ]]; then
+      #chekc if ${par_fpath} is the same as parameters.yml in the current directory
+      if ! cmp -s ${par_fpath} "${SAVEDIR}/parameters.yml"; then
+        echo "Error: ${par_fname} already exists and is different from the current parameters.yml. Please fix this before running the script."
+        exit 1
       else
-        echo "${par_fname} already exists in ${SAVEDIR} and is the same as the current ${par_fname}. No need to copy."
+        echo "parameters file already exists in ${SAVEDIR} and is the same as the current parameters.yml. No need to copy."
       fi
     else
-      cp ${par_fpath} "${SAVEDIR}/${par_fname}"
+      cp ${par_fpath} "${SAVEDIR}/parameters.yml"
     fi
     #save commit hash of the current code in a yml file in the savedir if it doesn't already exist, this is useful for later reference and to avoid confusion
     python -m mem_sub.record_hash -sp "${SAVEDIR}"

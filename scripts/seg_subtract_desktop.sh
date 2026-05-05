@@ -11,18 +11,16 @@ par_fpath="${4:-"parameters.yml"}"
 par_fname="$(basename -- "$par_fpath")"
 
 mkdir -p "$SAVEDIR"
-if [[ -f "${SAVEDIR}/${par_fname}" ]]; then
-  #chekc if "${SAVE_DIR_PATH}/${par_fpath}" is the same as ${par_fpath} in the current directory, if not copy the new one
-  #if not copy the exit the code and request to fix the ${par_fpath} file
-  #in the future change this to use old "${SAVE_DIR_PATH}/${par_fpath}" as ${par_fpath} file, when the path to that file becomes an argument
-  if ! cmp -s ${par_fpath} "${SAVEDIR}/${par_fname}"; then
-    echo "Error: ${par_fname} already exists and is different from the current ${par_fname}. Please fix this before running the script."
+if [[ -f "${SAVEDIR}/parameters.yml" ]]; then
+  #chekc if ${par_fpath} is the same as parameters.yml in the current directory
+  if ! cmp -s ${par_fpath} "${SAVEDIR}/parameters.yml"; then
+    echo "Error: ${par_fname} already exists and is different from the current parameters.yml. Please fix this before running the script."
     exit 1
   else
-    echo "${par_fname} already exists in ${SAVEDIR} and is the same as the current ${par_fname}. No need to copy."
+    echo "parameters file already exists in ${SAVEDIR} and is the same as the current parameters.yml. No need to copy."
   fi
   else
-  cp ${par_fpath} "${SAVEDIR}/${par_fname}"
+  cp ${par_fpath} "${SAVEDIR}/parameters.yml"
 fi
 
 #record the current commit hash in a yml file in the savedir if it doesn't already exist, this is useful for later reference and to avoid confusion

@@ -21,16 +21,16 @@ par_fname="$(basename -- "$par_fpath")"
 TIMESTEMP=$(date +"%Y%m%d_%H%M%S")
 #copy the yml parameter file in the same directory as results add a timestamp to avoid overwriting previous results
 mkdir -p "${SAVE_DIR_PATH}"
-if [[ -f "${SAVE_DIR_PATH}/${par_fname}" ]]; then
-
-  if ! cmp -s "${par_fpath}" "${SAVE_DIR_PATH}/${par_fname}"; then
-    echo "Error: ${par_fname} already exists and is different from the current ${par_fname}. Please fix this before running the script."
+if [[ -f "${SAVE_DIR_PATH}/parameters.yml" ]]; then
+  #chekc if ${par_fpath} is the same as parameters.yml in the current directory
+  if ! cmp -s ${par_fpath} "${SAVE_DIR_PATH}/parameters.yml"; then
+    echo "Error: ${par_fname} already exists and is different from the current parameters.yml. Please fix this before running the script."
     exit 1
   else
-    echo "${par_fname} already exists in ${SAVE_DIR_PATH} and is the same as the current ${par_fname}. No need to copy."
+    echo "parameters file already exists in ${SAVE_DIR_PATH} and is the same as the current parameters.yml. No need to copy."
   fi
-else
-  cp "${par_fpath}" "${SAVE_DIR_PATH}/${par_fname}"
+  else
+  cp ${par_fpath} "${SAVE_DIR_PATH}/parameters.yml"
 fi
 
 
