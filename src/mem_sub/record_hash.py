@@ -119,7 +119,7 @@ def load_yaml_file(fpath) -> dict:
     with open(fpath, 'r') as f:
         return yaml.safe_load(f)
 
-def compare_metadata(old_yml_path, new_metadata) -> None:
+def compare_metadata(old_yml_path, new_metadata) -> bool:
     d_old = load_yaml_file(old_yml_path)
     files_different = False
     for k, v in d_old.items():

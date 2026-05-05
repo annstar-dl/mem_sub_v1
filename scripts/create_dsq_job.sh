@@ -53,7 +53,7 @@ python scripts/create_job_list.py -ddp ${DATASET_PATH} -jfp "dsq_files/joblist_$
     --parameters_fname="${par_fname}"
 
 # check if jobfile is not empty
-if [ -s joblist.txt ]; then
+if [ -s "dsq_files/joblist.txt" ]; then
   #Now create the dsq job submission script
   if [[ "$show_output" -eq 1 ]]; then
     echo "Submitting jobs with output shown in the terminal."
