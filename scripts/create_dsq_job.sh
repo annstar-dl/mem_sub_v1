@@ -14,21 +14,23 @@ SAVE_SUB=$5
 show_output="${6:-0}"
 nb_of_jobs="${7:--1}"
 seg_dir="${8:-""}"
-par_fname="${9:-"parameters.yml"}"
+par_fpath="${9:-"parameters.yml"}"
+par_fname="$(basename -- "$par_fpath")"
+
 #timestep to add to the job array name to avoid overwriting previous results, this is useful for later reference and to avoid confusion about which code was used for segmentation
 TIMESTEMP=$(date +"%Y%m%d_%H%M%S")
 #copy the yml parameter file in the same directory as results add a timestamp to avoid overwriting previous results
 mkdir -p "${SAVE_DIR_PATH}"
 if [[ -f "${SAVE_DIR_PATH}/${par_fname}" ]]; then
 
-  if ! cmp -s "${par_fname}" "${SAVE_DIR_PATH}/${par_fname}"; then
-    echo "Error: ${SAVE_DIR_PATH}/${par_fname} already exists and is different from the current ${par_fname}. Please fix this before running the script."
+  if ! cmp -s "${par_fpath}" "${SAVE_DIR_PATH}/${par_fname}"; then
+    echo "Error: ${par_fname} already exists and is different from the current ${par_fname}. Please fix this before running the script."
     exit 1
   else
     echo "${par_fname} already exists in ${SAVE_DIR_PATH} and is the same as the current ${par_fname}. No need to copy."
   fi
 else
-  cp "${par_fname}" "${SAVE_DIR_PATH}/${par_fname}"
+  cp "${par_fpath}" "${SAVE_DIR_PATH}/${par_fname}"
 fi
 
 
