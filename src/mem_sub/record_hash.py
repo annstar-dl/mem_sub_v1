@@ -74,6 +74,22 @@ def get_conda_env_info() -> dict:
         "mem_sub": get_package_integrity(),
     }
 
+def get_git_tag_plus_hash() -> str:
+    """
+    Returns:
+      - 'v1.0.2-30-g60e84c2' (nearest tag + commits ahead + short hash), or
+      - 'v1.0.2' (exactly on tag), or
+      - '<short-hash>' (no tags, due to --always)
+    """
+    try:
+        return subprocess.check_output(
+            ["git", "describe", "--tags", "--always"],
+            stderr=subprocess.STDOUT,
+            text=True,
+        ).strip()
+    except Exception:
+        return "unknown"
+
 def create_metadata(caller_frame=None, script_args=None) -> None:
     d = {}
     frame = caller_frame if caller_frame else inspect.stack()[1]
@@ -81,6 +97,7 @@ def create_metadata(caller_frame=None, script_args=None) -> None:
     d['git_revision_hash'] = get_git_revision_hash()
     d['timestamp'] = datetime.datetime.now().isoformat()
     d['repo_path'] = get_repository_path()
+    d["tag+hash"] = get_git_tag_plus_hash()
     d['conda'] = get_conda_env_info()
     if script_args is not None:
         d['script_args'] = script_args
