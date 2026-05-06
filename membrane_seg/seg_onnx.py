@@ -175,8 +175,8 @@ if __name__ == "__main__":
     args = args.parse_args()
     args.onnx_model_path = os.path.join(args.model_dir, args.onnx_fname)
     args.output_dir_label = os.path.join(args.save_dir, 'labels')
+    os.makedirs(args.output_dir_label, exist_ok=True)
     if args.record_hash:
         save_metadata(os.path.join(args.save_dir,"exp_config.yml"), script_args=args.__dict__)
-    os.makedirs(args.output_dir_label, exist_ok=True)
     process(args)
 
