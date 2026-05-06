@@ -41,45 +41,41 @@ You can clone the repository using the following command (replace v1.0.0 with yo
    
    2. For HPC usage, please load the miniconda module first and then create the environment:
 
-   REMINDER: Switch from the login node while installing the environment to compute node, otherwise installation may fail due to limited resources. 
-   ```bash
-      #this command will allocate a compute node for you, make sure to specify the resources you need, e.g. number of GPUs, memory, etc. For example:
-      salloc
-      ```
-     After you are on the compute node, run the following commands to create the environment:
-
-    ```bash
-      # Load the miniconda module
-      module load miniconda
-      # Create a new environment from the YAML file
-      conda env create -f environment.yml
-      conda activate ves_seg
-      pip install -e .
-      ```
+       REMINDER: Switch from the login node while installing the environment to compute node, otherwise installation may fail due to limited resources. 
+        ```bash
+          #this command will allocate a compute node for you, make sure to specify the resources you need, e.g. number of GPUs, memory, etc. For example:
+          salloc
+        ```
+         After you are on the compute node, run the following commands to create the environment:
+    
+        ```bash
+          # Load the miniconda module
+          module load miniconda
+          # Create a new environment from the YAML file
+          conda env create -f environment.yml
+          conda activate ves_seg
+          pip install -e .
+        ```
 3. Download the pretrained U-Net model weights, and file with preprocessing parameters from the provided link (link is provided by request) and place them in the appropriate directory. 
 From the provided link, download folder with .onnx and .yml files and place this directory in the membrane_seg/seg_model/ directory.
    For example, if you downloaded the folder with name "mem_mad_2026_march_warmup_lr0012_200000". The membrane_seg/seg_model/ directory should look like this:
-   ```
+   Reminder: do not rename the model directory! At this stage we are tracking model name for experiments reproducibility.
+    ```
    membrane_seg/seg_model/
     |---mem_mad_2026_march_warmup_lr0012_200000/
     |------model.onnx
     |------deploy.yaml
     ```
-
-### Usage
-1. Copy the default subtraction parameters yml file (parameters_default.yml) from the repository to the desired location, and modify it if needed. If you do not want to pass this file path as an argument when running the subtraction script, put this file in the project root and name it parameters.yml.
+4. Copy the default subtraction parameters yml file (parameters_default.yml) from the repository to the desired location, and modify it if needed. If you do not want to pass this file path as an argument when running the subtraction script, put this file in the project root and name it parameters.yml.
     ```bash
    #go to the repository directory if you are not there already
    cd mem_sub_v1
    #copy the default parameters yml file to the repository root
    cp parameters_default.yml parameters.yml
     ```
-2. Download the directory with pretrained U-Net model weights (model.onnx) and file with preprocessing parameters (deploy.yaml) from the provided link (link is provided by request) and place them in the membrane_seg/seg_model directory.
-Do not rename the model directory! At this stage we are tracking model name for experiments reproducibility.
 
-    
-
-3. Run the membrane subtraction script. Depending on your computational resources and preferences, you can choose to run the subtraction on a desktop or on a high-performance computing (HPC) cluster.
+### Usage
+1. Run the membrane subtraction script. Depending on your computational resources and preferences, you can choose to run the subtraction on a desktop or on a high-performance computing (HPC) cluster.
    1. Desktop usage. Membrane subtraction on a desktop or local machine can be done using the following script:
         ```bash
            bash script/seg_subtract_destop.sh /path/to/mrc/files /path/to/saved/results path/to/segmentation_model_dir path/to/subtraction_parameters_yml_file
@@ -129,7 +125,7 @@ Do not rename the model directory! At this stage we are tracking model name for 
         ```
         This command will create a job array named "kv_protein", which will process the mrc files in the specified dataset folder, save the subtracted images, but not save the angle information of the segmented membranes. The output of the DSQ jobs will not be printed to the log files.
 
-3. Results and Output Structure. After running the subtraction script, you will find the results in the specified output folder.
+2. Results and Output Structure. After running the subtraction script, you will find the results in the specified output folder.
 This files contains two main parts:
 - Segmentation of membrane outlines using pretrained U-Net model.
 - Subtraction of the segmented membrane outlines from the original images.
