@@ -135,10 +135,13 @@ Also before the segmentation step, the mrc files are downsapled to have voxel si
 The structure of the output folder will be as follows:
 
     ```/your/save/path/
-        |---subtractions_mrc/ # Images after membrane subtraction in mrc format
-        |---misc/ # Miscellaneous files, including logs and intermediate results
-        ├──---{input_folder_name}_ds/  # Downsampled micrographs in jpg format
-        ├──---labels/                     # Segmented membrane masks (downsampled)
+        ├──exp_config.yml/  # The configuration file used for this run
+        ├──parameters.yml/  # Copy of your subtraction parameters file used for this run
+        ├──subtractions_mrc/ # Images after membrane subtraction in mrc format
+        ├──misc/ # Miscellaneous files, including logs and intermediate results
+        ├─────seg_model.txt/  # file with the name of the segmentation model used for this run
+        ├─────{input_folder_name}_ds/  # Downsampled micrographs in jpg format
+        ├─────labels/                     # Segmented membrane masks (downsampled)
         ├─────subtracted_png_ds/ # Downsampled after membrane subtraction in png format
         ├─────membranes/ # Images of membrane estimates in png format
         |─────membranes_ds/ # Downsampled images of membrane estimates in png format`
