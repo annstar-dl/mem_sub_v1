@@ -109,7 +109,7 @@ From the provided link, download folder with .onnx and .yml files and place this
                         Default is 0, which means that the output will not be printed to the log files. 
         - `nb_of_jobs`: (optinal argument) How many jobs to run. Default value –1, which means process all the files. For the test run set it to 1.
         - `path/to/segmentation_model_dir`: (optinal argument) Path to the directory with segmentation model. If not set, it will be taken from the SEGMENTATION_DIR variable in the `script/seg_mrc.sh` script.
-        - `path/to/subtraction_parameters_yml_file`: (optinal argument) Path to the subtraction parameters yml file. If not set, `parameters.yml` file script.
+        - `path/to/subtraction_parameters_yml_file`: (optinal argument) Path to the subtraction parameters yml file. If not set, it will use `parameters.yml` file in the project root.
 
         After running script/create_dsq_jobs.sh it will print out a line:
    
