@@ -7,5 +7,5 @@ dsq_files/
 test/
 parameters.yml
 src/mem_sub/_version.py
-run/run_parameters.sh
-run/
+run_scripts
+!run_scripts/run_seg_sub_default.sh

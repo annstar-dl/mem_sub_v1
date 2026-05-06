@@ -76,85 +76,77 @@ From the provided link, download folder with .onnx and .yml files and place this
 
 ### Usage
 1. Run the membrane subtraction script. Depending on your computational resources and preferences, you can choose to run the subtraction on a desktop or on a high-performance computing (HPC) cluster.
-   1. Desktop usage. Membrane subtraction on a desktop or local machine can be done using the following script:
+   1. Navigate to run_scripts directory and make a copy of run_seg_sub_default.sh script
         ```bash
-           bash script/seg_subtract_destop.sh /path/to/mrc/files /path/to/saved/results path/to/segmentation_model_dir path/to/subtraction_parameters_yml_file
+            cd run_scripts
+            cp run_seg_sub_default.sh run_seg_sub.sh
         ```
-       if you want to set the path segmentation model to default (mem_mad_2026_march_warmup_lr_50000) set this argument to empty string, like this:
-        ```bash
-           bash script/seg_subtract_destop.sh /path/to/mrc/files /path/to/save/results "" path/to/subtraction_parameters_yml_file
-        ```
-        if you want to set the path to subtraction parameters yml file to default, do not set this parameter, like this:
-        ```bash
-           bash script/seg_subtract_destop.sh /path/to/mrc/files /path/to/save/results ""
-        ```
-   2. HPC Usage. Membrane subtraction on Yale HPC cluster is done using Deadly Simple Queue (DSQ) scheduler.
-      The idea is that every image can be processed independently, so we can submit many jobs to the cluster,
-   each processing a single image. To run DSQ we have to prepare file with the list of jobs and their parameters. 
-   However, Yale HPC has a limit on how short the job duration can be, 
-   so we have to batch several image processing jobs into one. 
-   You can create the job file, you can run DSQ job using following script:
-       ```bash
-          bash script/create_dsq_jobs.sh /path/to/dataset/folder /path/to/save/results/folder job_array_name save_angle save_sub show_output nb_of_jobs path/to/segmentation_model_dir path/to/subtraction_parameters_yml_file
-       ```
-        <mark>Beware that optional parameters in Bash are not named. So if you skip one optional parameter, you have to skip all the parameters that are after it. Otherwise, the next value would be taken as the value of the parameter you skipped, and it would cause an error.</mark>
-        
+   
+        Open the run_seg_sub.sh script and set all the parameters to the desired values. Keep most of the parameters as they are, but make sure to set the correct paths for your dataset and output directory.
+        Also change the membrane segmentation model path if you are processing non vesicle data, such as bacterial micrographs.
+    
         Here is the description of the parameters:
-        - `/path/to/dataset/folder`: Path to the folder containing mrc files to be processed.
-        - `/path/to/save/results/folder`: Path to the folder where the results will be saved.
-        - `job_array_name`: A name for the job array, which will be used to identify the jobs in the DSQ scheduler, e.g. liposome.
-        - `save_angle`: A flag (0 or 1) indicating whether to save the angle information of the segmented membranes.
-        - `save_sub`: A flag (0 or 1) indicating whether to save the subtracted images.
-        - `show_output`: (optinal argument) A flag (0 or 1) indicating whether to print the output of the DSQ jobs to the log files.
-                        Default is 0, which means that the output will not be printed to the log files. 
-        - `nb_of_jobs`: (optinal argument) How many jobs to run. Default value –1, which means process all the files. For the test run set it to 1.
-        - `path/to/segmentation_model_dir`: (optinal argument) Path to the directory with segmentation model. If not set, it will be taken from the SEGMENTATION_DIR variable in the `script/seg_mrc.sh` script.
-        - `path/to/subtraction_parameters_yml_file`: (optinal argument) Path to the subtraction parameters yml file. If not set, it will use `parameters.yml` file in the project root.
+        - DATASET_PATH - name of the dataset to be processed, this can be a single mrc file or a directory containing mrc files
+        - SAVE_DIR_PATH - directory where the results will be saved
+        - JOB_ARRAY_NAME - if you want to run dsq job submission, this will be a prefix to the name of the job array
+        - SAVE_ANGLE - (0 or 1) flag to indicate whether to save the angle of the predicted membrane in the output, this is useful for later analysis and visualization
+        - SAVE_SUB=1 - (0 or 1) flag to indicate whether to save the subtracted micrographs in the output, this is useful for later analysis and visualization
+        - SHOW_OUTPUT - (0 or 1) flag to indicate whether to show the output of the dsq jobs in the terminal, this is useful for debugging and monitoring the progress of the jobs
+        - NB_OF_JOBS - (default -1) number of jobs to submit to the cluster, if -1, all jobs will be submitted, this is useful for testing and debugging
+        - SEGMENTATION_DIR - path to the segmentation model, this should be a directory containing the model.onnx file, this is useful for later reference and to avoid confusion about which model was used for segmentation
+        - PAR_FPATH - path to the parameters.yml file, this is useful for later reference and to avoid confusion about which parameters were used for segmentation
+        - RUN_DSQ - flag to indicate whether to run the dsq job submission script. If use HPC set it to 1, if 0, the whole folder will be processed at once using the seg_subtract_desktop.sh script
+        - RUN_ONLY_SEGMENTATION - flag to indicate whether to run only the segmentation script, this is useful for testing and debugging. Always keep it zero.
 
-        After running script/create_dsq_jobs.sh it will print out a line:
-   
-            ```
-                To submit the job array, run: sbatch liposome_12345678.sh 
-            ```
-   
-        Paste this command into the terminal to submit the job array to the DSQ scheduler.
-
-        Here is an example of how to run the script with all parameters:
+    2. Desktop usage. Set the parameters in the run_seg_sub.sh script run_dsq=0 and run the script using the following command:
+         ```bash
+          bash run_scripts/run_seg_sub.sh
+         ```
+    3. HPC Usage. Membrane subtraction on Yale HPC cluster is done using Deadly Simple Queue (DSQ) scheduler.
+       The idea is that every image can be processed independently, so we can submit many jobs to the cluster,
+    each processing a single image. To run DSQ we have to prepare file with the list of jobs and their parameters. 
+    However, Yale HPC has a limit on how short the job duration can be, 
+    so we have to batch several image processing jobs into one. 
+    You can create the DSQ job file by running following script after you set run_dsq=1 in the run_seg_sub.sh:
         ```bash
-           bash script/create_dsq_jobs.sh /path/to/dataset/folder /path/to/save/results/folder kv_protein 0 1 0 –1 membrane_seg/seg_model/mem_mad_2026_march_warmup_lr0012_200000 parameters.yml
+           run_scripts/run_seg_sub.sh
         ```
-        This command will create a job array named "kv_protein", which will process the mrc files in the specified dataset folder, save the subtracted images, but not save the angle information of the segmented membranes. The output of the DSQ jobs will not be printed to the log files.
-
+         After running run_scripts/run_seg_sub.sh it will print out a line:
+   
+             ```
+                 To submit the job array, run: sbatch liposome_12345678.sh 
+             ```
+   
+         Paste this command into the terminal to submit the job array to the DSQ scheduler.
+   
 2. Results and Output Structure. After running the subtraction script, you will find the results in the specified output folder.
-This files contains two main parts:
-- Segmentation of membrane outlines using pretrained U-Net model.
-- Subtraction of the segmented membrane outlines from the original images.
+    This files contains two main parts:
+     - Segmentation of membrane outlines using pretrained U-Net model.
+     - Subtraction of the segmented membrane outlines from the original images.
 
 
-Also before the segmentation step, the mrc files are downsapled to have voxel size of 4.5 Angstroms. As a result, you will see in the output folder misc/{input_folder_name}_ds with downsampled images in jpg format.
+Also before the segmentation step, the mrc files are downsampled to have voxel size of 4.0 Angstroms. As a result, you will see in the output folder misc/{input_folder_name}_ds with downsampled images in jpg format.
 The structure of the output folder will be as follows:
-
-    ```/your/save/path/
-        ├──exp_config.yml/  # The configuration file used for this run
-        ├──parameters.yml/  # Copy of your subtraction parameters file used for this run
-        ├──subtractions_mrc/ # Images after membrane subtraction in mrc format
-        ├──misc/ # Miscellaneous files, including logs and intermediate results
-        ├─────seg_model.txt/  # file with the name of the segmentation model used for this run
-        ├─────{input_folder_name}_ds/  # Downsampled micrographs in jpg format
-        ├─────labels/                     # Segmented membrane masks (downsampled)
-        ├─────subtracted_png_ds/ # Downsampled after membrane subtraction in png format
-        ├─────membranes/ # Images of membrane estimates in png format
-        |─────membranes_ds/ # Downsampled images of membrane estimates in png format`
-    ```
+        
+            ```/your/save/path/
+                ├──exp_config.yml/  # The configuration file used for this run
+                ├──parameters.yml/  # Copy of your subtraction parameters file used for this run
+                ├──subtractions_mrc/ # Images after membrane subtraction in mrc format
+                ├──misc/ # Miscellaneous files, including logs and intermediate results
+                ├─────seg_model.txt/  # file with the name of the segmentation model used for this run
+                ├─────{input_folder_name}_ds/  # Downsampled micrographs in jpg format
+                ├─────labels/                     # Segmented membrane masks (downsampled)
+                ├─────subtracted_png_ds/ # Downsampled after membrane subtraction in png format
+                ├─────membranes/ # Images of membrane estimates in png format
+                |─────membranes_ds/ # Downsampled images of membrane estimates in png format`
+            ```
 ### First run
 For the first run, we recommend testing our code on a small subset of data to ensure that everything is set up correctly. 
 You do not need to create a separate set, simply run the DSQ job creating script for a single job, which will process only 10 images.
 Also allow the script to print the output of the DSQ jobs to the log files, so you can see if there are any errors or issues with the processing.
-```bash
-    bash script/create_dsq_jobs.sh /path/to/dataset/folder /path/to/save/results/folder job_array_name 1 1 1 1
-```
+For that set the parameter show_output=1 and nb_of_jobs=1 in the run_seg_sub.sh script. This will allow you to see the output of the DSQ jobs in the terminal and check if there are any errors or issues with the processing.
 After the first run, check the output folder to see if the results are as expected.
-If not send us the .out file with the log output of the DSQ jobs, which you can find in the root of project directory.
+If not send us the .out file with the log output of the DSQ jobs, which you can find in the dsq_files folder in root of project directory.
 
 ### Change Hyperparameters
 You can change the hyperparameters of the subtraction process by modifying your `parameters.yml` file. This file contains various parameters that control the behavior of the subtraction algorithms, such as grid step, bases radius and etc.
