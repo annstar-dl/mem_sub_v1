@@ -90,7 +90,7 @@ def get_git_tag_plus_hash() -> str:
     except Exception:
         return "unknown"
 
-def create_metadata(caller_frame=None, script_args=None) -> None:
+def create_metadata(caller_frame=None, script_args=None, commit_status="") -> None:
     d = {}
     frame = caller_frame if caller_frame else inspect.stack()[1]
     d['initiating module'] = frame.filename
@@ -99,20 +99,25 @@ def create_metadata(caller_frame=None, script_args=None) -> None:
     d['repo_path'] = get_repository_path()
     d["tag+hash"] = get_git_tag_plus_hash()
     d['conda'] = get_conda_env_info()
+    d["commit_status"] = commit_status
     if script_args is not None:
         d['script_args'] = script_args
     return d
 
-def check_git_status():
+def check_git_status(raise_exception=False) -> None:
     # 'git status --porcelain' returns an empty string if nothing is changed
     #status = subprocess.check_output(['git', 'status', '--porcelain', '--ignore-submodules']).decode('utf-8').strip()
     status = subprocess.check_output(['git', 'status', '--porcelain']).decode('utf-8').strip()
     print(f"DEBUG: Status output is: '{status}'")  # The quotes will show if there's a hidden newline
 
     if status:
-        raise Exception("Error: Uncommitted changes detected! Commit your changes first or delete them!")
+        if raise_exception:
+            raise Exception("Error: Uncommitted changes detected! Commit your changes first or delete them!")
+        return "Dirty commit!"
+    else:
+        return "Clean commit"
 
-def save_metadata(save_path, script_args=None) -> None:
+def save_metadata(save_path, script_args=None,raise_uncommit=False) -> None:
     """
     Save metadata to yaml file of the save_folder
     Args:
@@ -120,9 +125,9 @@ def save_metadata(save_path, script_args=None) -> None:
     :param save_seg_dir: binary. True if save the segmentation folder and False otherwise
     returns: None
         """
-    check_git_status()
+    commit_status = check_git_status(raise_uncommit)
     caller_frame = inspect.stack()[1]
-    d = create_metadata(caller_frame=caller_frame, script_args=script_args)
+    d = create_metadata(caller_frame=caller_frame, script_args=script_args,commit_status=commit_status)
     if os.path.exists(save_path):
         metadata_different = compare_metadata(save_path, new_metadata=d)
         if metadata_different:
@@ -155,8 +160,9 @@ if __name__ == "__main__":
     args = argparse.ArgumentParser()
     args.add_argument("-sp",'--save_path', help="Path to saved results", required=True)
     args.add_argument("-fname", '--fname', help="Yml file name", default="exp_config")
+    args.add_argument("-runc", '--raise_uncommit', help="Raise exception if we have uncommited changes", default=False, action="store_true")
     args = args.parse_args()
     save_path = os.path.join(args.save_path,args.fname+".yml")
-    save_metadata(save_path)
+    save_metadata(save_path,raise_uncommit=args.raise_uncommit)
 
 
