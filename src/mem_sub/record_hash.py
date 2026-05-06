@@ -130,7 +130,8 @@ def save_metadata(save_path, script_args=None) -> None:
                 f"Metadata file {save_path} and current project are not the same! Restore the project state or use new folder.")
         else:
             print(f"Metadata file already exists, but metadata files are the same (except for timestamp and initiating module).")
-    save_yaml_file(save_path, d)
+    else:
+        save_yaml_file(save_path, d)
 
 def load_yaml_file(fpath) -> dict:
     with open(fpath, 'r') as f:
