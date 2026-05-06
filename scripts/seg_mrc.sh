@@ -81,7 +81,7 @@ python "tools/mrc2image.py" "${MRCPATH}" \
                             -o "${SAVEDIR_MRC}" \
                             --format "jpg" \
                             -dsa --scale --sub_mean \
-                            --border_size 7 --par_fpath ${par_fpath}
+                            --border_size 7 --par_fpath "${SAVEDIR}/parameters.yml"
 
 
 python "membrane_seg/seg_onnx.py" \

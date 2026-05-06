@@ -52,7 +52,6 @@ python scripts/create_job_list.py -ddp ${DATASET_PATH} -jfp "dsq_files/joblist_$
     --save_sub_flag=${SAVE_SUB} \
     --nb_of_jobs=${nb_of_jobs} \
     --seg_dir_path="${seg_dir}" \
-    --par_fpath="${par_fname}"
 
 # check if jobfile is not empty
 if [ -s "dsq_files/joblist_${JOB_ARRAY_NAME}.txt" ]; then
