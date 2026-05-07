@@ -46,17 +46,18 @@ else
   fi
 fi
 
-#run only the segmentation script if the flag is set, this is useful for testing and debugging
-if [[ "${RUN_ONLY_SEGMENTATION}" -eq 1 ]]; then
-  echo "Run only segmentation script"
-  bash scripts/seg_mrc.sh "${DATASET_PATH}" "${SAVE_DIR_PATH}" "${SEGMENTATION_DIR}" "${PAR_FPATH}"
-  exit 0
-fi
+
 #run the dsq job submission script if the flag is set, this will create a job list and submit the jobs to the cluster, otherwise run the whole folder at once using the seg_subtract_desktop.sh script
 if [[ "${RUN_DSQ}" -eq 1 ]]; then
   echo "Run dsq job submission script"
   bash scripts/create_dsq_job.sh "${DATASET_PATH}" "${SAVE_DIR_PATH}" "${JOB_ARRAY_NAME}" "${SAVE_ANGLE}" "${SAVE_SUB}" "${SHOW_OUTPUT}" "${NB_OF_JOBS}" "${SEGMENTATION_DIR}" "${PAR_FPATH}"
 else
-  echo "Run whole folder at once"
+  #run only the segmentation script if the flag is set, this is useful for testing and debugging
+  if [[ "${RUN_ONLY_SEGMENTATION}" -eq 1 ]]; then
+    echo "Run only segmentation script"
+    bash scripts/seg_mrc.sh "${DATASET_PATH}" "${SAVE_DIR_PATH}" "${SEGMENTATION_DIR}" "${PAR_FPATH}"
+    exit 0
+    fi
+  echo "Run subtraction on a whole folder at once"
   bash scripts/seg_subtract_desktop.sh "${DATASET_PATH}" "${SAVE_DIR_PATH}" "${SEGMENTATION_DIR}" "${PAR_FPATH}"
 fi
