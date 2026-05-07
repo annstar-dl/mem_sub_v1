@@ -1,0 +1,12 @@
+ToDo List for next release:
+1. Rename parameter_default.yml into parameter.yml, exclude parameter.yml from .gitignore.
+2. Add a section in README.md asking users to copy parameters.yml into run_scripts. Change the run_seg_sub_default.sh to read run_scripts/parameters.yml instead of parameter.yml from root dir.
+3. Test the code to see if it actually reads parameters.yml from run_scripts and not from parameters.yml in the root. If not, fix the code to read parameters.yml from run_scripts.
+4. Delete check for dirty commits in record_hash.py, since it freaks me out and not helpful since users sometimes copy their files into project directory.
+5. Test the code to see if it works with non-editable version of the package. If not, fix the code to work with non-editable version of the package.
+5. If code works with non-editable version of the package, add instructions in README.md about how to install the package in non-editable mode. Nobody needs editable mode except me. Moreover, editable mode is not recommended for users since it can cause issues with pip and package management. Therefore, it's better to recommend users to install the package in non-editable mode since then they could not accidentally mess with the package code and cause reproducibility issues.
+6. Make sure that pip is able to install correct version of the mem_sub package even with shallow clone. If not, fix the code to make sure pip can install correct version of the mem_sub package even with shallow clone.
+7. Add cross validation support to the code. Add a section in README.md about how to use cross validation.
+8. Also, Fred asked us to filter files based on defocus values, do it if is still relevant.
+9. Think about getting read of all those .sh scripts and just have a single run.py script that can be called with different arguments to run different steps of the pipeline. This would make the code cleaner and easier to maintain. Moreover, it would also make it easier for users to run the code since they would not have to worry about which .sh script to run for which step of the pipeline. They could just run the same run.py script with different arguments to run different steps of the pipeline.
+
