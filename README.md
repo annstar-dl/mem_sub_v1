@@ -24,7 +24,7 @@ For any questions or issues, please contact the Anna Starynska (anna.starynska@y
 1. Clone the repository. Set the branch name to latest release version (you can find the list of release tags on the right-hand side.) 
 You can clone the repository using the following command (replace v1.0.0 with your actual release tag):
 ```bash
-  git clone --branch v1.0.0 --depth 1 https://github.com/annstar-dl/mem_sub_v1
+  git clone --branch v1.0.2 https://github.com/annstar-dl/mem_sub_v1
 ```
 2. Installation create the conda environment and install packages.
     1. For desktop or local machine usage:
