@@ -35,7 +35,7 @@ def process_file(file_name,args: argparse.Namespace):
         raise ValueError(f"Voxel size {voxel_size[0]} is larger than 4.0 Angstrom. "
                          f"Your micrograph is probably downsampled, use micrograph of original size.")
     #read downsampled membrane mask of a micrograph from png file
-    print(f"Mask path", os.path.join(args.masks_path,f"{basename}.png"))
+    print(f"Mask path ", os.path.join(args.masks_path,f"{basename}.png"))
     mask = read_img(os.path.join(args.masks_path, basename + ".png"), True)
     # downsample the micrograph if needed
     img_ds = downsample_micrograph(img, voxel_size[0], border, "center")
